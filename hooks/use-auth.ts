@@ -1,7 +1,6 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
 import { type User, type AuthState, authenticateUser } from "@/lib/auth"
 
 interface AuthStore extends AuthState {
@@ -10,41 +9,33 @@ interface AuthStore extends AuthState {
   setUser: (user: User | null) => void
 }
 
-export const useAuth = create<AuthStore>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      isLoading: false,
-      isAuthenticated: false,
+export const useAuth = create<AuthStore>()((set, get) => ({
+  user: null,
+  isLoading: false,
+  isAuthenticated: false,
 
-      login: async (email: string, password: string) => {
-        set({ isLoading: true })
-        try {
-          const user = await authenticateUser(email, password)
-          if (user) {
-            set({ user, isAuthenticated: true, isLoading: false })
-            return true
-          } else {
-            set({ isLoading: false })
-            return false
-          }
-        } catch (error) {
-          set({ isLoading: false })
-          return false
-        }
-      },
+  login: async (email: string, password: string) => {
+    set({ isLoading: true })
+    try {
+      const user = await authenticateUser(email, password)
+      if (user) {
+        set({ user, isAuthenticated: true, isLoading: false })
+        return true
+      } else {
+        set({ isLoading: false })
+        return false
+      }
+    } catch (error) {
+      set({ isLoading: false })
+      return false
+    }
+  },
 
-      logout: () => {
-        set({ user: null, isAuthenticated: false })
-      },
+  logout: () => {
+    set({ user: null, isAuthenticated: false })
+  },
 
-      setUser: (user: User | null) => {
-        set({ user, isAuthenticated: !!user })
-      },
-    }),
-    {
-      name: "auth-storage",
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
-    },
-  ),
-)
+  setUser: (user: User | null) => {
+    set({ user, isAuthenticated: !!user })
+  },
+}))

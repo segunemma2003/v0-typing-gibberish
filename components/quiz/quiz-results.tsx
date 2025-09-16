@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { Trophy, Clock, Users, Target } from "lucide-react"
 
 interface QuizResult {
@@ -129,15 +129,20 @@ export function QuizResults() {
             <CardDescription>Number of students by score range</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={scoreDistribution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="range" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-4">
+                <Target className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">Score Distribution</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>90-100: 1 student</div>
+                    <div>80-89: 2 students</div>
+                    <div>70-79: 1 student</div>
+                    <div>60-69: 0 students</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

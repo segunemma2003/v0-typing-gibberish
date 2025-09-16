@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
+// import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts"
 import { TrendingUp, Award, BookOpen, Clock } from "lucide-react"
 
 export function AcademicSummary() {
@@ -60,16 +60,18 @@ export function AcademicSummary() {
             <CardDescription>Academic progress over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={gradeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis domain={[3.0, 4.0]} />
-                <Tooltip />
-                <Line type="monotone" dataKey="emma" stroke="hsl(var(--primary))" strokeWidth={2} name="Emma" />
-                <Line type="monotone" dataKey="alex" stroke="hsl(var(--secondary))" strokeWidth={2} name="Alex" />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-4">
+                <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">GPA Trends</p>
+                  <div className="space-y-1 text-xs">
+                    <div>Emma: 3.8 GPA ↗</div>
+                    <div>Alex: 3.6 GPA ↗</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -95,15 +97,13 @@ export function AcademicSummary() {
               ))}
             </div>
             <div className="mt-6">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={attendanceData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="attendance" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="h-[200px] flex items-center justify-center bg-muted/20 rounded-lg">
+                <div className="text-center space-y-2">
+                  <Clock className="w-8 h-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm font-medium">Attendance Chart</p>
+                  <p className="text-xs text-muted-foreground">Visual representation will appear here</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

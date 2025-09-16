@@ -1,0 +1,3 @@
+# Netlify redirects for subdomain-based multi-tenancy
+# This handles all routes for both main domain and subdomains
+/* /.netlify/functions/___netlify-handler 200

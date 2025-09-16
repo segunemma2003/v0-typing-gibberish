@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
+// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { BookOpen, Users, Download, TrendingUp } from "lucide-react"
 
 export function LibraryStats() {
@@ -60,17 +60,13 @@ export function LibraryStats() {
             <CardTitle>Monthly Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="borrowed" fill="hsl(var(--primary))" name="Borrowed" />
-                <Bar dataKey="returned" fill="hsl(var(--secondary))" name="Returned" />
-                <Bar dataKey="digital" fill="hsl(var(--accent))" name="Digital" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-2">
+                <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Chart will be displayed here</p>
+                <p className="text-xs text-muted-foreground">Recent activity: 223 borrowed, 201 returned</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -80,25 +76,33 @@ export function LibraryStats() {
             <CardTitle>Collection by Category</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-4">
+                <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span>Literature:</span>
+                    <span className="font-medium">35%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Science:</span>
+                    <span className="font-medium">25%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>History:</span>
+                    <span className="font-medium">20%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Technology:</span>
+                    <span className="font-medium">15%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Other:</span>
+                    <span className="font-medium">5%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

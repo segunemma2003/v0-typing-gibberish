@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+// import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { TrendingUp, Award, BookOpen, Target } from "lucide-react"
 
 export function GradeOverview() {
@@ -85,21 +85,16 @@ export function GradeOverview() {
             <CardDescription>Your academic progress over time</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={gradeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis domain={[3.0, 4.0]} />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="gpa"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-4">
+                <TrendingUp className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">GPA Trend</p>
+                  <p className="text-muted-foreground">Current GPA: 3.8</p>
+                  <p className="text-xs text-green-600">↗ Improving trend</p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

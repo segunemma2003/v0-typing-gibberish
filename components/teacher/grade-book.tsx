@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+// import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { TrendingUp, Users, BookOpen, Award } from "lucide-react"
 
 export function GradeBook() {
@@ -56,15 +56,20 @@ export function GradeBook() {
             <CardDescription>Current class performance overview</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={gradeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="grade" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center bg-muted/20 rounded-lg">
+              <div className="text-center space-y-4">
+                <Award className="w-12 h-12 mx-auto text-muted-foreground" />
+                <div className="space-y-2 text-sm">
+                  <p className="font-medium">Grade Distribution</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>A: 8 students</div>
+                    <div>B: 12 students</div>
+                    <div>C: 6 students</div>
+                    <div>D: 2 students</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
