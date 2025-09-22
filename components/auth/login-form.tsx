@@ -27,8 +27,10 @@ export function LoginForm() {
     setError("")
 
     const success = await login(email, password)
+    
     if (success) {
       const user = useAuth.getState().user
+      
       if (user) {
         // Check if user belongs to current school
         if (currentSchool && user.schoolId !== currentSchool.id) {
@@ -36,7 +38,9 @@ export function LoginForm() {
           useAuth.getState().logout()
           return
         }
-        router.push(getPortalRoute(user.role))
+        
+        const portalRoute = getPortalRoute(user.role)
+        router.push(portalRoute)
       }
     } else {
       setError("Invalid email or password")
@@ -51,7 +55,7 @@ export function LoginForm() {
             <Building2 className="w-6 h-6 text-white" />
           </div>
         )}
-        <CardTitle className="text-2xl font-bold">{currentSchool ? currentSchool.name : "EduManage"}</CardTitle>
+        <CardTitle className="text-2xl font-bold">{currentSchool ? currentSchool.name : "Compasse"}</CardTitle>
         <CardDescription>
           {currentSchool ? `Sign in to ${currentSchool.name} portal` : "Sign in to your school portal"}
         </CardDescription>
@@ -90,11 +94,36 @@ export function LoginForm() {
           </Button>
         </form>
         <div className="mt-4 text-sm text-muted-foreground">
-          <p>Demo credentials:</p>
-          <p>admin@school.edu / password123</p>
-          <p>teacher@school.edu / password123</p>
-          <p>student@school.edu / password123</p>
-          <p>parent@school.edu / password123</p>
+          <p>Demo credentials for {currentSchool?.name}:</p>
+          {currentSchool?.subdomain === 'demo' && (
+            <>
+              <p>admin@school.edu / password123</p>
+              <p>teacher@school.edu / password123</p>
+              <p>student@school.edu / password123</p>
+              <p>parent@school.edu / password123</p>
+            </>
+          )}
+          {currentSchool?.subdomain === 'test' && (
+            <>
+              <p>admin@test.edu / password123</p>
+              <p>teacher@test.edu / password123</p>
+              <p>student@test.edu / password123</p>
+            </>
+          )}
+          {currentSchool?.subdomain === 'greenwood' && (
+            <>
+              <p>admin@greenwood.edu / password123</p>
+              <p>teacher@greenwood.edu / password123</p>
+              <p>student@greenwood.edu / password123</p>
+            </>
+          )}
+          {currentSchool?.subdomain === 'riverside' && (
+            <>
+              <p>admin@riverside.edu / password123</p>
+              <p>teacher@riverside.edu / password123</p>
+              <p>student@riverside.edu / password123</p>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

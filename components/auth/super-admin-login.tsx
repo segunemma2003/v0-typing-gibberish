@@ -10,12 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/hooks/use-auth"
+import { SchoolAccessGuide } from "@/components/demo/school-access-guide"
 import { Shield, Building2 } from "lucide-react"
 
 export function SuperAdminLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [showSchoolGuide, setShowSchoolGuide] = useState(true)
   const { login, isLoading } = useAuth()
   const router = useRouter()
 
@@ -37,9 +39,37 @@ export function SuperAdminLogin() {
     }
   }
 
+  if (showSchoolGuide) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="w-full max-w-6xl space-y-6">
+          <SchoolAccessGuide />
+          <div className="text-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowSchoolGuide(false)}
+              className="bg-white"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              Super Admin Login
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+      <div className="w-full max-w-md space-y-4">
+        <Button
+          variant="ghost"
+          onClick={() => setShowSchoolGuide(true)}
+          className="mb-4"
+        >
+          ← Back to Schools
+        </Button>
+        <Card className="w-full shadow-xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
             <Shield className="w-8 h-8 text-white" />
@@ -91,11 +121,12 @@ export function SuperAdminLogin() {
               <Building2 className="w-4 h-4" />
               <span className="text-sm font-medium">Demo Credentials</span>
             </div>
-            <p className="text-sm text-blue-700">superadmin@edumanage.com</p>
+            <p className="text-sm text-blue-700">superadmin@compasse.com</p>
             <p className="text-sm text-blue-700">password123</p>
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

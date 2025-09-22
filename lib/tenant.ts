@@ -41,6 +41,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
   },
 
   initializeTenant: async (hostname?: string) => {
+    console.log("initializeTenant called with hostname:", hostname)
     set({ isLoading: true })
 
     try {
@@ -49,6 +50,54 @@ export const useTenant = create<TenantStore>()((set, get) => ({
       // If no hostname provided, get from window (client-side)
       if (!detectedHostname && typeof window !== "undefined") {
         detectedHostname = window.location.hostname
+        console.log("Detected hostname from window:", detectedHostname)
+        
+        // Also check for school parameter in URL (for testing subdomains)
+        const urlParams = new URLSearchParams(window.location.search)
+        const schoolParam = urlParams.get('school')
+        console.log("School param from URL:", schoolParam)
+        
+        if (schoolParam) {
+          // Simulate subdomain behavior with URL parameter
+          const { subdomain: detectedSubdomain } = getTenantFromHostname(detectedHostname)
+          console.log("Detected subdomain:", detectedSubdomain)
+          
+          if (!detectedSubdomain) {
+            // If main domain, use school parameter as subdomain
+            const school = getSchoolBySubdomain(schoolParam)
+            console.log("Found school:", school)
+            
+            if (school && school.isActive) {
+              console.log("Setting school tenant:", schoolParam)
+              set({
+                currentSchool: school,
+                subdomain: schoolParam,
+                isSuperAdmin: false,
+                isLoading: false,
+              })
+              return
+            } else {
+              console.log("School not found or inactive")
+              set({
+                currentSchool: null,
+                subdomain: schoolParam,
+                isSuperAdmin: false,
+                isLoading: false,
+              })
+              return
+            }
+          }
+        }
+        
+        // If no school param, treat as super admin (localhost)
+        console.log("No school param, setting as super admin")
+        set({
+          currentSchool: null,
+          subdomain: null,
+          isSuperAdmin: true,
+          isLoading: false,
+        })
+        return
       }
 
       // Try to get from headers (server-side via middleware)
@@ -109,6 +158,8 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         isLoading: false,
       })
     }
+    
+    console.log("Tenant initialization completed")
   },
 }))
 
@@ -125,9 +176,9 @@ export const getTenantFromHostname = (hostname: string) => {
   if (hostname.includes('.netlify.app')) {
     const parts = hostname.split('.')
     
-    // For Netlify, we expect: subdomain.mainsite.netlify.app
-    if (parts.length >= 4 && parts[parts.length - 2] === 'netlify' && parts[parts.length - 1] === 'app') {
-      // If it's the main site (e.g., compasse.netlify.app), treat as super admin
+    // Check if it's a valid Netlify domain
+    if (parts[parts.length - 2] === 'netlify' && parts[parts.length - 1] === 'app') {
+      // If it's the main site (e.g., lustrous-malasada-aaed22.netlify.app), treat as super admin
       if (parts.length === 3) {
         return {
           subdomain: null,
@@ -135,10 +186,12 @@ export const getTenantFromHostname = (hostname: string) => {
         }
       }
       
-      // If it's a subdomain (e.g., test.compasse.netlify.app), extract school subdomain
-      return {
-        subdomain: parts[0],
-        isSuperAdmin: false,
+      // If it's a subdomain (e.g., test.lustrous-malasada-aaed22.netlify.app), extract school subdomain
+      if (parts.length >= 4) {
+        return {
+          subdomain: parts[0],
+          isSuperAdmin: false,
+        }
       }
     }
   }

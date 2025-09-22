@@ -6,11 +6,11 @@
 [build.environment]
   NEXT_PUBLIC_MAIN_DOMAIN = "lustrous-malasada-aaed22.netlify.app"
 
-# Handle subdomain routing for schools
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/___netlify-handler"
-  status = 200
+# Temporarily disabled redirects for debugging
+# [[redirects]]
+#   from = "/*"
+#   to = "/.netlify/functions/___netlify-handler"
+#   status = 200
 
 # Redirect rules for different subdomains
 [[headers]]

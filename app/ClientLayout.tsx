@@ -3,19 +3,20 @@
 import type React from "react"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import { Montserrat } from "next/font/google"
+// import { Montserrat } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { TenantProvider } from "@/components/tenant/tenant-provider"
 import "./globals.css"
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-  weight: ["400", "600", "700", "900"],
-})
+// const montserrat = Montserrat({
+//   subsets: ["latin"],
+//   variable: "--font-montserrat",
+//   weight: ["400", "600", "700", "900"],
+// })
 
 function ClientContent({ children }: { children: React.ReactNode }) {
+  console.log("ClientContent: Rendering children")
   return (
     <TenantProvider>
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
@@ -37,7 +38,7 @@ export default function ClientLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} ${montserrat.variable}`}>
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ClientContent>{children}</ClientContent>
         <Analytics />
       </body>

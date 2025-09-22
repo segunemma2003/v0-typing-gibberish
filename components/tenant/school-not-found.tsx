@@ -27,7 +27,7 @@ export function SchoolNotFound({ subdomain }: SchoolNotFoundProps) {
               <Building2 className="w-4 h-4" />
               <span className="text-sm font-medium">Requested URL</span>
             </div>
-            <p className="text-sm text-gray-600">{subdomain}.edumanage.com</p>
+            <p className="text-sm text-gray-600">{subdomain}.compasse.com</p>
           </div>
           <div className="text-sm text-gray-600">
             <p>This could happen if:</p>

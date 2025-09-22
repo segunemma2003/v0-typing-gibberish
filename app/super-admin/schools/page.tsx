@@ -69,7 +69,7 @@ export default function SchoolsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-lg">{school.name}</CardTitle>
-                    <CardDescription>{school.subdomain}.edumanage.com</CardDescription>
+                    <CardDescription>{school.subdomain}.compasse.com</CardDescription>
                   </div>
                 </div>
                 <Badge variant={school.isActive ? "default" : "secondary"}>

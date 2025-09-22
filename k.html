@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agrisiti IoT Farm Management System - Process Flowchart (Large View)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            overflow: auto;
+        }
+        
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-btn {
+            margin: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .zoom-btn {
+            background: #2196F3;
+        }
+        
+        .zoom-btn:hover {
+            background: #1976D2;
+        }
+        
+        .fullscreen-btn {
+            background: #FF9800;
+        }
+        
+        .fullscreen-btn:hover {
+            background: #F57C00;
+        }
+        
+        .reset-btn {
+            background: #9C27B0;
+        }
+        
+        .reset-btn:hover {
+            background: #7B1FA2;
+        }
+        
+        #flowchart-container {
+            min-height: 800px;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+        }
+        
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .zoom-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            font-size: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .legend {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+        
+        .legend h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls, .instructions {
+                position: relative;
+                margin: 10px 0;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚜 Agrisiti IoT Farm Management System</h1>
+        <p>Complete Process Flowchart - Interactive Large View</p>
+    </div>
+    
+    <div class="controls">
+        <button class="control-btn zoom-btn" onclick="zoomIn()">🔍 Zoom In</button>
+        <button class="control-btn zoom-btn" onclick="zoomOut()">🔍 Zoom Out</button>
+        <button class="control-btn reset-btn" onclick="resetZoom()">↻ Reset</button>
+        <button class="control-btn fullscreen-btn" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+        <div style="margin-top: 10px; font-weight: bold; color: #333;">
+            Zoom: <span id="zoom-level">100%</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div id="flowchart-container">
+            <div class="mermaid">
+graph TD
+    A["🚀 System Startup<br/>Initialize Core Systems"] --> B["🖥️ Initialize Raspberry Pi 4B<br/>Boot Sequence & Hardware Check"]
+    B --> C["⚙️ Load Sensor Configuration<br/>Calibrate All Sensors"]
+    C --> D["☁️ Establish AWS IoT Connection<br/>Secure MQTT Channel"]
+    D --> E["🌐 Start Local Network Services<br/>WiFi & Ethernet Setup"]
+    
+    E --> F["📊 Begin Sensor Data Collection<br/>Continuous Monitoring Loop"]
+    
+    %% Sensor Collection Branches
+    F --> G1["🐔 Poultry Farm Sensors<br/>Environmental Monitoring"]
+    F --> G2["🐟 Fish Pond 1 Sensors<br/>Aquatic Environment"]
+    F --> G3["🐠 Fish Pond 2 Sensors<br/>Aquatic Environment"]
+    F --> G4["🌱 Hydrofarm Sensors<br/>Plant Growth Monitoring"]
+    F --> G5["📹 Camera Systems<br/>Visual Surveillance"]
+    
+    %% Poultry Detailed Sensors
+    G1 --> H1["🌡️ Temperature Sensor<br/>Optimal Climate Control"]
+    G1 --> H2["🚨 Foreign Object Detection<br/>Security Monitoring"]
+    G1 --> H3["💧 Water Level Sensor<br/>Hydration Management"]
+    G1 --> H4["🧪 pH Sensor<br/>Water Quality Control"]
+    
+    %% Fish Pond Sensors
+    G2 --> I1["🐟 Pond 1 Monitoring<br/>pH • Turbidity • DO2 • TDS<br/>Temperature • Flow Rate"]
+    G3 --> I2["🐠 Pond 2 Monitoring<br/>pH • Turbidity • DO2 • TDS<br/>Temperature • Flow Rate"]
+    
+    %% Hydrofarm Sensors
+    G4 --> J1["💧 Moisture Content<br/>Root Zone Hydration"]
+    G4 --> J2["💡 Light Intensity<br/>PAR & Spectrum Analysis"]
+    G4 --> J3["🧬 NPK Levels<br/>Nutrient Monitoring"]
+    G4 --> J4["⚗️ TDS in Nutrient Solution<br/>Concentration Control"]
+    
+    %% Camera Systems
+    G5 --> K1["📸 Poultry Camera<br/>Behavior & Health Monitoring"]
+    G5 --> K2["🎥 Fish Pond Camera<br/>Underwater Surveillance"]
+    G5 --> K3["📷 Hydrofarm Camera<br/>Growth Time-lapse"]
+    
+    %% Data Processing Hub
+    H1 --> L["🔄 Local Data Processing on Pi<br/>Validation • Filtering • Aggregation"]
+    H2 --> L
+    H3 --> L
+    H4 --> L
+    I1 --> L
+    I2 --> L
+    J1 --> L
+    J2 --> L
+    J3 --> L
+    J4 --> L
+    
+    %% Image Processing
+    K1 --> M["🖼️ Image/Video Processing<br/>AI Analysis • Compression"]
+    K2 --> M
+    K3 --> M
+    
+    %% Validation Checks
+    L --> N{"✅ Data Validation Check<br/>Quality Control"}
+    M --> O{"🎯 Image Quality Check<br/>Resolution & Clarity"}
+    
+    N --> |"✅ Valid Data"| P["📦 Format Data as JSON<br/>Structure & Timestamp"]
+    N --> |"❌ Invalid Data"| Q["⚠️ Log Error & Retry<br/>Error Recovery Protocol"]
+    Q --> F
+    
+    O --> |"✅ Good Quality"| R["📥 Compress Images/Video<br/>Optimize for Storage"]
+    O --> |"❌ Poor Quality"| S["🔧 Adjust Camera Settings<br/>Auto-calibration"]
+    S --> G5
+    
+    %% Local Storage
+    P --> T["💾 Local Data Storage Buffer<br/>Temporary Cache"]
+    R --> U["🗃️ Local Media Storage Buffer<br/>Image/Video Queue"]
+    
+    %% Internet Connectivity Check
+    T --> V{"🌐 Internet Connection Available?<br/>Network Status Check"}
+    U --> V
+    
+    V --> |"✅ Connected"| W["📡 Transmit to AWS IoT Core<br/>MQTT Secure Channel"]
+    V --> |"❌ No Connection"| X["⏳ Store in Local Queue<br/>Offline Buffer"]
+    X --> Y["⏰ Wait for Connection<br/>Retry Timer"]
+    Y --> V
+    
+    %% AWS Cloud Processing
+    W --> Z["☁️ AWS IoT Core Message Broker<br/>Central Message Hub"]
+    Z --> AA["⚡ AWS IoT Rules Engine<br/>Message Routing Logic"]
+    
+    AA --> BB{"🎯 Rule Evaluation<br/>Message Classification"}
+    BB --> |"📊 Sensor Data"| CC["📈 Route to Kinesis Data Stream<br/>Real-time Analytics"]
+    BB --> |"📸 Media Files"| DD["💾 Route to S3 Bucket<br/>Secure Storage"]
+    BB --> |"🚨 Alert Triggers"| EE["⚡ Trigger Lambda Function<br/>Automated Response"]
+    
+    %% Data Processing Streams
+    CC --> FF["🔥 Real-time Event Processing<br/>Stream Analytics"]
+    DD --> GG["🗄️ Media Storage & Archive<br/>Long-term Retention"]
+    
+    FF --> HH["🗄️ Store in DynamoDB<br/>NoSQL Database"]
+    FF --> II{"📊 Threshold Analysis<br/>Anomaly Detection"}
+    
+    II --> |"✅ Normal Range"| JJ["🔄 Continue Monitoring<br/>Normal Operation"]
+    II --> |"⚠️ Alert Condition"| KK["🚨 Generate Alert<br/>Immediate Notification"]
+    
+    %% Alert & Control Processing
+    EE --> LL["⚡ Lambda Function Execution<br/>Serverless Processing"]
+    KK --> LL
+    
+    LL --> MM{"🎯 Alert Type Classification<br/>Severity Assessment"}
+    MM --> |"🔴 Critical Alert"| NN["📢 Immediate Notification<br/>SMS • Email • Push"]
+    MM --> |"🟡 Warning Alert"| OO["📝 Log Warning<br/>Event Recording"]
+    MM --> |"🤖 Automation Trigger"| PP["🎛️ Trigger Control Action<br/>Automated Response"]
+    
+    %% Control System Actions
+    PP --> QQ{"🎛️ Control Type Selection<br/>Action Classification"}
+    QQ --> |"💧 Water Control"| RR["🔧 Activate Solenoid Valves<br/>Flow Management"]
+    QQ --> |"🌡️ Environmental Control"| SS["💨 Adjust Lights/Fans<br/>Climate Management"]
+    QQ --> |"🌿 Irrigation Control"| TT["💧 Control Nutrient Pumps<br/>Hydroponic Management"]
+    
+    %% Control Feedback Loop
+    RR --> UU["✅ Send Control Confirmation<br/>Action Verification"]
+    SS --> UU
+    TT --> UU
+    
+    UU --> VV["📝 Update Device State in DynamoDB<br/>State Management"]
+    VV --> WW["📤 Send Status to Pi<br/>Feedback Loop"]
+    
+    WW --> XX{"✅ Action Successful?<br/>Success Verification"}
+    XX --> |"✅ Success"| YY["🔄 Continue Normal Operation<br/>Resume Monitoring"]
+    XX --> |"❌ Failed"| ZZ["🔄 Retry Control Action<br/>Error Recovery"]
+    ZZ --> PP
+    
+    %% User Interface & APIs
+    HH --> AAA["🌐 API Gateway<br/>REST API Services"]
+    GG --> AAA
+    VV --> AAA
+    
+    AAA --> BBB["📱 Mobile App<br/>Remote Monitoring"]
+    AAA --> CCC["💻 Web Dashboard<br/>Real-time Analytics"]
+    AAA --> DDD["📊 Analytics Platform<br/>Business Intelligence"]
+    
+    %% Continuous Operation Loop
+    YY --> JJ
+    JJ --> EEE["⏰ Schedule Next Reading Cycle<br/>Timer Management"]
+    EEE --> F
+    
+    %% Error Handling & Recovery
+    NN --> FFF["📋 Log Critical Event<br/>Incident Management"]
+    OO --> FFF
+    FFF --> GGG{"🏥 System Health Check<br/>Diagnostic Scan"}
+    GGG --> |"✅ Healthy"| JJ
+    GGG --> |"⚠️ Issues Detected"| HHH["🔧 System Recovery Protocol<br/>Auto-repair Sequence"]
+    HHH --> B
+    
+    %% Maintenance & Updates
+    DDD --> III{"🔧 Maintenance Schedule?<br/>Routine Check"}
+    III --> |"⏰ Maintenance Due"| JJJ["🛠️ Perform System Maintenance<br/>Scheduled Service"]
+    III --> |"✅ No Maintenance"| JJ
+    JJJ --> KKK["📱 Update Firmware/Software<br/>System Updates"]
+    KKK --> LLL["🎯 Calibrate Sensors<br/>Precision Adjustment"]
+    LLL --> MMM["🧪 Test Control Systems<br/>Functionality Check"]
+    MMM --> NNN["📊 Generate Maintenance Report<br/>Service Documentation"]
+    NNN --> JJ
+    
+    %% Enhanced Styling Classes
+    classDef startup fill:#FF6B6B,stroke:#FF5252,stroke-width:3px,color:white,font-weight:bold
+    classDef aws fill:#FF9800,stroke:#F57C00,stroke-width:3px,color:white,font-weight:bold
+    classDef sensor fill:#2196F3,stroke:#1976D2,stroke-width:3px,color:white,font-weight:bold
+    classDef control fill:#4CAF50,stroke:#388E3C,stroke-width:3px,color:white,font-weight:bold
+    classDef alert fill:#F44336,stroke:#D32F2F,stroke-width:3px,color:white,font-weight:bold
+    classDef process fill:#9C27B0,stroke:#7B1FA2,stroke-width:3px,color:white,font-weight:bold
+    classDef decision fill:#FF9800,stroke:#F57C00,stroke-width:3px,color:white,font-weight:bold
+    classDef storage fill:#607D8B,stroke:#455A64,stroke-width:3px,color:white,font-weight:bold
+    classDef camera fill:#795548,stroke:#5D4037,stroke-width:3px,color:white,font-weight:bold
+    classDef network fill:#009688,stroke:#00796B,stroke-width:3px,color:white,font-weight:bold
+    classDef maintenance fill:#673AB7,stroke:#512DA8,stroke-width:3px,color:white,font-weight:bold
+    
+    %% Apply Classes
+    class A,B startup
+    class Z,AA,CC,DD,FF,HH,GG,AAA,EE,LL aws
+    class G1,G2,G3,G4,H1,H2,H3,H4,I1,I2,J1,J2,J3,J4 sensor
+    class RR,SS,TT,PP,QQ,UU control
+    class KK,NN,OO,FFF alert
+    class L,M,P,T,U,R process
+    class N,O,V,BB,II,MM,XX,GGG,III decision
+    class VV,WW storage
+    class G5,K1,K2,K3 camera
+    class W,Y,X network
+    class JJJ,KKK,LLL,MMM,NNN,HHH maintenance
+            </div>
+        </div>
+        
+        <div class="legend">
+            <h3>🎨 Flowchart Legend & Color Coding</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF6B6B;"></div>
+                <span><strong>System Startup:</strong> Initial boot and configuration processes</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #FF9800;"></div>
+                <span><strong>AWS Cloud Services:</strong> Cloud-based processing and storage</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #2196F3;"></div>
+                <span><strong>Sensors:</strong> Data collection from physical sensors</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #4CAF50;"></div>
+                <span><strong>Control Systems:</strong> Automated device control actions</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #F44336;"></div>
+                <span><strong>Alerts:</strong> Warning and notification systems</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9C27B0;"></div>
+                <span><strong>Processing:</strong> Data processing and transformation</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #795548;"></div>
+                <span><strong>Camera Systems:</strong> Visual monitoring and analysis</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #673AB7;"></div>
+                <span><strong>Maintenance:</strong> System maintenance and updates</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="zoom-info">
+        <div><strong>🔍 Zoom Level:</strong> <span id="zoom-display">100%</span></div>
+        <div><strong>📏 Current View:</strong> <span id="view-status">Normal</span></div>
+    </div>
+    
+    <div class="instructions">
+        <h4>🎮 Navigation Controls</h4>
+        <p><strong>Keyboard Shortcuts:</strong></p>
+        <ul>
+            <li><code>Ctrl + Plus</code> - Zoom In</li>
+            <li><code>Ctrl + Minus</code> - Zoom Out</li>
+            <li><code>Ctrl + 0</code> - Reset Zoom</li>
+            <li><code>F11</code> - Fullscreen</li>
+            <li><code>Ctrl + Wheel</code> - Zoom</li>
+        </ul>
+        <p><strong>Mouse:</strong></p>
+        <ul>
+            <li>Drag to pan around</li>
+            <li>Ctrl + Scroll to zoom</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Initialize Mermaid with enhanced configuration
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '16px',
+                fontFamily: 'Segoe UI, Arial, sans-serif'
+            },
+            flowchart: {
+                useMaxWidth: false,
+                htmlLabels: true,
+                curve: 'basis',
+                padding: 20
+            },
+            securityLevel: 'loose'
+        });
+        
+        let currentZoom = 1;
+        const zoomStep = 0.2;
+        const minZoom = 0.3;
+        const maxZoom = 3.0;
+        
+        function updateZoom() {
+            const container = document.getElementById('flowchart-container');
+            container.style.transform = `scale(${currentZoom})`;
+            
+            const zoomPercent = Math.round(currentZoom * 100);
+            document.getElementById('zoom-level').textContent = zoomPercent + '%';
+            document.getElementById('zoom-display').textContent = zoomPercent + '%';
+            
+            // Update view status
+            let status = 'Normal';
+            if (currentZoom < 0.7) status = 'Wide View';
+            else if (currentZoom > 1.5) status = 'Detail View';
+            document.getElementById('view-status').textContent = status;
+        }
+        
+        function zoomIn() {
+            if (currentZoom < maxZoom) {
+                currentZoom += zoomStep;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentZoom > minZoom) {
+                currentZoom -= zoomStep;
+                updateZoom();
+            }
+        }
+        
+        function resetZoom() {
+            currentZoom = 1;
+            updateZoom();
+        }
+        
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('Fullscreen not supported');
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Enhanced mouse wheel zoom with smooth transitions
+        document.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+                const newZoom = currentZoom + delta;
+                
+                if (newZoom >= minZoom && newZoom <= maxZoom) {
+                    currentZoom = newZoom;
+                    updateZoom();
+                }
+            }
+        }, { passive: false });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey) {
+                switch(e.key) {
+                    case '=':
+                    case '+':
+                        e.preventDefault();
+                        zoomIn();
+                        break;
+                    case '-':
+                        e.preventDefault();
+                        zoomOut();
+                        break;
+                    case '0':
+                        e.preventDefault();
+                        resetZoom();
+                        break;
+                }
+            }
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+        
+        // Drag to pan functionality
+        let isPanning = false;
+        let startX, startY;
+        let translateX = 0, translateY = 0;
+        
+        document.getElementById('flowchart-container').addEventListener('mousedown', function(e) {
+            if (e.ctrlKey || e.button !== 0) return;
+            isPanning = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            this.style.cursor = 'grabbing';
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isPanning) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            
+            const container = document.getElementById('flowchart-container');
+            container.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isPanning) {
+                isPanning = false;
+                document.getElementById('flowchart-container').style.cursor = 'grab';
+            }
+        });
+        
+        // Initialize
+        updateZoom();
+        
+        // Add smooth loading animation
+        window.addEventListener('load', function() {
+            const container = document.querySelector('.container');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.6s ease';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 100);
+        });
+    </script>
+</body>
+</html>

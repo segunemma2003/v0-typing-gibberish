@@ -91,7 +91,7 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div>
                     <h3 className="font-semibold">{school.name}</h3>
-                    <p className="text-sm text-gray-600">{school.subdomain}.edumanage.com</p>
+                    <p className="text-sm text-gray-600">{school.subdomain}.compasse.com</p>
                     <p className="text-xs text-gray-500">{school.principalName}</p>
                   </div>
                 </div>

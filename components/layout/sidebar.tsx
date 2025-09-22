@@ -63,10 +63,10 @@ export function Sidebar({ items, title, navItems, userRole }: SidebarProps) {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-sidebar-foreground text-sm">
-                  {title || (isSuperAdmin ? "Super Admin" : currentSchool?.name || "EduManage")}
+                  {title || (isSuperAdmin ? "Super Admin" : currentSchool?.name || "Compasse")}
                 </span>
                 {currentSchool && !collapsed && (
-                  <span className="text-xs text-sidebar-foreground/70">{currentSchool.subdomain}.edumanage.com</span>
+                  <span className="text-xs text-sidebar-foreground/70">{currentSchool.subdomain}.compasse.com</span>
                 )}
               </div>
             </div>

@@ -12,7 +12,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
   const { initializeTenant, isLoading } = useTenant()
 
   useEffect(() => {
+    console.log("TenantProvider: Initializing tenant")
     const hostname = window.location.hostname
+    console.log("TenantProvider: Hostname:", hostname)
     initializeTenant(hostname)
   }, [initializeTenant])
 

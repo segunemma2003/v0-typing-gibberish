@@ -2,7 +2,7 @@
 
 export const config = {
   // Main domain for the application
-  mainDomain: process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'lustrous-malasada-aaed22.netlify.app',
+  mainDomain: process.env.NEXT_PUBLIC_MAIN_DOMAIN || 'compasse.netlify.app',
   
   // Environment
   isDevelopment: process.env.NODE_ENV === 'development',
