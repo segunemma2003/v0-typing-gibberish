@@ -44,10 +44,10 @@ For local development:
 
 Set these in your Netlify dashboard:
 
-```
+\`\`\`
 NEXT_PUBLIC_MAIN_DOMAIN=theqcare.org
 NODE_ENV=production
-```
+\`\`\`
 
 ## Custom Domain Setup
 

@@ -108,4 +108,3 @@ export const generateSubdomainUrl = (subdomain: string, path: string = ''): stri
     return `http://localhost:3000${path}?school=${subdomain}`
   }
 }
-

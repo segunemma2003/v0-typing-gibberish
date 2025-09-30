@@ -1,4 +1,4 @@
- // Configuration for subdomain-based multi-tenancy
+// Configuration for subdomain-based multi-tenancy
 
 export const config = {
   // Main domain for the application
