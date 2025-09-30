@@ -7,6 +7,8 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { TenantProvider } from "@/components/tenant/tenant-provider"
+import { TenantDebug } from "@/components/debug/tenant-debug"
+import { LoginTest } from "@/components/debug/login-test"
 import "./globals.css"
 
 // const montserrat = Montserrat({
@@ -16,7 +18,6 @@ import "./globals.css"
 // })
 
 function ClientContent({ children }: { children: React.ReactNode }) {
-  console.log("ClientContent: Rendering children")
   return (
     <TenantProvider>
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">
@@ -26,6 +27,8 @@ function ClientContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>}>
         {children}
+        <TenantDebug />
+        <LoginTest />
       </Suspense>
     </TenantProvider>
   )

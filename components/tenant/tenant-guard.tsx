@@ -24,38 +24,70 @@ export function TenantGuard({
   const router = useRouter()
 
   useEffect(() => {
+    console.log("TenantGuard: Checking permissions", {
+      tenantLoading,
+      authLoading,
+      requireSuperAdmin,
+      requireSchool,
+      allowedRoles,
+      isSuperAdmin,
+      currentSchool: currentSchool?.name,
+      isAuthenticated,
+      user: user?.name,
+      userRole: user?.role,
+      userSchoolId: user?.schoolId
+    })
+
     // Wait for both tenant and auth to load
     if (tenantLoading || authLoading) return
 
     // Check super admin requirement
     if (requireSuperAdmin && !isSuperAdmin) {
+      console.log("TenantGuard: Redirecting - Super admin required but not super admin")
       router.push("/")
       return
     }
 
     // Check school requirement
     if (requireSchool && !currentSchool) {
+      console.log("TenantGuard: Redirecting - School required but no current school")
+      console.log("TenantGuard: Debug info:", {
+        hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A',
+        subdomain,
+        isSuperAdmin,
+        tenantLoading,
+        authLoading,
+        currentSchool: currentSchool?.name || 'None'
+      })
       router.push("/")
       return
     }
 
     // Check authentication
     if (!isAuthenticated || !user) {
+      console.log("TenantGuard: Redirecting - Not authenticated")
       router.push("/")
       return
     }
 
     // Check role permissions
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+      console.log("TenantGuard: Redirecting - Role not allowed", { userRole: user.role, allowedRoles })
       router.push("/")
       return
     }
 
     // Check if user belongs to current school (for non-super admin)
     if (!isSuperAdmin && currentSchool && user.schoolId !== currentSchool.id) {
+      console.log("TenantGuard: Redirecting - User doesn't belong to current school", {
+        userSchoolId: user.schoolId,
+        currentSchoolId: currentSchool.id
+      })
       router.push("/")
       return
     }
+
+    console.log("TenantGuard: All checks passed, rendering children")
   }, [
     tenantLoading,
     authLoading,

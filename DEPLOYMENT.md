@@ -8,11 +8,11 @@ This application supports subdomain-based multi-tenancy where each school gets i
 
 1. **Main Domain Configuration**: 
    - Set `NEXT_PUBLIC_MAIN_DOMAIN` in your Netlify environment variables
-   - For example: `lustrous-malasada-aaed22.netlify.app`
+   - For example: `theqcare.org`
 
 2. **Subdomain Structure**:
-   - Main site: `lustrous-malasada-aaed22.netlify.app` (Super Admin)
-   - School subdomains: `test.lustrous-malasada-aaed22.netlify.app`, `demo.lustrous-malasada-aaed22.netlify.app`
+   - Main site: `theqcare.org` (Super Admin)
+   - School subdomains: `demo.theqcare.org`, `test.theqcare.org`
 
 ### Netlify Configuration
 
@@ -25,14 +25,14 @@ The `netlify.toml` file is configured to:
 
 Once deployed to Netlify:
 
-1. **Super Admin Access**: Visit your main Netlify URL (e.g., `https://compasse.netlify.app`)
-2. **School Access**: Visit subdomains (e.g., `https://test.compasse.netlify.app`)
+1. **Super Admin Access**: Visit your main domain URL (e.g., `https://theqcare.org`)
+2. **School Access**: Visit subdomains (e.g., `https://demo.theqcare.org`)
 
 ### Adding New Schools
 
 1. Create a new school in the super admin panel
 2. Set the school's subdomain (e.g., "test")
-3. The school will be accessible at `test.yoursite.netlify.app`
+3. The school will be accessible at `test.theqcare.org`
 
 ### Development
 
@@ -45,7 +45,7 @@ For local development:
 Set these in your Netlify dashboard:
 
 ```
-NEXT_PUBLIC_MAIN_DOMAIN=your-site.netlify.app
+NEXT_PUBLIC_MAIN_DOMAIN=theqcare.org
 NODE_ENV=production
 ```
 

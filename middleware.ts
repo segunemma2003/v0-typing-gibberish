@@ -1,3 +1,4 @@
+import build from "next/dist/build"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -10,16 +11,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Handle subdomain detection for Netlify
+  // Handle subdomain detection for theqcare.org and legacy Netlify
   const subdomain = getSubdomain(hostname)
 
-  if (subdomain) {
-    // If someone tries to access a subdomain, redirect to URL parameter approach
+  if (subdomain && hostname.includes('.netlify.app')) {
+    // If someone tries to access a Netlify subdomain, redirect to URL parameter approach
     // This avoids SSL certificate issues with Netlify subdomains
     const mainDomain = getMainDomain(hostname)
     const redirectUrl = `https://${mainDomain}?school=${subdomain}`
     
     return NextResponse.redirect(redirectUrl, 301)
+  }
+
+  // For theqcare.org subdomains, add subdomain header for tenant detection
+  if (subdomain && hostname.includes('.theqcare.org')) {
+    const response = NextResponse.next()
+    response.headers.set('X-Subdomain', subdomain)
+    return response
   }
 
   // For main domain, continue normally
@@ -32,7 +40,23 @@ function getSubdomain(hostname: string): string | null {
     return null
   }
 
-  // Handle Netlify domains specially
+  // Handle theqcare.org domains
+  if (hostname.includes('.theqcare.org')) {
+    const parts = hostname.split('.')
+    
+    // For theqcare.org: subdomain.theqcare.org (3 parts) = has subdomain
+    // theqcare.org (2 parts) = no subdomain
+    if (parts.length === 3 && parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
+      return parts[0] // Return the first part as subdomain
+    }
+    
+    // Main theqcare.org site (2 parts) - no subdomain
+    if (parts.length === 2 && parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
+      return null
+    }
+  }
+
+  // Handle Netlify domains specially (legacy support)
   if (hostname.includes('.netlify.app')) {
     const parts = hostname.split('.')
     
@@ -61,7 +85,16 @@ function getSubdomain(hostname: string): string | null {
 }
 
 function getMainDomain(hostname: string): string {
-  // For Netlify domains, extract the main domain
+  // For theqcare.org domains, extract the main domain
+  if (hostname.includes('.theqcare.org')) {
+    const parts = hostname.split('.')
+    if (parts.length >= 3) {
+      // Return theqcare.org from subdomain.theqcare.org
+      return parts.slice(1).join('.')
+    }
+  }
+  
+  // For Netlify domains, extract the main domain (legacy support)
   if (hostname.includes('.netlify.app')) {
     const parts = hostname.split('.')
     if (parts.length >= 4) {

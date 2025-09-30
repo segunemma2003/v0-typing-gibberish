@@ -2,6 +2,7 @@
 
 import { create } from "zustand"
 import { getSchoolBySubdomain, type School } from "./auth"
+import { getDynamicSchoolBySubdomain, type DynamicSchool } from "./dynamic-schools"
 
 export interface TenantState {
   currentSchool: School | null
@@ -50,7 +51,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
       // If no hostname provided, get from window (client-side)
       if (!detectedHostname && typeof window !== "undefined") {
         detectedHostname = window.location.hostname
-        console.log("Detected hostname from window:", detectedHostname)
+        console.log("TenantProvider: Detected hostname from window:", detectedHostname)
         
         // Also check for school parameter in URL (for testing subdomains)
         const urlParams = new URLSearchParams(window.location.search)
@@ -89,8 +90,50 @@ export const useTenant = create<TenantStore>()((set, get) => ({
           }
         }
         
-        // If no school param, treat as super admin (localhost)
-        console.log("No school param, setting as super admin")
+        // If no school param, try to detect from hostname
+        console.log("No school param, trying to detect from hostname:", detectedHostname)
+        const { subdomain: detectedSubdomain, isSuperAdmin } = getTenantFromHostname(detectedHostname)
+        console.log("getTenantFromHostname result:", { detectedSubdomain, isSuperAdmin })
+        
+        if (isSuperAdmin) {
+          console.log("Detected as super admin")
+          set({
+            currentSchool: null,
+            subdomain: null,
+            isSuperAdmin: true,
+            isLoading: false,
+          })
+          return
+        }
+        
+        if (detectedSubdomain) {
+          console.log("Detected subdomain:", detectedSubdomain)
+          // First try dynamic schools (for newly registered schools)
+          let school = getDynamicSchoolBySubdomain(detectedSubdomain)
+          console.log("Dynamic school result:", school)
+          
+          // Fallback to static schools (for demo schools)
+          if (!school) {
+            school = getSchoolBySubdomain(detectedSubdomain)
+            console.log("Static school result:", school)
+          }
+          
+          if (school && school.isActive) {
+            console.log("Found school from hostname:", school.name, "ID:", school.id)
+            set({
+              currentSchool: school,
+              subdomain: detectedSubdomain,
+              isSuperAdmin: false,
+              isLoading: false,
+            })
+            return
+          } else {
+            console.log("No active school found for subdomain:", detectedSubdomain)
+          }
+        }
+        
+        // Final fallback - treat as super admin
+        console.log("Final fallback - treating as super admin")
         set({
           currentSchool: null,
           subdomain: null,
@@ -105,6 +148,42 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         const metaTag = document.querySelector('meta[name="x-tenant-hostname"]')
         if (metaTag) {
           detectedHostname = metaTag.getAttribute("content") || ""
+        }
+      }
+
+      // For subdomains, always try to detect from hostname first
+      if (detectedHostname && detectedHostname.includes('.theqcare.org')) {
+        const parts = detectedHostname.split('.')
+        if (parts.length >= 3) {
+          const subdomainFromHostname = parts[0]
+          console.log("TenantProvider: Detected subdomain from hostname:", subdomainFromHostname)
+          
+          // Try dynamic schools first, then static schools
+          let school = getDynamicSchoolBySubdomain(subdomainFromHostname)
+          if (!school) {
+            school = getSchoolBySubdomain(subdomainFromHostname)
+          }
+          
+          if (school && school.isActive) {
+            console.log("Found school from subdomain:", school.name)
+            set({
+              currentSchool: school,
+              subdomain: subdomainFromHostname,
+              isSuperAdmin: false,
+              isLoading: false,
+            })
+            return
+          } else {
+            // School not found - this might be a new school registration
+            console.log("School not found for subdomain:", subdomainFromHostname)
+            set({
+              currentSchool: null,
+              subdomain: subdomainFromHostname,
+              isSuperAdmin: false,
+              isLoading: false,
+            })
+            return
+          }
         }
       }
 
@@ -159,6 +238,18 @@ export const useTenant = create<TenantStore>()((set, get) => ({
       })
     }
     
+    // Final fallback to ensure loading is always set to false
+    setTimeout(() => {
+      const currentState = get()
+      if (currentState.isLoading) {
+        console.log("Final fallback: Setting loading to false")
+        set({
+          ...currentState,
+          isLoading: false,
+        })
+      }
+    }, 100)
+    
     console.log("Tenant initialization completed")
   },
 }))
@@ -172,7 +263,31 @@ export const getTenantFromHostname = (hostname: string) => {
     }
   }
 
-  // Handle Netlify subdomains (e.g., test.compasse.netlify.app)
+  // Handle theqcare.org subdomains (e.g., demo.theqcare.org)
+  if (hostname.includes('.theqcare.org')) {
+    const parts = hostname.split('.')
+    
+    // Check if it's a valid theqcare.org domain
+    if (parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
+      // If it's the main site (theqcare.org), treat as super admin
+      if (parts.length === 2) {
+        return {
+          subdomain: null,
+          isSuperAdmin: true,
+        }
+      }
+      
+      // If it's a subdomain (e.g., demo.theqcare.org), extract school subdomain
+      if (parts.length >= 3) {
+        return {
+          subdomain: parts[0],
+          isSuperAdmin: false,
+        }
+      }
+    }
+  }
+
+  // Handle Netlify subdomains (legacy support)
   if (hostname.includes('.netlify.app')) {
     const parts = hostname.split('.')
     

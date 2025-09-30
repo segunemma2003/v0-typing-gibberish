@@ -26,23 +26,67 @@ export function LoginForm() {
     e.preventDefault()
     setError("")
 
+    console.log("=== LOGIN ATTEMPT ===")
+    console.log("Email:", email)
+    console.log("Current School:", currentSchool?.name)
+    console.log("Current School ID:", currentSchool?.id)
+    console.log("Hostname:", typeof window !== 'undefined' ? window.location.hostname : 'N/A')
+
     const success = await login(email, password)
     
     if (success) {
       const user = useAuth.getState().user
+      console.log("=== LOGIN SUCCESSFUL ===")
+      console.log("User:", user?.name)
+      console.log("Role:", user?.role)
+      console.log("School ID:", user?.schoolId)
       
       if (user) {
+        // If no current school detected, redirect to the appropriate school subdomain
+        if (!currentSchool && user.role !== 'super_admin') {
+          console.log("=== NO SCHOOL DETECTED ===")
+          console.log("User belongs to school:", user.schoolId)
+          
+          // Find the school by ID to get its subdomain
+          const schoolSubdomain = user.schoolId === 'school-demo' ? 'demo' :
+                                 user.schoolId === 'school-test' ? 'test' :
+                                 user.schoolId === 'school-1' ? 'greenwood' :
+                                 user.schoolId === 'school-2' ? 'riverside' : null
+          
+          if (schoolSubdomain) {
+            // Try subdomain first, fallback to URL parameter
+            const schoolUrl = `https://${schoolSubdomain}.theqcare.org/admin`
+            const fallbackUrl = `https://theqcare.org/admin?school=${schoolSubdomain}`
+            
+            console.log("Redirecting to school subdomain:", schoolUrl)
+            console.log("Fallback URL:", fallbackUrl)
+            
+            // Try subdomain first
+            window.location.href = schoolUrl
+            return
+          }
+        }
+        
         // Check if user belongs to current school
         if (currentSchool && user.schoolId !== currentSchool.id) {
+          console.log("=== SCHOOL MISMATCH ===")
+          console.log("User School ID:", user.schoolId)
+          console.log("Current School ID:", currentSchool.id)
           setError("You don't have access to this school")
           useAuth.getState().logout()
           return
         }
         
         const portalRoute = getPortalRoute(user.role)
-        router.push(portalRoute)
+        console.log("=== REDIRECTING ===")
+        console.log("Portal Route:", portalRoute)
+        console.log("Full URL:", typeof window !== 'undefined' ? `${window.location.origin}${portalRoute}` : 'N/A')
+        
+        // Use router.replace to avoid back button issues
+        router.replace(portalRoute)
       }
     } else {
+      console.log("=== LOGIN FAILED ===")
       setError("Invalid email or password")
     }
   }

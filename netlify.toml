@@ -4,7 +4,38 @@
   publish = ".next"
 
 [build.environment]
-  NEXT_PUBLIC_MAIN_DOMAIN = "lustrous-malasada-aaed22.netlify.app"
+  NEXT_PUBLIC_MAIN_DOMAIN = "theqcare.org"
+
+# Force HTTPS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+# Serve all subdomains directly without redirects
+[[redirects]]
+  from = "https://:subdomain.theqcare.org/*"
+  to = "/:splat"
+  status = 200
+  headers = {X-Subdomain = ":subdomain"}
+
+[[redirects]]
+  from = "http://:subdomain.theqcare.org/*"
+  to = "https://:subdomain.theqcare.org/:splat"
+  status = 301
+
+# Main domain handling
+[[redirects]]
+  from = "https://theqcare.org/*"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "http://theqcare.org/*"
+  to = "https://theqcare.org/:splat"
+  status = 301
 
 # Temporarily disabled redirects for debugging
 # [[redirects]]

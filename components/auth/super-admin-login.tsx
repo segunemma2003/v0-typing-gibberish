@@ -25,16 +25,23 @@ export function SuperAdminLogin() {
     e.preventDefault()
     setError("")
 
+    console.log("Super admin login attempt:", { email })
+
     const success = await login(email, password)
     if (success) {
       const user = useAuth.getState().user
+      console.log("Super admin login successful:", { user: user?.name, role: user?.role })
+      
       if (user && user.role === "super_admin") {
-        router.push("/super-admin")
+        console.log("Redirecting to super admin dashboard")
+        router.replace("/super-admin")
       } else {
+        console.log("Access denied - not super admin")
         setError("Access denied. Super admin credentials required.")
         useAuth.getState().logout()
       }
     } else {
+      console.log("Super admin login failed")
       setError("Invalid email or password")
     }
   }

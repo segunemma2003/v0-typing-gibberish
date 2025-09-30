@@ -15,6 +15,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
     console.log("TenantProvider: Initializing tenant")
     const hostname = window.location.hostname
     console.log("TenantProvider: Hostname:", hostname)
+    
+    // Check if we're on a subdomain
+    const parts = hostname.split('.')
+    if (parts.length >= 3 && hostname.includes('.theqcare.org')) {
+      console.log("TenantProvider: Detected subdomain:", parts[0])
+    }
+    
     initializeTenant(hostname)
   }, [initializeTenant])
 

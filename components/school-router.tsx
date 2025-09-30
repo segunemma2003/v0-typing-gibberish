@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { LoginForm } from "@/components/auth/login-form"
 import { SchoolNotFound } from "@/components/tenant/school-not-found"
 import { getSchoolBySubdomain } from "@/lib/auth"
+import { getDynamicSchoolBySubdomain } from "@/lib/dynamic-schools"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { School, Users } from "lucide-react"
@@ -15,12 +16,10 @@ export function SchoolRouter() {
   const schoolParam = searchParams?.get('school')
 
   useEffect(() => {
-    console.log("SchoolRouter: Setting mounted to true")
     setMounted(true)
   }, [])
 
   if (!mounted) {
-    console.log("SchoolRouter: Not mounted yet, showing loading")
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="text-center space-y-4">
@@ -31,10 +30,12 @@ export function SchoolRouter() {
     )
   }
 
-  console.log("SchoolRouter: Mounted, schoolParam:", schoolParam)
-
   if (schoolParam) {
-    const school = getSchoolBySubdomain(schoolParam)
+    // Try dynamic schools first, then static schools
+    let school = getDynamicSchoolBySubdomain(schoolParam)
+    if (!school) {
+      school = getSchoolBySubdomain(schoolParam)
+    }
     
     if (!school || !school.isActive) {
       return <SchoolNotFound subdomain={schoolParam} />
