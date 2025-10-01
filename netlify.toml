@@ -1,10 +1,13 @@
 [build]
-  command = "yarn run build"
-  functions = "netlify/functions"
+  command = "pnpm run build"
   publish = ".next"
 
 [build.environment]
   NEXT_PUBLIC_MAIN_DOMAIN = "theqcare.org"
+  NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Force HTTPS
 [[headers]]
@@ -14,34 +17,12 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
 
-# Serve all subdomains directly without redirects
+# Catch-all redirect to Next.js handler
+# Next.js middleware handles subdomain routing and tenant detection
 [[redirects]]
-  from = "https://:subdomain.theqcare.org/*"
-  to = "/:splat"
+  from = "/*"
+  to = "/.netlify/functions/___netlify-handler"
   status = 200
-  headers = {X-Subdomain = ":subdomain"}
-
-[[redirects]]
-  from = "http://:subdomain.theqcare.org/*"
-  to = "https://:subdomain.theqcare.org/:splat"
-  status = 301
-
-# Main domain handling
-[[redirects]]
-  from = "https://theqcare.org/*"
-  to = "/:splat"
-  status = 200
-
-[[redirects]]
-  from = "http://theqcare.org/*"
-  to = "https://theqcare.org/:splat"
-  status = 301
-
-# Temporarily disabled redirects for debugging
-# [[redirects]]
-#   from = "/*"
-#   to = "/.netlify/functions/___netlify-handler"
-#   status = 200
 
 # Redirect rules for different subdomains
 [[headers]]
