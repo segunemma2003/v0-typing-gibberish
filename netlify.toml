@@ -1,11 +1,12 @@
 [build]
-  command = "pnpm run build"
+  command = "npm install --legacy-peer-deps && npm run build"
   publish = ".next"
 
 [build.environment]
   NEXT_PUBLIC_MAIN_DOMAIN = "theqcare.org"
   NODE_VERSION = "20"
 
+# Essential Next.js plugin for Netlify
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
@@ -17,12 +18,8 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
 
-# Catch-all redirect to Next.js handler
-# Next.js middleware handles subdomain routing and tenant detection
-[[redirects]]
-  from = "/*"
-  to = "/.netlify/functions/___netlify-handler"
-  status = 200
+# Next.js rewrites are handled automatically by @netlify/plugin-nextjs
+# Don't add manual redirects as they can conflict with the plugin
 
 # Redirect rules for different subdomains
 [[headers]]
