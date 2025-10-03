@@ -1,12 +1,12 @@
 [build]
   command = "npm run build"
-  # Don't set publish directory - @netlify/plugin-nextjs handles it automatically
+  publish = ".next"
 
 [build.environment]
   NEXT_PUBLIC_MAIN_DOMAIN = "theqcare.org"
   NODE_VERSION = "20"
 
-# Essential Next.js plugin for Netlify
+# Essential Next.js plugin for Netlify  
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 

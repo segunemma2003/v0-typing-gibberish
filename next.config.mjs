@@ -11,7 +11,7 @@ const nextConfig = {
   },
   // Ensure trailing slashes are handled correctly
   trailingSlash: false,
-  // Disable standalone output for Netlify
+  // Let Netlify handle the output format
   output: undefined,
 }
 
