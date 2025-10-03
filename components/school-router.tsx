@@ -12,14 +12,52 @@ import { School, Users } from "lucide-react"
 
 export function SchoolRouter() {
   const [mounted, setMounted] = useState(false)
+  const [schoolIdentifier, setSchoolIdentifier] = useState<string | null | 'loading'>('loading')
   const searchParams = useSearchParams()
   const schoolParam = searchParams?.get('school')
 
   useEffect(() => {
     setMounted(true)
-  }, [])
+    
+    // Check for subdomain first
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname
+      console.log('SchoolRouter: hostname =', hostname)
+      
+      // Check for theqcare.org subdomain
+      if (hostname.includes('.theqcare.org')) {
+        const parts = hostname.split('.')
+        if (parts.length === 3 && parts[1] === 'theqcare' && parts[2] === 'org') {
+          const subdomain = parts[0]
+          console.log('SchoolRouter: detected subdomain =', subdomain)
+          setSchoolIdentifier(subdomain)
+          return
+        }
+      }
+      
+      // Check for Netlify subdomain (legacy)
+      if (hostname.includes('.netlify.app')) {
+        const parts = hostname.split('.')
+        if (parts.length === 4 && parts[2] === 'netlify' && parts[3] === 'app') {
+          const subdomain = parts[0]
+          console.log('SchoolRouter: detected Netlify subdomain =', subdomain)
+          setSchoolIdentifier(subdomain)
+          return
+        }
+      }
+      
+      // Fallback to URL parameter
+      if (schoolParam) {
+        console.log('SchoolRouter: using URL param =', schoolParam)
+        setSchoolIdentifier(schoolParam)
+      } else {
+        console.log('SchoolRouter: no subdomain or param detected')
+        setSchoolIdentifier(null)
+      }
+    }
+  }, [schoolParam])
 
-  if (!mounted) {
+  if (!mounted || schoolIdentifier === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="text-center space-y-4">
@@ -30,15 +68,15 @@ export function SchoolRouter() {
     )
   }
 
-  if (schoolParam) {
+  if (schoolIdentifier) {
     // Try dynamic schools first, then static schools
-    let school = getDynamicSchoolBySubdomain(schoolParam)
+    let school = getDynamicSchoolBySubdomain(schoolIdentifier)
     if (!school) {
-      school = getSchoolBySubdomain(schoolParam)
+      school = getSchoolBySubdomain(schoolIdentifier)
     }
     
     if (!school || !school.isActive) {
-      return <SchoolNotFound subdomain={schoolParam} />
+      return <SchoolNotFound subdomain={schoolIdentifier} />
     }
 
     // Show login form for the specific school
@@ -125,14 +163,20 @@ export function SchoolRouter() {
                   </div>
                   <div className="space-y-2">
                     <a 
-                      href={`?school=${school.subdomain}`}
+                      href={typeof window !== 'undefined' && window.location.hostname.includes('theqcare.org')
+                        ? `https://${school.subdomain}.theqcare.org`
+                        : `?school=${school.subdomain}`
+                      }
                       className="block w-full text-center bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Access {school.name}
                     </a>
                     <div className="text-center p-2 bg-blue-50 rounded-lg">
                       <p className="text-xs text-blue-700">
-                        URL: ?school={school.subdomain}
+                        {typeof window !== 'undefined' && window.location.hostname.includes('theqcare.org')
+                          ? `URL: https://${school.subdomain}.theqcare.org`
+                          : `Dev URL: ?school=${school.subdomain}`
+                        }
                       </p>
                     </div>
                   </div>
