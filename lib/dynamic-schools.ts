@@ -12,7 +12,7 @@ export interface DynamicSchool {
 // In-memory storage for demo (in production, use database)
 let dynamicSchools: DynamicSchool[] = [
   {
-    id: "demo-school",
+    id: "school-demo",
     name: "Demo Elementary School",
     subdomain: "demo",
     isActive: true,
@@ -20,7 +20,7 @@ let dynamicSchools: DynamicSchool[] = [
     updatedAt: new Date(),
   },
   {
-    id: "test-school",
+    id: "school-test",
     name: "Test High School",
     subdomain: "test",
     isActive: true,
@@ -28,7 +28,7 @@ let dynamicSchools: DynamicSchool[] = [
     updatedAt: new Date(),
   },
   {
-    id: "greenwood-school",
+    id: "school-1",
     name: "Greenwood High School",
     subdomain: "greenwood",
     isActive: true,
@@ -36,7 +36,7 @@ let dynamicSchools: DynamicSchool[] = [
     updatedAt: new Date(),
   },
   {
-    id: "riverside-school",
+    id: "school-2",
     name: "Riverside Academy",
     subdomain: "riverside",
     isActive: true,
@@ -94,15 +94,16 @@ export const validateSchoolSubdomain = (subdomain: string): boolean => {
 }
 
 export const generateSchoolUrl = (subdomain: string, path: string = ''): string => {
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? 'https://theqcare.org' 
-    : 'http://localhost:3000'
-  
-  return `${baseUrl}${path}?school=${subdomain}`
+  // Always use subdomain approach in production
+  if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_MAIN_DOMAIN) {
+    return `https://${subdomain}.theqcare.org${path}`
+  }
+  // Development: use URL parameter for testing
+  return `http://localhost:3000${path}?school=${subdomain}`
 }
 
 export const generateSubdomainUrl = (subdomain: string, path: string = ''): string => {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_MAIN_DOMAIN) {
     return `https://${subdomain}.theqcare.org${path}`
   } else {
     return `http://localhost:3000${path}?school=${subdomain}`
