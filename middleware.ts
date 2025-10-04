@@ -1,4 +1,3 @@
-import build from "next/dist/build"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
@@ -13,6 +12,17 @@ export function middleware(request: NextRequest) {
 
   // Handle subdomain detection for theqcare.org and legacy Netlify
   const subdomain = getSubdomain(hostname)
+
+  // REDIRECT: URL parameter to subdomain (for production)
+  // If accessing main domain with ?school= parameter, redirect to subdomain
+  if (!subdomain && hostname.includes('theqcare.org')) {
+    const schoolParam = url.searchParams.get('school')
+    if (schoolParam) {
+      // Redirect to actual subdomain
+      const subdomainUrl = `https://${schoolParam}.theqcare.org${url.pathname}`
+      return NextResponse.redirect(subdomainUrl, 301)
+    }
+  }
 
   if (subdomain && hostname.includes('.netlify.app')) {
     // If someone tries to access a Netlify subdomain, redirect to URL parameter approach

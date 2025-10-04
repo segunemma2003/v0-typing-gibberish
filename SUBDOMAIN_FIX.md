@@ -91,3 +91,4 @@ These will help you verify the subdomain is being detected correctly.
 2. Verify Netlify domain settings include `*.theqcare.org`
 3. Check that you're not on a `.netlify.app` subdomain (those redirect to URL params)
 
+
