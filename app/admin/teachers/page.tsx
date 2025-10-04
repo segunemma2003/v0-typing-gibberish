@@ -1,12 +1,18 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Plus, Filter, Download } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Search, Plus, Filter, Download, Edit, Trash2, X } from "lucide-react"
 
 export default function TeachersPage() {
-  const teachers = [
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [teachers, setTeachers] = useState([
     {
       id: "1",
       name: "Dr. Sarah Wilson",
@@ -34,7 +40,63 @@ export default function TeachersPage() {
       status: "On Leave",
       joinDate: "2021-01-10",
     },
-  ]
+  ])
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    subjects: "",
+    department: "",
+  })
+
+  const handleAdd = () => {
+    if (!formData.name || !formData.email) return
+    
+    const newTeacher = {
+      id: `${Date.now()}`,
+      name: formData.name,
+      email: formData.email,
+      subjects: formData.subjects.split(',').map(s => s.trim()),
+      department: formData.department,
+      status: "Active",
+      joinDate: new Date().toISOString().split('T')[0],
+    }
+    setTeachers([...teachers, newTeacher])
+    setFormData({ name: "", email: "", subjects: "", department: "" })
+    setShowAddForm(false)
+  }
+
+  const handleEdit = (id: string) => {
+    const teacher = teachers.find(t => t.id === id)
+    if (teacher) {
+      setFormData({
+        name: teacher.name,
+        email: teacher.email,
+        subjects: teacher.subjects.join(', '),
+        department: teacher.department,
+      })
+      setEditingId(id)
+      setShowAddForm(true)
+    }
+  }
+
+  const handleUpdate = () => {
+    if (!editingId) return
+    setTeachers(teachers.map(t => 
+      t.id === editingId 
+        ? { ...t, name: formData.name, email: formData.email, subjects: formData.subjects.split(',').map(s => s.trim()), department: formData.department }
+        : t
+    ))
+    setFormData({ name: "", email: "", subjects: "", department: "" })
+    setEditingId(null)
+    setShowAddForm(false)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this teacher?")) {
+      setTeachers(teachers.filter(t => t.id !== id))
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -44,11 +106,70 @@ export default function TeachersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Teachers</h1>
           <p className="text-muted-foreground">Manage teaching staff and assignments</p>
         </div>
-        <Button>
+        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ name: "", email: "", subjects: "", department: "" }) }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Teacher
         </Button>
       </div>
+
+      {/* Add/Edit Form */}
+      {showAddForm && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>{editingId ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Full Name *</Label>
+                <Input 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input 
+                  type="email"
+                  value={formData.email} 
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="teacher@school.edu"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Subjects</Label>
+                <Input 
+                  value={formData.subjects} 
+                  onChange={(e) => setFormData({...formData, subjects: e.target.value})}
+                  placeholder="e.g., Mathematics, Physics"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input 
+                  value={formData.department} 
+                  onChange={(e) => setFormData({...formData, department: e.target.value})}
+                  placeholder="e.g., Science"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
+                {editingId ? "Update" : "Add"} Teacher
+              </Button>
+              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -107,8 +228,11 @@ export default function TeachersPage() {
                     <p className="text-sm text-muted-foreground">Since {teacher.joinDate}</p>
                   </div>
                   <Badge variant={teacher.status === "Active" ? "default" : "secondary"}>{teacher.status}</Badge>
-                  <Button variant="outline" size="sm">
-                    View Details
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(teacher.id)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(teacher.id)}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>

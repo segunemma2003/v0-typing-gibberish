@@ -1,12 +1,18 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Plus, Filter, Download } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Search, Plus, Filter, Download, Edit, Trash2, X } from "lucide-react"
 
 export default function StudentsPage() {
-  const students = [
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [students, setStudents] = useState([
     {
       id: "1",
       name: "Alice Johnson",
@@ -34,7 +40,60 @@ export default function StudentsPage() {
       status: "Inactive",
       enrollmentDate: "2024-01-15",
     },
-  ]
+  ])
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    grade: "",
+    class: "",
+  })
+
+  const handleAdd = () => {
+    if (!formData.name || !formData.email) return
+    
+    const newStudent = {
+      id: `${Date.now()}`,
+      ...formData,
+      status: "Active",
+      enrollmentDate: new Date().toISOString().split('T')[0],
+    }
+    setStudents([...students, newStudent])
+    setFormData({ name: "", email: "", grade: "", class: "" })
+    setShowAddForm(false)
+  }
+
+  const handleEdit = (id: string) => {
+    const student = students.find(s => s.id === id)
+    if (student) {
+      setFormData({
+        name: student.name,
+        email: student.email,
+        grade: student.grade,
+        class: student.class,
+      })
+      setEditingId(id)
+      setShowAddForm(true)
+    }
+  }
+
+  const handleUpdate = () => {
+    if (!editingId) return
+    setStudents(students.map(s => 
+      s.id === editingId 
+        ? { ...s, ...formData }
+        : s
+    ))
+    setFormData({ name: "", email: "", grade: "", class: "" })
+    setEditingId(null)
+    setShowAddForm(false)
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm("Are you sure you want to delete this student?")) {
+      setStudents(students.filter(s => s.id !== id))
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -44,11 +103,70 @@ export default function StudentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
         </div>
-        <Button>
+        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ name: "", email: "", grade: "", class: "" }) }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
       </div>
+
+      {/* Add/Edit Form */}
+      {showAddForm && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>{editingId ? "Edit Student" : "Add New Student"}</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Full Name *</Label>
+                <Input 
+                  value={formData.name} 
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  placeholder="Enter full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email *</Label>
+                <Input 
+                  type="email"
+                  value={formData.email} 
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="student@school.edu"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Grade</Label>
+                <Input 
+                  value={formData.grade} 
+                  onChange={(e) => setFormData({...formData, grade: e.target.value})}
+                  placeholder="e.g., Grade 10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Class</Label>
+                <Input 
+                  value={formData.class} 
+                  onChange={(e) => setFormData({...formData, class: e.target.value})}
+                  placeholder="e.g., 10A"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
+                {editingId ? "Update" : "Add"} Student
+              </Button>
+              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Filters */}
       <Card>
@@ -100,8 +218,11 @@ export default function StudentsPage() {
                     <p className="text-sm text-muted-foreground">Class {student.class}</p>
                   </div>
                   <Badge variant={student.status === "Active" ? "default" : "secondary"}>{student.status}</Badge>
-                  <Button variant="outline" size="sm">
-                    View Details
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(student.id)}>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(student.id)}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
