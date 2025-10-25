@@ -12,7 +12,7 @@ jobs:
     steps:
     # Step 1: Get the code
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3 # Used to get the context for the runner, but actual deployment is remote
       
     # Step 2: Set up SSH agent
     - name: Set up SSH
@@ -30,6 +30,7 @@ jobs:
         script: |
           TARGET_DIR="/var/www/react-app"
           APP_NAME="my-compasse-app"
+          REPO_URL="https://github.com/segunemma2003/v0-typing-gibberish.git" # IMPORTANT: Replace with your actual repository URL
           
           echo "Navigating to ${TARGET_DIR}"
           mkdir -p ${TARGET_DIR} # Ensure target directory exists
@@ -40,9 +41,12 @@ jobs:
             echo "Git repository found, pulling latest changes..."
             git pull --force
           else
-            echo "No Git repository found, cloning..."
-            # IMPORTANT: Replace with your actual repository URL
-            git clone https://github.com/your-org/your-repo.git . # Clone into current directory
+            echo "No Git repository found, attempting to initialize and pull..."
+            # This attempts to make the existing directory a Git repo and pull into it.
+            # It respects existing non-Git files as much as possible.
+            git init
+            git remote add origin ${REPO_URL}
+            git pull --force origin main # Pull from main branch
           fi
 
           echo "Installing dependencies on server..."
@@ -69,7 +73,7 @@ jobs:
           fi
           pm2 save
           
-          # Reload Nginx if necessary (only if Nginx configuration changed)
+          echo "Reloading Nginx..."
           sudo systemctl reload nginx
           
           echo "✅ Deployment completed successfully!"
