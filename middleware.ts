@@ -1,125 +1,42 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
+import { getServerTenant } from "@/lib/tenant"
 
 export function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || ""
   const url = request.nextUrl.clone()
 
-  // Skip middleware for static files and API routes
+  // Skip middleware for static files, API routes, and specific file types
   if (url.pathname.startsWith("/_next") || url.pathname.startsWith("/api") || url.pathname.includes(".")) {
     return NextResponse.next()
   }
 
-  // Handle subdomain detection for theqcare.org and legacy Netlify
-  const subdomain = getSubdomain(hostname)
+  const { subdomain, isSuperAdmin } = getServerTenant(request)
 
-  // REDIRECT: URL parameter to subdomain (for production)
-  // If accessing main domain with ?school= parameter, redirect to subdomain
-  if (!subdomain && hostname.includes('theqcare.org')) {
-    const schoolParam = url.searchParams.get('school')
-    if (schoolParam) {
-      // Redirect to actual subdomain
-      const subdomainUrl = `https://${schoolParam}.theqcare.org${url.pathname}`
-      return NextResponse.redirect(subdomainUrl, 301)
+  // If it's the base domain (no subdomain and not super admin, or specific base domain for super admin)
+  // and trying to access a tenant-specific route, redirect to a generic tenant not found page or main page.
+  if (!isSuperAdmin && !subdomain && hostname === (process.env.NEXT_PUBLIC_BASE_DOMAIN || "theqcare.org")) {
+    // Example: Redirect non-tenant requests on base domain away from tenant-specific routes
+    // You might want to define specific patterns for tenant-specific routes (e.g., /admin, /student)
+    // For now, if it's the base domain and not a known tenant, and not super admin, redirect to a safe place.
+    if (url.pathname !== '/' && url.pathname !== '/super-admin') { // Allow root and super-admin for base domain
+      url.pathname = '/'; // Redirect to home or tenant selection page
+      return NextResponse.redirect(url)
     }
   }
 
-  if (subdomain && hostname.includes('.netlify.app')) {
-    // If someone tries to access a Netlify subdomain, redirect to URL parameter approach
-    // This avoids SSL certificate issues with Netlify subdomains
-    const mainDomain = getMainDomain(hostname)
-    const redirectUrl = `https://${mainDomain}?school=${subdomain}`
-    
-    return NextResponse.redirect(redirectUrl, 301)
-  }
+  // For any tenant-specific requests (subdomain or custom domain handled by Nginx)
+  // Add tenant information to the response headers for client-side processing
+  const response = NextResponse.next()
 
-  // For theqcare.org subdomains, add subdomain header for tenant detection
-  if (subdomain && hostname.includes('.theqcare.org')) {
-    const response = NextResponse.next()
+  if (subdomain) {
     response.headers.set('X-Subdomain', subdomain)
-    return response
   }
+  response.headers.set('X-Is-Super-Admin', isSuperAdmin.toString())
 
-  // For main domain, continue normally
-  return NextResponse.next()
-}
-
-function getSubdomain(hostname: string): string | null {
-  // Handle localhost development
-  if (hostname === "localhost" || hostname.startsWith("localhost:")) {
-    return null
-  }
-
-  // Handle theqcare.org domains
-  if (hostname.includes('.theqcare.org')) {
-    const parts = hostname.split('.')
-    
-    // For theqcare.org: subdomain.theqcare.org (3 parts) = has subdomain
-    // theqcare.org (2 parts) = no subdomain
-    if (parts.length === 3 && parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
-      return parts[0] // Return the first part as subdomain
-    }
-    
-    // Main theqcare.org site (2 parts) - no subdomain
-    if (parts.length === 2 && parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
-      return null
-    }
-  }
-
-  // Handle Netlify domains specially (legacy support)
-  if (hostname.includes('.netlify.app')) {
-    const parts = hostname.split('.')
-    
-    // For Netlify: subdomain.mainsite.netlify.app (4 parts) = has subdomain
-    // mainsite.netlify.app (3 parts) = no subdomain
-    if (parts.length === 4 && parts[parts.length - 2] === 'netlify' && parts[parts.length - 1] === 'app') {
-      return parts[0] // Return the first part as subdomain
-    }
-    
-    // Main Netlify site (3 parts) - no subdomain
-    if (parts.length === 3 && parts[parts.length - 2] === 'netlify' && parts[parts.length - 1] === 'app') {
-      return null
-    }
-  }
-
-  // Extract subdomain from hostname for custom domains
-  const parts = hostname.split(".")
-
-  // Need at least 3 parts for a subdomain (subdomain.domain.tld)
-  if (parts.length < 3) {
-    return null
-  }
-
-  // Return the first part as subdomain
-  return parts[0]
-}
-
-function getMainDomain(hostname: string): string {
-  // For theqcare.org domains, extract the main domain
-  if (hostname.includes('.theqcare.org')) {
-    const parts = hostname.split('.')
-    if (parts.length >= 3) {
-      // Return theqcare.org from subdomain.theqcare.org
-      return parts.slice(1).join('.')
-    }
-  }
+  // The TenantProvider will use these headers to initialize currentTenant state on the client
   
-  // For Netlify domains, extract the main domain (legacy support)
-  if (hostname.includes('.netlify.app')) {
-    const parts = hostname.split('.')
-    if (parts.length >= 4) {
-      // Return mainsite.netlify.app from subdomain.mainsite.netlify.app
-      return parts.slice(1).join('.')
-    }
-  }
-  
-  // For custom domains, extract main domain
-  const parts = hostname.split('.')
-  if (parts.length >= 3) {
-    return parts.slice(1).join('.')
-  }
-  
-  return hostname
+  return response
 }
 
 export const config = {

@@ -14,42 +14,62 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
       
-    # Step 2: Setup Node.js
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    # Step 2: Set up SSH agent
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
       with:
-        node-version: '20'
-        cache: 'npm'
-        
-    # Step 3: Install dependencies
-    - name: Install dependencies
-      run: npm install --legacy-peer-deps
-      
-    # Step 4: Build the React app
-    - name: Build project
-      run: npm run build
-      env:
-        CI: false  # Treats warnings as warnings, not errors
-        
-    # Step 5: Upload build files to VPS
-    - name: Deploy to VPS
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        source: "build/*"
-        target: "/var/www/react-app/"
-        strip_components: 1
-        rm: true  # Remove old files before copying new ones
-        
-    # Step 6: Restart Nginx
-    - name: Restart Nginx
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+    # Step 3: Run remote deployment commands
+    - name: Deploy on VPS
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
+          TARGET_DIR="/var/www/react-app"
+          APP_NAME="my-compasse-app"
+          
+          echo "Navigating to ${TARGET_DIR}"
+          mkdir -p ${TARGET_DIR} # Ensure target directory exists
+          cd ${TARGET_DIR}
+
+          # Check if .git directory exists to decide between clone and pull
+          if [ -d ".git" ]; then
+            echo "Git repository found, pulling latest changes..."
+            git pull --force
+          else
+            echo "No Git repository found, cloning..."
+            # IMPORTANT: Replace with your actual repository URL
+            git clone https://github.com/your-org/your-repo.git . # Clone into current directory
+          fi
+
+          echo "Installing dependencies on server..."
+          npm install --legacy-peer-deps # Or yarn install / pnpm install
+          
+          echo "Building project on server..."
+          npm run build # Or your custom build command
+          
+          echo "Restarting application..."
+          # Check if app is running before trying to reload
+          pm2 describe ${APP_NAME} > /dev/null
+          RUNNING=$?
+
+          if [ "${RUNNING}" -ne 0 ]; then
+            echo "PM2 app ${APP_NAME} not found, starting..."
+            # IMPORTANT: Ensure your ecosystem.config.js is configured or provide full path to entry file
+            # Example if your entry is /var/www/react-app/server.js and listens on port 9000
+            # pm2 start /var/www/react-app/server.js --name ${APP_NAME} -- --port 9000
+            # For Next.js, typically:
+            pm2 start npm --name ${APP_NAME} -- run start -- -p 9000
+          else
+            echo "PM2 app ${APP_NAME} found, reloading..."
+            pm2 reload ${APP_NAME}
+          fi
+          pm2 save
+          
+          # Reload Nginx if necessary (only if Nginx configuration changed)
           sudo systemctl reload nginx
+          
           echo "✅ Deployment completed successfully!"
