@@ -30,7 +30,7 @@ jobs:
         script: |
           TARGET_DIR="/var/www/react-app"
           APP_NAME="my-compasse-app"
-          REPO_URL="https://github.com/segunemma2003/v0-typing-gibberish.git" # IMPORTANT: Replace with your actual repository URL
+          REPO_URL="git@github.com:segunemma2003/v0-typing-gibberish.git" # IMPORTANT: Replace with your actual SSH repository URL
           
           echo "Navigating to ${TARGET_DIR}"
           mkdir -p ${TARGET_DIR} # Ensure target directory exists
