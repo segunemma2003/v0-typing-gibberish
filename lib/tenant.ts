@@ -1,32 +1,33 @@
 "use client"
 
 import { create } from "zustand"
-import { getSchoolBySubdomain, type School } from "./auth"
-import { getDynamicSchoolBySubdomain, type DynamicSchool } from "./dynamic-schools"
+// import { getSchoolBySubdomain, type School } from "./auth" // Remove old imports
+// import { getDynamicSchoolBySubdomain, type DynamicSchool } from "./dynamic-schools" // Remove old imports
+import { tenantService, type Tenant } from "@/lib/api/tenants" // Import new tenantService and Tenant interface
 
 export interface TenantState {
-  currentSchool: School | null
+  currentTenant: Tenant | null // Renamed to currentTenant
   subdomain: string | null
   isSuperAdmin: boolean
   isLoading: boolean
 }
 
 interface TenantStore extends TenantState {
-  setTenant: (subdomain: string | null, school: School | null, isSuperAdmin: boolean) => void
+  setTenant: (subdomain: string | null, tenant: Tenant | null, isSuperAdmin: boolean) => void // Updated parameter
   clearTenant: () => void
   initializeTenant: (hostname?: string) => Promise<void>
 }
 
 export const useTenant = create<TenantStore>()((set, get) => ({
-  currentSchool: null,
+  currentTenant: null, // Renamed
   subdomain: null,
   isSuperAdmin: false,
   isLoading: true,
 
-  setTenant: (subdomain, school, isSuperAdmin) => {
+  setTenant: (subdomain, tenant, isSuperAdmin) => { // Updated parameter
     set({
       subdomain,
-      currentSchool: school,
+      currentTenant: tenant, // Renamed
       isSuperAdmin,
       isLoading: false,
     })
@@ -34,7 +35,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
 
   clearTenant: () => {
     set({
-      currentSchool: null,
+      currentTenant: null, // Renamed
       subdomain: null,
       isSuperAdmin: false,
       isLoading: false,
@@ -53,97 +54,71 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         detectedHostname = window.location.hostname
         console.log("TenantProvider: Detected hostname from window:", detectedHostname)
         
-        // Also check for school parameter in URL (for testing subdomains)
+        // The URL parameter logic might be simplified or removed as API should handle domains
         const urlParams = new URLSearchParams(window.location.search)
         const schoolParam = urlParams.get('school')
         console.log("School param from URL:", schoolParam)
         
-        if (schoolParam) {
-          // Simulate subdomain behavior with URL parameter
-          const { subdomain: detectedSubdomain } = getTenantFromHostname(detectedHostname)
-          console.log("Detected subdomain:", detectedSubdomain)
-          
-          if (!detectedSubdomain) {
-            // If main domain, use school parameter as subdomain
-            const school = getSchoolBySubdomain(schoolParam)
-            console.log("Found school:", school)
-            
-            if (school && school.isActive) {
-              console.log("Setting school tenant:", schoolParam)
-              set({
-                currentSchool: school,
-                subdomain: schoolParam,
-                isSuperAdmin: false,
-                isLoading: false,
-              })
-              return
-            } else {
-              console.log("School not found or inactive")
-              set({
-                currentSchool: null,
-                subdomain: schoolParam,
-                isSuperAdmin: false,
-                isLoading: false,
-              })
-              return
-            }
-          }
-        }
-        
-        // If no school param, try to detect from hostname
-        console.log("No school param, trying to detect from hostname:", detectedHostname)
+        // --- Start of API-driven Tenant Resolution --- //
+
         const { subdomain: detectedSubdomain, isSuperAdmin } = getTenantFromHostname(detectedHostname)
-        console.log("getTenantFromHostname result:", { detectedSubdomain, isSuperAdmin })
-        
+
         if (isSuperAdmin) {
           console.log("Detected as super admin")
           set({
-            currentSchool: null,
+            currentTenant: null, // Renamed
             subdomain: null,
             isSuperAdmin: true,
             isLoading: false,
           })
           return
         }
-        
+
         if (detectedSubdomain) {
-          console.log("Detected subdomain:", detectedSubdomain)
-          // First try dynamic schools (for newly registered schools)
-          let school = getDynamicSchoolBySubdomain(detectedSubdomain)
-          console.log("Dynamic school result:", school)
-          
-          // Fallback to static schools (for demo schools)
-          if (!school) {
-            school = getSchoolBySubdomain(detectedSubdomain)
-            console.log("Static school result:", school)
-          }
-          
-          if (school && school.isActive) {
-            console.log("Found school from hostname:", school.name, "ID:", school.id)
+          console.log("Attempting to fetch tenant for subdomain:", detectedSubdomain);
+          const tenantsResponse = await tenantService.getTenants(); // Fetch all tenants
+          const allTenants = tenantsResponse.data;
+
+          // Find the tenant that matches the detected subdomain or domain
+          const foundTenant = allTenants.find(
+            (t) => t.domain.split('.')[0] === detectedSubdomain || t.domain === detectedHostname
+          );
+
+          if (foundTenant) {
+            console.log("Found tenant:", foundTenant.name, "ID:", foundTenant.id);
             set({
-              currentSchool: school,
+              currentTenant: foundTenant, // Renamed
               subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
-            })
-            return
+            });
+            return;
           } else {
-            console.log("No active school found for subdomain:", detectedSubdomain)
+            console.log("No active tenant found for subdomain/domain:", detectedSubdomain || detectedHostname);
+            set({
+              currentTenant: null, // Renamed
+              subdomain: detectedSubdomain,
+              isSuperAdmin: false,
+              isLoading: false,
+            });
+            return;
           }
         }
-        
-        // Final fallback - treat as super admin
-        console.log("Final fallback - treating as super admin")
+
+        // If no subdomain and not super admin, it might be the base domain or an error
+        console.log("No subdomain detected and not super admin. Defaulting to super admin or no tenant.");
         set({
-          currentSchool: null,
+          currentTenant: null, // Renamed
           subdomain: null,
-          isSuperAdmin: true,
+          isSuperAdmin: true, // Assuming default to super_admin on base domain
           isLoading: false,
-        })
-        return
+        });
+        return;
+        // --- End of API-driven Tenant Resolution --- //
+
       }
 
-      // Try to get from headers (server-side via middleware)
+      // This part handles server-side detection (e.g., via middleware setting meta tags)
       if (!detectedHostname && typeof document !== "undefined") {
         const metaTag = document.querySelector('meta[name="x-tenant-hostname"]')
         if (metaTag) {
@@ -151,87 +126,64 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         }
       }
 
-      // For subdomains, always try to detect from hostname first
-      if (detectedHostname && detectedHostname.includes('.theqcare.org')) {
-        const parts = detectedHostname.split('.')
-        if (parts.length >= 3) {
-          const subdomainFromHostname = parts[0]
-          console.log("TenantProvider: Detected subdomain from hostname:", subdomainFromHostname)
-          
-          // Try dynamic schools first, then static schools
-          let school = getDynamicSchoolBySubdomain(subdomainFromHostname)
-          if (!school) {
-            school = getSchoolBySubdomain(subdomainFromHostname)
-          }
-          
-          if (school && school.isActive) {
-            console.log("Found school from subdomain:", school.name)
+      // Re-run the API-driven resolution for server-side detected hostname
+      if (detectedHostname) {
+        const { subdomain: detectedSubdomain, isSuperAdmin } = getTenantFromHostname(detectedHostname)
+
+        if (isSuperAdmin) {
+          set({
+            currentTenant: null, // Renamed
+            subdomain: null,
+            isSuperAdmin: true,
+            isLoading: false,
+          })
+          return
+        }
+
+        if (detectedSubdomain) {
+          console.log("Attempting to fetch tenant for server-side detected subdomain:", detectedSubdomain);
+          const tenantsResponse = await tenantService.getTenants(); // Fetch all tenants
+          const allTenants = tenantsResponse.data;
+
+          const foundTenant = allTenants.find(
+            (t) => t.domain.split('.')[0] === detectedSubdomain || t.domain === detectedHostname
+          );
+
+          if (foundTenant) {
+            console.log("Found tenant server-side:", foundTenant.name);
             set({
-              currentSchool: school,
-              subdomain: subdomainFromHostname,
+              currentTenant: foundTenant, // Renamed
+              subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
-            })
-            return
+            });
+            return;
           } else {
-            // School not found - this might be a new school registration
-            console.log("School not found for subdomain:", subdomainFromHostname)
+            console.log("No active tenant found server-side for subdomain/domain:", detectedSubdomain || detectedHostname);
             set({
-              currentSchool: null,
-              subdomain: subdomainFromHostname,
+              currentTenant: null, // Renamed
+              subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
-            })
-            return
+            });
+            return;
           }
         }
       }
 
-      if (!detectedHostname) {
-        set({
-          currentSchool: null,
-          subdomain: null,
-          isSuperAdmin: true,
-          isLoading: false,
-        })
-        return
-      }
+      // Final fallback for situations where no tenant is detected
+      console.log("Final fallback - treating as super admin (no tenant detected at all)")
+      set({
+        currentTenant: null, // Renamed
+        subdomain: null,
+        isSuperAdmin: true,
+        isLoading: false,
+      })
 
-      const { subdomain, isSuperAdmin } = getTenantFromHostname(detectedHostname)
-
-      if (isSuperAdmin) {
-        set({
-          currentSchool: null,
-          subdomain: null,
-          isSuperAdmin: true,
-          isLoading: false,
-        })
-        return
-      }
-
-      // Find school by subdomain
-      const school = subdomain ? getSchoolBySubdomain(subdomain) : null
-
-      if (school && school.isActive) {
-        set({
-          currentSchool: school,
-          subdomain,
-          isSuperAdmin: false,
-          isLoading: false,
-        })
-      } else {
-        // School not found or inactive
-        set({
-          currentSchool: null,
-          subdomain,
-          isSuperAdmin: false,
-          isLoading: false,
-        })
-      }
     } catch (error) {
       console.error("Error initializing tenant:", error)
       set({
-        currentSchool: null,
+        currentTenant: null, // Renamed
         subdomain: null,
         isSuperAdmin: false,
         isLoading: false,
@@ -249,12 +201,12 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         })
       }
     }, 100)
-    
-    console.log("Tenant initialization completed")
   },
 }))
 
 export const getTenantFromHostname = (hostname: string) => {
+  const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "theqcare.org"; // IMPORTANT: Set this in .env.local
+
   // Handle localhost development
   if (hostname === "localhost" || hostname.startsWith("localhost:")) {
     return {
@@ -263,22 +215,22 @@ export const getTenantFromHostname = (hostname: string) => {
     }
   }
 
-  // Handle theqcare.org subdomains (e.g., demo.theqcare.org)
-  if (hostname.includes('.theqcare.org')) {
+  // Handle subdomains (e.g., demo.yourbase.com)
+  if (hostname.includes(`.${BASE_DOMAIN}`)) {
     const parts = hostname.split('.')
     
-    // Check if it's a valid theqcare.org domain
-    if (parts[parts.length - 2] === 'theqcare' && parts[parts.length - 1] === 'org') {
-      // If it's the main site (theqcare.org), treat as super admin
-      if (parts.length === 2) {
+    // Check if it's a valid base domain
+    if (parts[parts.length - 2] === BASE_DOMAIN.split('.')[0] && parts[parts.length - 1] === BASE_DOMAIN.split('.')[1]) {
+      // If it's the main site (yourbase.com), treat as super admin
+      if (parts.length === BASE_DOMAIN.split('.').length) {
         return {
           subdomain: null,
           isSuperAdmin: true,
         }
       }
       
-      // If it's a subdomain (e.g., demo.theqcare.org), extract school subdomain
-      if (parts.length >= 3) {
+      // If it's a subdomain (e.g., demo.yourbase.com), extract subdomain
+      if (parts.length > BASE_DOMAIN.split('.').length) {
         return {
           subdomain: parts[0],
           isSuperAdmin: false,
@@ -287,48 +239,29 @@ export const getTenantFromHostname = (hostname: string) => {
     }
   }
 
-  // Handle Netlify subdomains (legacy support)
-  if (hostname.includes('.netlify.app')) {
-    const parts = hostname.split('.')
-    
-    // Check if it's a valid Netlify domain
-    if (parts[parts.length - 2] === 'netlify' && parts[parts.length - 1] === 'app') {
-      // If it's the main site (e.g., lustrous-malasada-aaed22.netlify.app), treat as super admin
-      if (parts.length === 3) {
-        return {
-          subdomain: null,
-          isSuperAdmin: true,
-        }
-      }
-      
-      // If it's a subdomain (e.g., test.lustrous-malasada-aaed22.netlify.app), extract school subdomain
-      if (parts.length >= 4) {
-        return {
-          subdomain: parts[0],
-          isSuperAdmin: false,
-        }
-      }
-    }
-  }
+  // Handle custom domains (e.g., tenantA.com, tenantB.net)
+  // This logic assumes custom domains directly map to tenants without subdomains
+  // Or you have a way to map the full domain to a tenant ID on the backend
+  // For now, if it's not localhost or a known subdomain pattern, assume it's a custom domain trying to reach a tenant
+  // A more robust solution would involve fetching all tenants and checking if hostname matches t.domain exactly.
+  const tenants = get().currentTenant ? [get().currentTenant] : []; // This is a temporary way to get tenants, ideally use an API call here
+  const matchedTenant = tenants.find(t => t.domain === hostname);
 
-  // Handle custom domains
-  const parts = hostname.split(".")
-
-  // For custom domains, need at least 3 parts for a subdomain (subdomain.domain.tld)
-  if (parts.length < 3) {
+  if (matchedTenant) {
     return {
-      subdomain: null,
-      isSuperAdmin: true,
+      subdomain: matchedTenant.domain, // Or a derived tenant identifier
+      isSuperAdmin: false,
     }
   }
 
+  // If none of the above, default to super admin on the main domain or a non-tenant context
   return {
-    subdomain: parts[0],
-    isSuperAdmin: false,
+    subdomain: null,
+    isSuperAdmin: hostname === BASE_DOMAIN, // Only super admin if on the exact base domain
   }
 }
 
-// Server-side tenant detection utility
+// Server-side tenant detection utility (no change here, it uses getTenantFromHostname)
 export const getServerTenant = (request: Request) => {
   const url = new URL(request.url)
   const hostname = url.hostname

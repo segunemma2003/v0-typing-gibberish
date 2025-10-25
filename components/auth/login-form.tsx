@@ -9,18 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/hooks/use-auth"
+// import { useAuth } from "@/hooks/use-auth" // Remove old useAuth hook
 import { useTenant } from "@/lib/tenant"
 import { getPortalRoute } from "@/lib/auth"
 import { Building2 } from "lucide-react"
+import { useLogin, useMe } from "@/lib/api/auth" // Import new useLogin and useMe hooks
+import { useQueryClient } from "@tanstack/react-query"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const { login, isLoading } = useAuth()
+  // const { login, isLoading } = useAuth() // Old useAuth destructuring
+  const { mutate: loginUser, isPending: isLoading, isError, error: loginError } = useLogin() // New useLogin hook
   const { currentSchool } = useTenant()
   const router = useRouter()
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,63 +36,71 @@ export function LoginForm() {
     console.log("Current School ID:", currentSchool?.id)
     console.log("Hostname:", typeof window !== 'undefined' ? window.location.hostname : 'N/A')
 
-    const success = await login(email, password)
-    
-    if (success) {
-      const user = useAuth.getState().user
-      console.log("=== LOGIN SUCCESSFUL ===")
-      console.log("User:", user?.name)
-      console.log("Role:", user?.role)
-      console.log("School ID:", user?.schoolId)
-      
-      if (user) {
-        // If no current school detected, redirect to the appropriate school subdomain
-        if (!currentSchool && user.role !== 'super_admin') {
-          console.log("=== NO SCHOOL DETECTED ===")
-          console.log("User belongs to school:", user.schoolId)
+    loginUser({ email, password }, {
+      onSuccess: (data) => {
+        console.log("=== LOGIN SUCCESSFUL ===")
+        console.log("User:", data.user?.name)
+        console.log("Role:", data.user?.role)
+        // The token is already stored by apiClient interceptor
+        // Invalidate 'me' query to refetch user data if needed
+        queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+
+        const user = data.user; // Use the user object from the login response
+        
+        if (user) {
+          // If no current school detected, redirect to the appropriate school subdomain
+          // This logic might need adjustment based on how `user.schoolId` is derived from the new API structure
+          if (!currentSchool && user.role !== 'super_admin') {
+            console.log("=== NO SCHOOL DETECTED ===")
+            // Assuming user.tenant.domain or user.schoolId can be used for redirection
+            const schoolDomain = user.tenant?.domain; 
+            // This part of the logic needs to be revisited based on how schools are mapped to domains/subdomains
+            // from the `tenant` object returned by the API.
+            // For now, retaining a simplified version, but a more robust solution
+            // would query the schools API for the domain based on tenant/school ID.
+            const schoolSubdomain = schoolDomain ? schoolDomain.split('.')[0] : null;
+
+            if (schoolSubdomain) {
+              // Construct URL based on the detected subdomain/domain
+              // This assumes a pattern like 'https://subdomain.yourbase.com/admin'
+              // You will need to adjust 'theqcare.org' to your base domain.
+              const baseDomain = process.env.NEXT_PUBLIC_BASE_DOMAIN || "theqcare.org"; // Define this in .env.local
+              const schoolUrl = `https://${schoolSubdomain}.${baseDomain}/admin`; 
+              
+              console.log("Redirecting to school subdomain:", schoolUrl)
+              window.location.href = schoolUrl
+              return
+            }
+          }
           
-          // Find the school by ID to get its subdomain
-          const schoolSubdomain = user.schoolId === 'school-demo' ? 'demo' :
-                                 user.schoolId === 'school-test' ? 'test' :
-                                 user.schoolId === 'school-1' ? 'greenwood' :
-                                 user.schoolId === 'school-2' ? 'riverside' : null
-          
-          if (schoolSubdomain) {
-            // Try subdomain first, fallback to URL parameter
-            const schoolUrl = `https://${schoolSubdomain}.theqcare.org/admin`
-            const fallbackUrl = `https://theqcare.org/admin?school=${schoolSubdomain}`
-            
-            console.log("Redirecting to school subdomain:", schoolUrl)
-            console.log("Fallback URL:", fallbackUrl)
-            
-            // Try subdomain first
-            window.location.href = schoolUrl
+          // Check if user belongs to current school
+          // This also needs adjustment based on the new API's `user.tenant` structure vs `currentSchool`
+          // For now, comparing `user.tenant.id` with `currentSchool.id` if available.
+          if (currentSchool && user.tenant && user.tenant.id !== currentSchool.id) {
+            console.log("=== SCHOOL MISMATCH ===")
+            console.log("User Tenant ID:", user.tenant.id)
+            console.log("Current School ID:", currentSchool.id)
+            setError("You don't have access to this school")
+            // useAuth.getState().logout() // Old logout, handled by `apiClient` or a separate `useLogout`
+            localStorage.removeItem('token'); // Manually remove token if needed, or rely on global logout
+            queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
             return
           }
+          
+          const portalRoute = getPortalRoute(user.role)
+          console.log("=== REDIRECTING ===")
+          console.log("Portal Route:", portalRoute)
+          console.log("Full URL:", typeof window !== 'undefined' ? `${window.location.origin}${portalRoute}` : 'N/A')
+          
+          // Use router.replace to avoid back button issues
+          router.replace(portalRoute)
         }
-        
-        // Check if user belongs to current school
-        if (currentSchool && user.schoolId !== currentSchool.id) {
-          console.log("=== SCHOOL MISMATCH ===")
-          console.log("User School ID:", user.schoolId)
-          console.log("Current School ID:", currentSchool.id)
-          setError("You don't have access to this school")
-          useAuth.getState().logout()
-          return
-        }
-        
-        const portalRoute = getPortalRoute(user.role)
-        console.log("=== REDIRECTING ===")
-        console.log("Portal Route:", portalRoute)
-        console.log("Full URL:", typeof window !== 'undefined' ? `${window.location.origin}${portalRoute}` : 'N/A')
-        
-        // Use router.replace to avoid back button issues
-        router.replace(portalRoute)
-      }
-    } else {
-      console.log("=== LOGIN FAILED ===")
-      setError("Invalid email or password")
-    }
+      },
+      onError: (err) => {
+        console.error("Login failed", err);
+        setError("Invalid email or password."); // Generic error message for security
+      },
+    });
   }
 
   return (
@@ -128,9 +140,9 @@ export function LoginForm() {
               required
             />
           </div>
-          {error && (
+          {(error || isError) && (
             <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{error || loginError?.message || "An unknown error occurred."}</AlertDescription>
             </Alert>
           )}
           <Button type="submit" className="w-full" disabled={isLoading}>

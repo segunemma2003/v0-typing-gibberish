@@ -1,0 +1,55 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]  # Triggers on push to main branch
+  workflow_dispatch:    # Allows manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Get the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    # Step 2: Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: npm ci
+      
+    # Step 4: Build the React app
+    - name: Build project
+      run: npm run build
+      env:
+        CI: false  # Treats warnings as warnings, not errors
+        
+    # Step 5: Upload build files to VPS
+    - name: Deploy to VPS
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        source: "build/*"
+        target: "/var/www/react-app/"
+        strip_components: 1
+        rm: true  # Remove old files before copying new ones
+        
+    # Step 6: Restart Nginx
+    - name: Restart Nginx
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          sudo systemctl reload nginx
+          echo "✅ Deployment completed successfully!"
