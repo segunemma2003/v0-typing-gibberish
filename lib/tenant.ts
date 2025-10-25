@@ -207,6 +207,9 @@ export const useTenant = create<TenantStore>()((set, get) => ({
 export const getTenantFromHostname = (hostname: string) => {
   const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "theqcare.org"; // IMPORTANT: Set this in .env.local
 
+  // Ensure BASE_DOMAIN is always a string for split operations
+  const baseDomainParts = BASE_DOMAIN.split('.');
+
   // Handle localhost development
   if (hostname === "localhost" || hostname.startsWith("localhost:")) {
     return {
@@ -220,9 +223,9 @@ export const getTenantFromHostname = (hostname: string) => {
     const parts = hostname.split('.')
     
     // Check if it's a valid base domain
-    if (parts[parts.length - 2] === BASE_DOMAIN.split('.')[0] && parts[parts.length - 1] === BASE_DOMAIN.split('.')[1]) {
+    if (parts[parts.length - baseDomainParts.length] === baseDomainParts[0] && parts[parts.length - 1] === baseDomainParts[baseDomainParts.length - 1]) {
       // If it's the main site (yourbase.com), treat as super admin
-      if (parts.length === BASE_DOMAIN.split('.').length) {
+      if (parts.length === baseDomainParts.length) {
         return {
           subdomain: null,
           isSuperAdmin: true,
@@ -230,7 +233,7 @@ export const getTenantFromHostname = (hostname: string) => {
       }
       
       // If it's a subdomain (e.g., demo.yourbase.com), extract subdomain
-      if (parts.length > BASE_DOMAIN.split('.').length) {
+      if (parts.length > baseDomainParts.length) {
         return {
           subdomain: parts[0],
           isSuperAdmin: false,
@@ -239,25 +242,13 @@ export const getTenantFromHostname = (hostname: string) => {
     }
   }
 
-  // Handle custom domains (e.g., tenantA.com, tenantB.net)
-  // This logic assumes custom domains directly map to tenants without subdomains
-  // Or you have a way to map the full domain to a tenant ID on the backend
-  // For now, if it's not localhost or a known subdomain pattern, assume it's a custom domain trying to reach a tenant
-  // A more robust solution would involve fetching all tenants and checking if hostname matches t.domain exactly.
-  const tenants = get().currentTenant ? [get().currentTenant] : []; // This is a temporary way to get tenants, ideally use an API call here
-  const matchedTenant = tenants.find(t => t.domain === hostname);
-
-  if (matchedTenant) {
-    return {
-      subdomain: matchedTenant.domain, // Or a derived tenant identifier
-      isSuperAdmin: false,
-    }
-  }
-
-  // If none of the above, default to super admin on the main domain or a non-tenant context
+  // For custom domains, we'll rely on `initializeTenant` to fetch all tenants
+  // and match the full hostname to a tenant's domain. Here, we can't definitively
+  // say if it's a tenant or super admin without an API call.
+  // Default to non-super-admin with null subdomain, and initializeTenant will resolve.
   return {
     subdomain: null,
-    isSuperAdmin: hostname === BASE_DOMAIN, // Only super admin if on the exact base domain
+    isSuperAdmin: false, // Assume not super admin unless explicitly matched to base domain or localhost
   }
 }
 

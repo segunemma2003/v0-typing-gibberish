@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // 1. Service Functions
 
-interface Tenant {
+export interface Tenant {
   id: number;
   name: string;
   domain: string;
