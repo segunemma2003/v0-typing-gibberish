@@ -12,16 +12,43 @@ jobs:
     steps:
     # Step 1: Get the code
     - name: Checkout code
-      uses: actions/checkout@v3 # Used to get the context for the runner, but actual deployment is remote
+      uses: actions/checkout@v3
       
-    # Step 2: Set up SSH agent
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
+    # Step 2: Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
       with:
-        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+        node-version: '20' # Specify your Node.js version, e.g., '18', '20'
+        cache: 'npm'
+        
+    # Step 3: Install dependencies
+    - name: Install dependencies
+      run: npm install --legacy-peer-deps
+      
+    # Step 4: Build the Next.js app
+    - name: Build project
+      run: npm run build
+      env:
+        CI: false  # Treats warnings as warnings, not errors
+        NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+        NEXT_PUBLIC_BASE_DOMAIN: ${{ secrets.NEXT_PUBLIC_BASE_DOMAIN }}
+        
+    # Step 5: Archive production build artifacts
+    - name: Archive build artifacts
+      run: tar -czf next-build-artifacts.tar.gz .next/ public/ package.json # Include essential files
 
-    # Step 3: Run remote deployment commands
-    - name: Deploy on VPS
+    # Step 6: Deploy build files to VPS via SCP
+    - name: Transfer build to VPS
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        source: "next-build-artifacts.tar.gz"
+        target: "/tmp/"
+        
+    # Step 7: Unpack build and restart app on VPS via SSH
+    - name: Unpack build and restart app on VPS
       uses: appleboy/ssh-action@master
       with:
         host: ${{ secrets.VPS_HOST }}
@@ -30,51 +57,21 @@ jobs:
         script: |
           TARGET_DIR="/var/www/react-app"
           APP_NAME="my-compasse-app"
-          REPO_URL="git@github.com:segunemma2003/v0-typing-gibberish.git" # IMPORTANT: Replace with your actual SSH repository URL
           
-          # Source NVM if present to ensure node/npm/pm2 are in PATH
-          if [ -s "$HOME/.nvm/nvm.sh" ]; then
-            . "$HOME/.nvm/nvm.sh"
-            nvm use default || nvm use stable || nvm use 20 # Or your desired node version
-          fi
+          echo "Preparing deployment directory on ${TARGET_DIR}..."
+          mkdir -p ${TARGET_DIR}
+          rm -rf ${TARGET_DIR}/* # Clear existing contents for a clean deployment
 
-          echo "Navigating to ${TARGET_DIR}"
-          mkdir -p ${TARGET_DIR} # Ensure target directory exists
-          cd ${TARGET_DIR}
+          echo "Unpacking new build artifacts..."
+          tar -xzf /tmp/next-build-artifacts.tar.gz -C ${TARGET_DIR}
+          rm /tmp/next-build-artifacts.tar.gz
 
-          # Check if .git directory exists and ensure remote is SSH, then pull
-          if [ -d ".git" ]; then
-            echo "Git repository found."
-            CURRENT_REMOTE_URL=$(git remote get-url origin)
-            if [[ "$CURRENT_REMOTE_URL" != *"${REPO_URL}"* ]]; then
-              echo "Remote URL is not SSH, updating to SSH..."
-              git remote set-url origin ${REPO_URL}
-            fi
-            echo "Pulling latest changes..."
-            git pull --force
-          else
-            echo "No Git repository found, cloning with SSH... (Using SSH URL)"
-            git clone ${REPO_URL} . # Clone into current directory
-          fi
+          # Install production dependencies if node_modules not included in tar (uncomment if needed)
+          # echo "Installing production dependencies on server..."
+          # cd ${TARGET_DIR} && npm install --production
 
-          echo "Installing dependencies on server..."
-          npm install --legacy-peer-deps # Or yarn install / pnpm install
-          
-          echo "Building project on server..."
-          npm run build # Or your custom build command
-          
-          echo "Restarting application..."
-          # Check if app is running before trying to reload
-          pm2 describe ${APP_NAME} > /dev/null
-          RUNNING=$?
-
-          if [ "${RUNNING}" -ne 0 ]; then
-            echo "PM2 app ${APP_NAME} not found, starting..."
-            pm2 start npm --name ${APP_NAME} -- run start -- -p 9000
-          else
-            echo "PM2 app ${APP_NAME} found, reloading..."
-            pm2 reload ${APP_NAME}
-          fi
+          echo "Restarting application ${APP_NAME}..."
+          pm2 reload ${APP_NAME} || pm2 start ${TARGET_DIR}/node_modules/next/dist/bin/next --name ${APP_NAME} -- start -p 9000
           pm2 save
           
           echo "Reloading Nginx..."
