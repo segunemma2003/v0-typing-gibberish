@@ -66,6 +66,21 @@ jobs:
           tar -xzf /tmp/next-build-artifacts.tar.gz -C ${TARGET_DIR}
           rm /tmp/next-build-artifacts.tar.gz
 
+          # Source NVM if present to ensure node/npm/pm2 are in PATH
+          if [ -s "$HOME/.nvm/nvm.sh" ]; then
+            . "$HOME/.nvm/nvm.sh"
+            # Ensure Node.js LTS is installed and used
+            if ! nvm list | grep -q "lts/"; then
+              echo "NVM: Installing latest LTS Node.js..."
+              nvm install "lts/*"
+            fi
+            nvm use "lts/*" || nvm use default || nvm use stable || nvm use 20 # Use LTS, fallback
+          else
+            echo "NVM not found, assuming system Node.js is configured."
+          fi
+
+          echo "Navigating to ${TARGET_DIR}"
+
           # Install production dependencies if node_modules not included in tar (uncomment if needed)
           # echo "Installing production dependencies on server..."
           # cd ${TARGET_DIR} && npm install --production
