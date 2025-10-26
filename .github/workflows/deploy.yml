@@ -53,7 +53,7 @@ jobs:
             echo "Pulling latest changes..."
             git pull --force
           else
-            echo "No Git repository found, cloning with SSH..."
+            echo "No Git repository found, cloning with SSH... (Using SSH URL)"
             git clone ${REPO_URL} . # Clone into current directory
           fi
 
