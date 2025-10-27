@@ -2,94 +2,27 @@ name: Deploy to VPS
 
 on:
   push:
-    branches: [ main ]  # Triggers on push to main branch
-  workflow_dispatch:    # Allows manual trigger from GitHub UI
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    # Step 1: Get the code
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    # Step 2: Set up Node.js
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20' # Specify your Node.js version, e.g., '18', '20'
-        cache: 'npm'
-        
-    # Step 3: Install dependencies
-    - name: Install dependencies
-      run: npm install --legacy-peer-deps
-      
-    # Step 4: Build the Next.js app
-    - name: Build project
-      run: npm run build
-      env:
-        CI: false  # Treats warnings as warnings, not errors
-        NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-        NEXT_PUBLIC_BASE_DOMAIN: ${{ secrets.NEXT_PUBLIC_BASE_DOMAIN }}
-        
-    # Step 5: Archive production build artifacts
-    - name: Archive build artifacts
-      run: tar -czf next-build-artifacts.tar.gz .next/ public/ package.json # Include essential files
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # Step 6: Deploy build files to VPS via SCP
-    - name: Transfer build to VPS
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        source: "next-build-artifacts.tar.gz"
-        target: "/tmp/"
-        
-    # Step 7: Unpack build and restart app on VPS via SSH
-    - name: Unpack build and restart app on VPS
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        script: |
-          TARGET_DIR="/var/www/react-app"
-          APP_NAME="my-compasse-app"
-          
-          echo "Preparing deployment directory on ${TARGET_DIR}..."
-          mkdir -p ${TARGET_DIR}
-          rm -rf ${TARGET_DIR}/* # Clear existing contents for a clean deployment
-
-          echo "Unpacking new build artifacts..."
-          tar -xzf /tmp/next-build-artifacts.tar.gz -C ${TARGET_DIR}
-          rm /tmp/next-build-artifacts.tar.gz
-
-          # Source NVM if present to ensure node/npm/pm2 are in PATH
-          if [ -s "$HOME/.nvm/nvm.sh" ]; then
-            . "$HOME/.nvm/nvm.sh"
-            # Ensure Node.js LTS is installed and used
-            if ! nvm list | grep -q "lts/"; then
-              echo "NVM: Installing latest LTS Node.js..."
-              nvm install "lts/*"
-            fi
-            nvm use "lts/*" || nvm use default || nvm use stable || nvm use 20 # Use LTS, fallback
-          else
-            echo "NVM not found, assuming system Node.js is configured."
-          fi
-
-          echo "Navigating to ${TARGET_DIR}"
-
-          # Install production dependencies if node_modules not included in tar (uncomment if needed)
-          # echo "Installing production dependencies on server..."
-          # cd ${TARGET_DIR} && npm install --production
-
-          echo "Restarting application ${APP_NAME}..."
-          pm2 reload ${APP_NAME} || pm2 start ${TARGET_DIR}/node_modules/next/dist/bin/next --name ${APP_NAME} -- start -p 9000
-          pm2 save
-          
-          echo "Reloading Nginx..."
-          sudo systemctl reload nginx
-          
-          echo "✅ Deployment completed successfully!"
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/react-app
+            git pull origin main
+            npm install --legacy-peer-deps
+            npm run build
+            pm2 restart my-compasse-app
+            pm2 save
