@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { SchoolRouter } from "@/components/school-router"
+import { LandingPage } from "@/components/landing-page/LandingPage"
 
 // Force dynamic rendering for search params
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,7 @@ export default function HomePage() {
         </div>
       </div>
     }>
-      <SchoolRouter />
+      <LandingPage />
     </Suspense>
   )
 }

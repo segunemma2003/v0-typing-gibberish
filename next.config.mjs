@@ -11,14 +11,23 @@ const nextConfig = {
   },
   // Ensure trailing slashes are handled correctly
   trailingSlash: false,
-  // Let Netlify handle the output format
-  // output: undefined, // Removing this line
-  // Disable Lightning CSS for CSS minification to resolve native module issues
-  experimental: {
-    optimizeCss: false, // This often disables lightningcss usage for css minification
-  },
-  webpack: (config, { isServer }) => {
-    // Additional webpack configurations if needed
+  // output: undefined, // No longer needed
+  // Explicitly configure CSS processing to use cssnano to bypass lightningcss issues
+  webpack: (config, { isServer, defaultLoaders }) => {
+    // Only apply this customization for CSS minification during the build process
+    if (!isServer && config.optimization && config.optimization.minimizer) {
+      const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+      config.optimization.minimizer = config.optimization.minimizer.map((minimizer) => {
+        if (minimizer.constructor.name === 'CssMinimizerPlugin') {
+          return new CssMinimizerPlugin({
+            minimizerOptions: {
+              preset: 'default',
+            },
+          });
+        }
+        return minimizer;
+      });
+    }
     return config;
   },
 }
