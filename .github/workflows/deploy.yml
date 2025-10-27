@@ -10,10 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy to VPS
+      - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -21,8 +18,21 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /var/www/react-app
+            
+            echo "📥 Pulling latest changes..."
             git pull origin main
+            
+            echo "📦 Installing dependencies..."
             npm install --legacy-peer-deps
+            
+            echo "🗑️ Removing old build..."
+            rm -rf .next
+            
+            echo "🔨 Building application..."
             npm run build
+            
+            echo "🔄 Restarting PM2..."
             pm2 restart my-compasse-app
             pm2 save
+            
+            echo "✅ Deployment complete!"
