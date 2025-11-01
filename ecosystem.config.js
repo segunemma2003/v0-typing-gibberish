@@ -11,7 +11,13 @@ module.exports = {
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: '3000',
+        PORT: 9000,
+        HOSTNAME: '0.0.0.0',
+      },
+      // Explicitly set port to match Nginx configuration
+      env_production: {
+        NODE_ENV: 'production',
+        PORT: 9000,
         HOSTNAME: '0.0.0.0',
       },
       error_file: './logs/err.log',

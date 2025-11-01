@@ -27,8 +27,8 @@ jobs:
             pm2 flush 2>/dev/null || true
             pm2 save 2>/dev/null || true
             
-            echo "🔍 Killing all processes on ports 3000, 5000, and 9000..."
-            for port in 3000 5000 9000; do
+            echo "🔍 Killing all processes on ports 9000, 3000, and 5000..."
+            for port in 9000 3000 5000; do
               pid=$(lsof -ti:$port 2>/dev/null || true)
               if [ ! -z "$pid" ]; then
                 echo "Killing process $pid on port $port"
@@ -72,7 +72,7 @@ jobs:
             
             echo "🔨 Building application..."
             export NODE_ENV=production
-            export PORT=3000
+            export PORT=9000
             npm run build || exit 1
             
             echo "✅ Verifying build output..."
@@ -111,25 +111,44 @@ jobs:
             pm2 logs my-compasse-app --lines 30 --nostream || echo "⚠️ Could not fetch logs"
             
             echo "🔍 Checking port status..."
-            if netstat -tlnp 2>/dev/null | grep -q ":3000"; then
-              echo "✅ Port 3000 is listening!"
-              netstat -tlnp 2>/dev/null | grep ":3000" || true
-            elif ss -tlnp 2>/dev/null | grep -q ":3000"; then
-              echo "✅ Port 3000 is listening!"
-              ss -tlnp 2>/dev/null | grep ":3000" || true
+            if netstat -tlnp 2>/dev/null | grep -q ":9000"; then
+              echo "✅ Port 9000 is listening!"
+              netstat -tlnp 2>/dev/null | grep ":9000" || true
+            elif ss -tlnp 2>/dev/null | grep -q ":9000"; then
+              echo "✅ Port 9000 is listening!"
+              ss -tlnp 2>/dev/null | grep ":9000" || true
             else
-              echo "⚠️ Port 3000 not detected - checking PM2 status..."
+              echo "⚠️ Port 9000 not detected - checking PM2 status..."
               pm2 describe my-compasse-app || echo "⚠️ Could not describe PM2 process"
             fi
             
-            echo "🔄 Reloading Nginx..."
-            sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || echo "⚠️ Could not reload nginx (may need manual check)"
+            echo "🔄 Restarting Nginx..."
+            # Test nginx configuration first
+            sudo nginx -t 2>/dev/null && echo "✅ Nginx configuration is valid" || echo "⚠️ Nginx configuration test failed"
+            
+            # Restart nginx (more reliable than reload)
+            if sudo systemctl restart nginx 2>/dev/null; then
+              echo "✅ Nginx restarted successfully via systemctl"
+            elif sudo service nginx restart 2>/dev/null; then
+              echo "✅ Nginx restarted successfully via service"
+            else
+              echo "⚠️ Could not restart nginx automatically - attempting reload..."
+              sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || echo "⚠️ Nginx reload also failed - may need manual restart"
+            fi
+            
+            # Verify nginx is running
+            sleep 2
+            if sudo systemctl is-active --quiet nginx 2>/dev/null || pgrep -x nginx > /dev/null 2>&1; then
+              echo "✅ Nginx is running"
+            else
+              echo "⚠️ Warning: Nginx may not be running - please check manually"
+            fi
             
             echo ""
             echo "✅ Deployment completed successfully!"
             echo "📝 Final PM2 Status:"
             pm2 list
             echo ""
-            echo "🔗 Your app should be running on port 3000"
+            echo "🔗 Your app should be running on port 9000"
             echo "📋 To check logs: pm2 logs my-compasse-app"
             echo "📊 To monitor: pm2 monit"

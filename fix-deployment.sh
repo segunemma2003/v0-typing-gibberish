@@ -6,10 +6,10 @@
 echo "🛑 Stopping PM2 app..."
 pm2 delete my-compasse-app 2>/dev/null || true
 
-echo "🔍 Killing processes on ports 3000, 5000, and 9000..."
+echo "🔍 Killing processes on ports 9000, 3000, and 5000..."
+lsof -ti:9000 | xargs kill -9 2>/dev/null || true
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:5000 | xargs kill -9 2>/dev/null || true
-lsof -ti:9000 | xargs kill -9 2>/dev/null || true
 sleep 2
 
 echo "🗑️ Removing old build..."
@@ -45,8 +45,8 @@ pm2 list
 echo "📋 PM2 Logs (last 20 lines):"
 pm2 logs my-compasse-app --lines 20 --nostream
 
-echo "🔍 Checking if port 3000 is listening..."
-netstat -tlnp | grep :3000 || echo "⚠️ Port 3000 not listening yet"
+echo "🔍 Checking if port 9000 is listening..."
+netstat -tlnp | grep :9000 || echo "⚠️ Port 9000 not listening yet"
 
 echo "✅ Fix complete!"
 
