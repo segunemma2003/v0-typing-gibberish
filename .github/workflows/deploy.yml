@@ -41,13 +41,31 @@ jobs:
             git fetch origin
             git reset --hard origin/main || git pull origin main || exit 1
             
-            echo "📦 Installing dependencies..."
-            # Only clean node_modules if npm install fails (will retry)
-            npm install --legacy-peer-deps || {
-              echo "⚠️ First install attempt failed, cleaning cache and retrying..."
-              npm cache clean --force 2>/dev/null || true
-              npm install --legacy-peer-deps || exit 1
-            }
+            echo "📦 Installing dependencies (with native module fix)..."
+            # Clean everything to ensure fresh install of native bindings
+            rm -rf node_modules package-lock.json
+            npm cache clean --force 2>/dev/null || true
+            
+            # Install dependencies fresh
+            npm install --legacy-peer-deps || exit 1
+            
+            # Verify lightningcss native bindings are installed
+            echo "🔍 Verifying lightningcss installation..."
+            if [ ! -d "node_modules/lightningcss" ]; then
+              echo "❌ ERROR: lightningcss not installed"
+              exit 1
+            fi
+            
+            # Check if native bindings exist
+            if find node_modules/lightningcss* -name "*.node" 2>/dev/null | grep -q ".node"; then
+              echo "✅ Native bindings found"
+            else
+              echo "⚠️ Native bindings missing, attempting to fix..."
+              # Try reinstalling lightningcss specifically
+              npm install lightningcss@latest --legacy-peer-deps --save 2>/dev/null || true
+              # Also try installing the platform-specific package
+              npm install lightningcss-linux-x64-gnu@latest --legacy-peer-deps --save-optional 2>/dev/null || true
+            fi
             
             echo "🗑️ Removing old build artifacts..."
             rm -rf .next out
