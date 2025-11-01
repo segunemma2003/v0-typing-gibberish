@@ -11,7 +11,8 @@ const nextConfig = {
   },
   // Ensure trailing slashes are handled correctly
   trailingSlash: false,
-  // output: undefined, // No longer needed
+  // Uncomment below for standalone output (better for VPS, but requires PM2 script update)
+  // output: 'standalone',
   // Explicitly configure CSS processing to use cssnano to bypass lightningcss issues
   webpack: (config, { isServer, defaultLoaders }) => {
     // Only apply this customization for CSS minification during the build process
