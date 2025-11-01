@@ -1,47 +1,40 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   GraduationCap,
   Users,
-  UserCheck,
   BookOpen,
   Calendar,
   BarChart3,
   Bell,
-  Bus,
-  Building,
-  Trophy,
-  Package,
   DollarSign,
-  Library,
-  FileText,
-  MessageSquare,
-  UsersRound,
-  Monitor,
-  FileCheck,
+  Shield,
+  Zap,
+  CheckCircle,
+  ArrowRight,
+  Menu,
+  X,
+  Star,
+  Globe,
+  Award,
+  Baby,
+  School,
   Sparkles,
-  CheckCircle2,
-  Send,
+  Heart,
+  Play,
+  ChevronRight,
   Mail,
   Phone,
   MapPin,
-  ArrowRight,
-  Star,
-  Shield,
-  Zap,
   TrendingUp,
-  Menu,
-  X,
-  ArrowDown,
-  Play,
-  Globe,
-  Award,
+  Clock,
+  Smartphone,
+  Cloud,
 } from 'lucide-react'
 
 export function LandingPage() {
@@ -52,12 +45,10 @@ export function LandingPage() {
     schoolName: '',
     schoolType: '',
     studentCount: '',
-    message: '',
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [activeTestimonial, setActiveTestimonial] = useState(0)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,38 +58,16 @@ export function LandingPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % 3)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-
-    try {
-      const response = await fetch('/api/quotation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        setSubmitStatus('success')
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          schoolName: '',
-          schoolType: '',
-          studentCount: '',
-          message: '',
-        })
-      } else {
-        setSubmitStatus('error')
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error)
-      setSubmitStatus('error')
-    } finally {
-      setIsSubmitting(false)
-    }
+    console.log('Form submitted:', formData)
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -108,816 +77,474 @@ export function LandingPage() {
     }))
   }
 
-  // Using vibrant colors that typically appear in educational logos (orange, green, blue)
+  const schoolLevels = [
+    { icon: Baby, name: 'Pre-School', age: '2-4 years', color: 'from-pink-500 to-rose-500' },
+    { icon: Heart, name: 'Creche/Nursery', age: '3-5 years', color: 'from-purple-500 to-pink-500' },
+    { icon: School, name: 'Primary School', age: '5-11 years', color: 'from-blue-500 to-cyan-500' },
+    { icon: GraduationCap, name: 'Secondary School', age: '11-18 years', color: 'from-green-500 to-emerald-500' },
+  ]
+
   const features = [
     {
-      icon: GraduationCap,
-      title: 'Student Management',
-      description: 'Comprehensive student records, admissions, academic progress tracking.',
-      gradient: 'from-orange-500 via-amber-500 to-yellow-500',
-      bg: 'bg-orange-50',
-    },
-    {
-      icon: UserCheck,
-      title: 'Teacher Management',
-      description: 'Manage teacher profiles, assignments, schedules, and performance.',
-      gradient: 'from-green-500 via-emerald-500 to-teal-500',
-      bg: 'bg-green-50',
-    },
-    {
       icon: Users,
-      title: 'Staff Management',
-      description: 'Complete staff directory, roles, permissions, and admin tools.',
-      gradient: 'from-blue-500 via-cyan-500 to-sky-500',
-      bg: 'bg-blue-50',
+      title: 'Student Management',
+      description: 'Track enrollment, attendance, and academic progress seamlessly',
+      gradient: 'from-violet-600 to-indigo-600',
     },
     {
       icon: BookOpen,
-      title: 'Class & Subjects',
-      description: 'Organize classes, subjects, curriculum mapping seamlessly.',
-      gradient: 'from-red-500 via-rose-500 to-pink-500',
-      bg: 'bg-red-50',
-    },
-    {
-      icon: Calendar,
-      title: 'Timetable',
-      description: 'Create and manage schedules, assignments, room allocations.',
-      gradient: 'from-purple-500 via-violet-500 to-fuchsia-500',
-      bg: 'bg-purple-50',
-    },
-    {
-      icon: BarChart3,
-      title: 'Reports & Analytics',
-      description: 'Generate comprehensive reports and performance insights.',
-      gradient: 'from-indigo-500 via-blue-500 to-cyan-500',
-      bg: 'bg-indigo-50',
-    },
-    {
-      icon: Bell,
-      title: 'Announcements',
-      description: 'Broadcast school-wide announcements instantly.',
-      gradient: 'from-yellow-500 via-orange-500 to-red-500',
-      bg: 'bg-yellow-50',
+      title: 'Digital Curriculum',
+      description: 'Manage lessons, assignments, and learning resources online',
+      gradient: 'from-blue-600 to-cyan-600',
     },
     {
       icon: DollarSign,
-      title: 'Finance Management',
-      description: 'Fee collection, payment tracking, financial reporting.',
-      gradient: 'from-emerald-500 via-green-500 to-lime-500',
-      bg: 'bg-emerald-50',
+      title: 'Fee Management',
+      description: 'Automated billing, payment tracking, and financial reports',
+      gradient: 'from-emerald-600 to-green-600',
     },
     {
-      icon: Library,
-      title: 'Library System',
-      description: 'Digital catalog, book borrowing, digital resources.',
-      gradient: 'from-teal-500 via-cyan-500 to-blue-500',
-      bg: 'bg-teal-50',
+      icon: Bell,
+      title: 'Parent Communication',
+      description: 'Real-time updates on student progress and school events',
+      gradient: 'from-amber-600 to-orange-600',
     },
     {
-      icon: FileText,
-      title: 'Quiz & Assessment',
-      description: 'Create quizzes, conduct CBT exams, track results.',
-      gradient: 'from-pink-500 via-rose-500 to-red-500',
-      bg: 'bg-pink-50',
+      icon: Calendar,
+      title: 'Smart Timetables',
+      description: 'Automated scheduling with conflict detection',
+      gradient: 'from-pink-600 to-rose-600',
     },
     {
-      icon: MessageSquare,
-      title: 'Communication',
-      description: 'Messaging for teachers, students, and parents.',
-      gradient: 'from-sky-500 via-blue-500 to-indigo-500',
-      bg: 'bg-sky-50',
+      icon: BarChart3,
+      title: 'Analytics Dashboard',
+      description: 'Data-driven insights for better decision making',
+      gradient: 'from-purple-600 to-violet-600',
+    },
+  ]
+
+  const testimonials = [
+    {
+      quote: "Compasse transformed our school operations. Parents love the real-time updates, and our administrative workload has reduced by 60%.",
+      author: "Mrs. Adebayo Kemi",
+      role: "Principal, Lagos Model School",
+      school: "Primary & Secondary",
+      image: "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&q=80",
     },
     {
-      icon: Bus,
-      title: 'Transport',
-      description: 'Fleet management, route planning, tracking.',
-      gradient: 'from-amber-500 via-orange-500 to-red-500',
-      bg: 'bg-amber-50',
+      quote: "The best investment for our nursery school. Managing toddlers' activities and parent communication has never been easier.",
+      author: "Mr. Okonkwo David",
+      role: "Director, Little Stars Nursery",
+      school: "Pre-School & Creche",
+      image: "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=400&q=80",
     },
     {
-      icon: Building,
-      title: 'House System',
-      description: 'Manage competitions, points, member assignments.',
-      gradient: 'from-violet-500 via-purple-500 to-fuchsia-500',
-      bg: 'bg-violet-50',
-    },
-    {
-      icon: Trophy,
-      title: 'Sports',
-      description: 'Organize activities, track competitions, teams.',
-      gradient: 'from-orange-500 via-amber-500 to-yellow-500',
-      bg: 'bg-orange-50',
-    },
-    {
-      icon: Package,
-      title: 'Inventory',
-      description: 'Track assets, supplies, equipment.',
-      gradient: 'from-slate-500 via-gray-500 to-zinc-500',
-      bg: 'bg-slate-50',
-    },
-    {
-      icon: UsersRound,
-      title: 'Parent Portal',
-      description: 'View children\'s progress, assignments, payments.',
-      gradient: 'from-green-600 via-emerald-600 to-teal-600',
-      bg: 'bg-green-50',
-    },
-    {
-      icon: Monitor,
-      title: 'Student Portal',
-      description: 'Access courses, grades, schedule, achievements.',
-      gradient: 'from-blue-600 via-cyan-600 to-sky-600',
-      bg: 'bg-blue-50',
-    },
-    {
-      icon: FileCheck,
-      title: 'Teacher Portal',
-      description: 'Manage classes, assignments, grades, students.',
-      gradient: 'from-purple-600 via-indigo-600 to-blue-600',
-      bg: 'bg-purple-50',
+      quote: "Our teachers save hours weekly on administrative tasks. The system is intuitive and perfectly suited for African schools.",
+      author: "Dr. Aisha Mohammed",
+      role: "Administrator, Abuja Academy",
+      school: "Secondary School",
+      image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&q=80",
     },
   ]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-1/2 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
+      </div>
+
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled 
-          ? 'bg-white/90 backdrop-blur-2xl shadow-2xl border-b border-gray-100/50' 
-          : 'bg-transparent'
+        scrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg py-4' : 'bg-transparent py-6'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <a href="#" className="flex items-center group">
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-blue-500 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                <Image
-                  src="/logo.jpg"
-                  alt="Logo"
-                  width={50}
-                  height={50}
-                  className="relative rounded-xl object-contain transition-transform group-hover:scale-110"
-                />
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
+                <div className="relative w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
               </div>
-            </a>
+              <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Compasse
+              </span>
+            </div>
+
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-700 hover:text-orange-600 transition-all duration-300 font-semibold text-sm relative group">
-                Features
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-500 to-blue-500 group-hover:w-full transition-all duration-300"></span>
-              </a>
-              <a href="#contact" className="text-gray-700 hover:text-orange-600 transition-all duration-300 font-semibold text-sm relative group">
-                Contact
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-orange-500 to-blue-500 group-hover:w-full transition-all duration-300"></span>
-              </a>
-              <Button 
-                asChild 
-                className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 text-white font-bold"
-              >
-                <a href="#quotation">Get Quote</a>
+              <a href="#features" className="text-gray-700 hover:text-purple-600 font-medium transition">Features</a>
+              <a href="#testimonials" className="text-gray-700 hover:text-purple-600 font-medium transition">Testimonials</a>
+              <a href="#pricing" className="text-gray-700 hover:text-purple-600 font-medium transition">Pricing</a>
+              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-105">
+                Get Started Free
               </Button>
             </div>
-            <button
-              className="md:hidden p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
+
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden">
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
-        
+
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-2xl border-t border-gray-200">
+          <div className="md:hidden bg-white/95 backdrop-blur-xl border-t">
             <div className="px-4 py-4 space-y-3">
-              <a href="#features" className="block text-gray-700 hover:text-orange-600 transition-colors font-semibold" onClick={() => setMobileMenuOpen(false)}>Features</a>
-              <a href="#contact" className="block text-gray-700 hover:text-orange-600 transition-colors font-semibold" onClick={() => setMobileMenuOpen(false)}>Contact</a>
-              <Button asChild className="w-full bg-gradient-to-r from-orange-500 to-blue-500 text-white font-bold">
-                <a href="#quotation" onClick={() => setMobileMenuOpen(false)}>Get Quote</a>
+              <a href="#features" className="block py-2 text-gray-700">Features</a>
+              <a href="#testimonials" className="block py-2 text-gray-700">Testimonials</a>
+              <a href="#pricing" className="block py-2 text-gray-700">Pricing</a>
+              <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                Get Started Free
               </Button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Hero Section - Split Layout */}
-      <section className="relative min-h-screen flex items-center pt-20 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-blue-50">
-        {/* Dynamic Background */}
-        <div className="absolute inset-0">
-          <div className="absolute top-20 left-10 w-96 h-96 bg-orange-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
-        </div>
+      {/* Hero Section */}
+      <section className="relative min-h-screen flex items-center pt-20 pb-20 px-4">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="text-center lg:text-left space-y-8 animate-fade-in-up">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full">
+                <Sparkles className="w-4 h-4 text-purple-600 animate-pulse" />
+                <span className="text-sm font-semibold text-purple-700">Trusted by 500+ African Schools</span>
+              </div>
 
-        {/* Background Image */}
-        <div className="absolute inset-0 opacity-5">
-          <Image
-            src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1920&q=80"
-            alt="Education"
-            fill
-            className="object-cover"
-            priority
-          />
-        </div>
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
+                <span className="text-gray-900">Modern School</span>
+                <br />
+                <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 bg-clip-text text-transparent animate-gradient">
+                  Management System
+                </span>
+              </h1>
 
-        <div className="relative max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center z-10">
-          {/* Left: Content */}
-          <div className="space-y-8 text-center lg:text-left">
-            <div className="inline-block">
-              <div className="flex justify-center lg:justify-start mb-6">
-                <div className="relative group">
-                  <div className="absolute -inset-3 bg-gradient-to-r from-orange-500 to-blue-500 rounded-3xl blur-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 animate-pulse"></div>
-                  <div className="relative backdrop-blur-2xl bg-white/60 rounded-3xl p-6 shadow-2xl border-2 border-white/30">
-                    <Image
-                      src="/logo.jpg"
-                      alt="Logo"
-                      width={180}
-                      height={180}
-                      className="rounded-2xl object-contain"
-                    />
+              <p className="text-xl text-gray-600 max-w-lg">
+                Complete solution for Pre-Schools, Creches, Primary & Secondary Schools across Africa. 
+                Streamline operations, enhance learning, empower communities.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+                <Button size="lg" variant="outline" className="border-2 hover:border-purple-600 group">
+                  <Play className="mr-2 w-5 h-5 group-hover:scale-110 transition-transform" />
+                  Watch Demo
+                </Button>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="flex items-center gap-8 pt-8">
+                <div className="flex -space-x-2">
+                  {[
+                    "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&q=80",
+                    "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=100&q=80",
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80",
+                    "https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=100&q=80",
+                  ].map((img, i) => (
+                    <img key={i} src={img} alt="" className="w-10 h-10 rounded-full border-2 border-white object-cover" />
+                  ))}
+                </div>
+                <div className="text-sm">
+                  <div className="flex items-center gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <span className="text-gray-600">4.9/5 from 2000+ schools</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right - Hero Image */}
+            <div className="relative animate-fade-in">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+                <img 
+                  src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80"
+                  alt="African students in classroom"
+                  className="w-full h-auto object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent"></div>
+              </div>
+
+              {/* Floating Cards */}
+              <div className="absolute -top-4 -right-4 bg-white rounded-xl shadow-xl p-4 animate-float">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">100% Cloud Based</p>
+                    <p className="text-sm text-gray-600">Access anywhere</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-xl p-4 animate-float animation-delay-2000">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Shield className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">Bank-Level Security</p>
+                    <p className="text-sm text-gray-600">Data protected</p>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <div className="space-y-6">
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight">
-                <span className="block text-gray-900">Transform Your</span>
-                <span className="block bg-gradient-to-r from-orange-600 via-amber-500 to-blue-600 bg-clip-text text-transparent">
-                  School Management
-                </span>
-                <span className="block text-gray-900">Experience</span>
-              </h1>
-              <p className="text-lg sm:text-xl md:text-2xl text-gray-700 max-w-xl lg:max-w-none leading-relaxed font-medium">
-                All-in-one platform for African schools. Streamline operations, enhance learning, 
-                and empower your community with cutting-edge technology.
-              </p>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                size="lg"
-                className="group bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white text-lg px-10 py-8 rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-105 font-bold"
-                asChild
-              >
-                <a href="#quotation" className="flex items-center justify-center gap-3">
-                  Get Free Quote
-                  <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" />
-                </a>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="group backdrop-blur-xl bg-white/70 border-2 border-gray-300 hover:border-orange-400 text-lg px-10 py-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 font-bold"
-                asChild
-              >
-                <a href="#features" className="flex items-center justify-center gap-3">
-                  <Play className="w-5 h-5" />
-                  Watch Demo
-                </a>
-              </Button>
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center lg:justify-start items-center gap-6 pt-8 text-sm">
-              {[
-                { icon: CheckCircle2, text: '500+ Schools', color: 'text-green-600' },
-                { icon: Shield, text: 'Secure', color: 'text-blue-600' },
-                { icon: Star, text: '4.9/5 Rating', color: 'text-orange-600' },
-                { icon: Globe, text: '10+ Countries', color: 'text-purple-600' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gray-700 group hover:scale-110 transition-transform duration-300">
-                  <item.icon className={`w-5 h-5 ${item.color} group-hover:rotate-12 transition-transform duration-300`} />
-                  <span className="font-semibold">{item.text}</span>
-                </div>
-              ))}
-            </div>
           </div>
-
-          {/* Right: Visual Element */}
-          <div className="relative hidden lg:block">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-blue-500/20 rounded-3xl blur-3xl transform rotate-6"></div>
-              <div className="relative backdrop-blur-2xl bg-white/40 rounded-3xl p-8 shadow-2xl border-2 border-white/30">
-                <div className="relative h-96 rounded-2xl overflow-hidden">
-                  <Image
-                    src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80"
-                    alt="Dashboard preview"
-                    fill
-                    className="object-cover rounded-xl"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <a href="#features" className="flex flex-col items-center gap-2 text-gray-400 hover:text-orange-600 transition-colors">
-            <span className="text-sm font-semibold">Explore</span>
-            <ArrowDown className="w-6 h-6" />
-          </a>
         </div>
       </section>
 
-      {/* Features Section - Dynamic Grid */}
-      <section id="features" className="py-32 px-4 sm:px-6 lg:px-8 relative bg-white">
-        {/* Subtle Background */}
-        <div className="absolute inset-0 opacity-3">
-          <Image
-            src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1920&q=80"
-            alt="School"
-            fill
-            className="object-cover"
-          />
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          {/* Section Header */}
-          <div className="text-center mb-20 space-y-6">
-            <div className="inline-flex items-center gap-2 px-6 py-3 backdrop-blur-xl bg-gradient-to-r from-orange-100/80 to-blue-100/80 border border-orange-200/50 rounded-full text-orange-700 font-bold shadow-lg">
-              <Sparkles className="w-5 h-5" />
-              Comprehensive Platform
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900">
-              Everything You Need
+      {/* School Levels Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-purple-50 to-pink-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Built for Every Education Level
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto font-medium">
-              A complete suite of tools to manage every aspect of your school
+            <p className="text-xl text-gray-600">
+              From early childhood to secondary education, we've got you covered
             </p>
           </div>
 
-          {/* Hero Feature Showcase */}
-          <div className="grid md:grid-cols-2 gap-6 mb-16">
-            <div className="relative h-80 rounded-3xl overflow-hidden group shadow-2xl">
-              <Image
-                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80"
-                alt="Collaborative learning"
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent flex items-end p-8">
-                <div className="text-white">
-                  <h3 className="text-3xl font-black mb-3">Smart Learning</h3>
-                  <p className="text-lg text-white/90">Technology-enhanced education platform</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative h-80 rounded-3xl overflow-hidden group shadow-2xl">
-              <Image
-                src="https://images.unsplash.com/photo-1543269664-7eef42226a21?w=800&q=80"
-                alt="Digital transformation"
-                fill
-                className="object-cover group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-gray-900/40 to-transparent flex items-end p-8">
-                <div className="text-white">
-                  <h3 className="text-3xl font-black mb-3">Digital Transformation</h3>
-                  <p className="text-lg text-white/90">Modernize your school operations</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card
-                key={index}
-                className="group relative border-0 backdrop-blur-xl bg-white/70 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 overflow-hidden"
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-                <CardHeader className="relative z-10">
-                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-5 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 shadow-xl`}>
-                    <feature.icon className="w-8 h-8 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {schoolLevels.map((level, index) => (
+              <Card key={index} className="group hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-0 overflow-hidden">
+                <div className={`h-2 bg-gradient-to-r ${level.color}`}></div>
+                <CardContent className="p-6 text-center">
+                  <div className={`w-16 h-16 mx-auto mb-4 bg-gradient-to-br ${level.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                    <level.icon className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl font-black text-gray-900 mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-orange-600 group-hover:to-blue-600 transition-all duration-300">
-                    {feature.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="relative z-10">
-                  <CardDescription className="text-gray-600 text-base leading-relaxed font-medium">
-                    {feature.description}
-                  </CardDescription>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{level.name}</h3>
+                  <p className="text-gray-600">{level.age}</p>
                 </CardContent>
-                <div className={`absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}></div>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section - Asymmetric Layout */}
-      <section className="py-32 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-orange-900/50 to-blue-900"></div>
-        <div className="absolute inset-0 opacity-20">
-          <Image
-            src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=1920&q=80"
-            alt="Students"
-            fill
-            className="object-cover"
-          />
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            {/* Left: Content */}
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-5 py-2.5 backdrop-blur-xl bg-white/10 border border-white/20 text-white rounded-full text-sm font-bold">
-                <Award className="w-4 h-4" />
-                Why Choose Us
-              </div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white">
-                Built for Excellence
-              </h2>
-              <p className="text-xl text-blue-100 max-w-xl leading-relaxed">
-                Designed specifically for African schools with world-class features and support
-              </p>
+      {/* Features Grid */}
+      <section id="features" className="py-20 px-4 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Powerful Features for Modern Schools
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Everything you need to run your school efficiently, all in one integrated platform
+            </p>
+          </div>
 
-              <div className="space-y-4 pt-8">
-                {[
-                  { icon: Shield, text: 'Bank-level security & data protection', gradient: 'from-green-400 to-emerald-500' },
-                  { icon: Zap, text: 'Lightning-fast performance', gradient: 'from-yellow-400 to-orange-500' },
-                  { icon: TrendingUp, text: 'Real-time analytics & insights', gradient: 'from-blue-400 to-cyan-500' },
-                  { icon: Sparkles, text: 'Modern, intuitive interface', gradient: 'from-purple-400 to-pink-500' },
-                  { icon: Users, text: 'Scalable for any school size', gradient: 'from-indigo-400 to-blue-500' },
-                  { icon: Phone, text: '24/7 dedicated support', gradient: 'from-green-400 to-teal-500' },
-                ].map((benefit, index) => (
-                  <div
-                    key={index}
-                    className="group flex items-start space-x-4 p-5 backdrop-blur-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-500 hover:scale-105 hover:shadow-2xl"
-                  >
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center flex-shrink-0 group-hover:scale-125 group-hover:rotate-12 transition-all duration-500 shadow-lg`}>
-                      <benefit.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <p className="text-lg font-bold text-white pt-2">{benefit.text}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border-0 bg-white overflow-hidden">
+                <CardContent className="p-8">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                    <feature.icon className="w-7 h-7 text-white" />
                   </div>
-                ))}
-              </div>
-            </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-            {/* Right: Visual */}
-            <div className="relative">
-              <div className="relative">
-                <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/30 to-blue-500/30 rounded-3xl blur-2xl"></div>
-                <div className="relative backdrop-blur-2xl bg-white/10 rounded-3xl p-6 border border-white/20 shadow-2xl">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="relative h-48 rounded-xl overflow-hidden group">
-                      <Image
-                        src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&q=80"
-                        alt="Students"
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="relative h-48 rounded-xl overflow-hidden group">
-                      <Image
-                        src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&q=80"
-                        alt="Teacher"
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="relative h-48 rounded-xl overflow-hidden group">
-                      <Image
-                        src="https://images.unsplash.com/photo-1529390079861-9deac712f043?w=600&q=80"
-                        alt="Library"
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="relative h-48 rounded-xl overflow-hidden group">
-                      <Image
-                        src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600&q=80"
-                        alt="Campus"
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {/* CTA */}
+          <div className="text-center mt-12">
+            <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-xl transition-all hover:scale-105">
+              See All Features
+              <ChevronRight className="ml-2 w-5 h-5" />
+            </Button>
           </div>
         </div>
       </section>
 
-      {/* Stats Section - Dynamic */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-white via-orange-50/30 to-blue-50/30">
-        <div className="absolute inset-0 opacity-3">
-          <Image
-            src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=1920&q=80"
-            alt="Classroom"
-            fill
-            className="object-cover"
-          />
+      {/* Interactive Stats */}
+      <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full filter blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-64 h-64 bg-white rounded-full filter blur-3xl animate-pulse animation-delay-2000"></div>
         </div>
+
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { number: '500+', label: 'Schools', sublabel: 'Trusted', gradient: 'from-orange-500 to-amber-500' },
-              { number: '100K+', label: 'Users', sublabel: 'Active', gradient: 'from-blue-500 to-cyan-500' },
-              { number: '10+', label: 'Countries', sublabel: 'Africa', gradient: 'from-green-500 to-emerald-500' },
-              { number: '24/7', label: 'Support', sublabel: 'Available', gradient: 'from-purple-500 to-indigo-500' },
+              { icon: School, number: '500+', label: 'Schools', sublabel: 'Across Africa' },
+              { icon: Users, number: '100K+', label: 'Students', sublabel: 'Active Daily' },
+              { icon: Globe, number: '15+', label: 'Countries', sublabel: 'Coverage' },
+              { icon: TrendingUp, number: '99.9%', label: 'Uptime', sublabel: 'Reliability' },
             ].map((stat, index) => (
-              <div key={index} className="text-center group">
-                <div className={`text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent mb-3 group-hover:scale-110 transition-transform duration-500 inline-block`}>
-                  {stat.number}
-                </div>
-                <div className="text-gray-900 font-black text-xl md:text-2xl mb-1">{stat.label}</div>
-                <div className="text-gray-600 text-sm font-semibold uppercase tracking-wide">{stat.sublabel}</div>
+              <div key={index} className="text-center group cursor-pointer">
+                <stat.icon className="w-12 h-12 mx-auto mb-4 opacity-80 group-hover:scale-110 transition-transform" />
+                <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform">{stat.number}</div>
+                <div className="text-lg font-semibold opacity-90">{stat.label}</div>
+                <div className="text-sm opacity-75">{stat.sublabel}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Quotation Form - Split Layout */}
-      <section id="quotation" className="py-32 px-4 sm:px-6 lg:px-8 relative bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
-            {/* Left: Content */}
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 px-6 py-3 backdrop-blur-xl bg-gradient-to-r from-green-100/80 to-emerald-100/80 border border-green-200/50 rounded-full text-green-700 font-bold shadow-lg">
-                <Mail className="w-5 h-5" />
-                Get Your Quote
-              </div>
-              <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 leading-tight">
-                Request Your
-                <span className="block bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">
-                  Custom Quotation
-                </span>
-              </h2>
-              <p className="text-xl text-gray-600 leading-relaxed font-medium">
-                Tell us about your school and we'll prepare a personalized quote tailored to your specific needs and requirements.
-              </p>
+      {/* Testimonials Carousel */}
+      <section id="testimonials" className="py-20 px-4 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Trusted by School Leaders
+            </h2>
+            <p className="text-xl text-gray-600">
+              See what educators across Africa are saying
+            </p>
+          </div>
 
-              {/* Quick Benefits */}
-              <div className="pt-8 space-y-4">
-                {[
-                  'Custom pricing based on your school size',
-                  'Flexible payment plans available',
-                  'No hidden fees or charges',
-                  'Free setup and onboarding support',
-                ].map((benefit, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700 font-medium">{benefit}</span>
+          <div className="relative">
+            <div className="overflow-hidden rounded-2xl bg-white shadow-xl">
+              <div className="flex transition-transform duration-500" style={{ transform: `translateX(-${activeTestimonial * 100}%)` }}>
+                {testimonials.map((testimonial, index) => (
+                  <div key={index} className="w-full flex-shrink-0 p-12">
+                    <div className="grid md:grid-cols-3 gap-8 items-center">
+                      <div className="md:col-span-1">
+                        <img 
+                          src={testimonial.image}
+                          alt={testimonial.author}
+                          className="w-32 h-32 rounded-full mx-auto object-cover shadow-lg"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <div className="flex mb-4">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                        <p className="text-xl text-gray-700 mb-6 italic">"{testimonial.quote}"</p>
+                        <div>
+                          <p className="font-bold text-gray-900">{testimonial.author}</p>
+                          <p className="text-gray-600">{testimonial.role}</p>
+                          <p className="text-sm text-purple-600 font-semibold">{testimonial.school}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right: Form */}
-            <Card className="border-0 backdrop-blur-xl bg-white/80 shadow-2xl overflow-hidden">
-              <CardContent className="p-8 md:p-12">
-                {submitStatus === 'success' ? (
-                  <div className="text-center space-y-6 py-12">
-                    <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-2xl animate-scale-in">
-                      <CheckCircle2 className="w-14 h-14 text-white" />
-                    </div>
-                    <h3 className="text-3xl font-black text-gray-900">Request Submitted!</h3>
-                    <p className="text-lg text-gray-600 max-w-md mx-auto">
-                      We've received your request and will get back to you within 24 hours with a personalized quote.
-                    </p>
-                    <Button
-                      onClick={() => setSubmitStatus('idle')}
-                      variant="outline"
-                      className="mt-4"
-                    >
-                      Submit Another Request
-                    </Button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label htmlFor="name" className="block text-sm font-black text-gray-700">
-                          Your Name *
-                        </label>
-                        <Input
-                          id="name"
-                          name="name"
-                          type="text"
-                          required
-                          value={formData.name}
-                          onChange={handleChange}
-                          placeholder="John Doe"
-                          className="h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="email" className="block text-sm font-black text-gray-700">
-                          Email *
-                        </label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={handleChange}
-                          placeholder="john@example.com"
-                          className="h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label htmlFor="phone" className="block text-sm font-black text-gray-700">
-                          Phone *
-                        </label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          type="tel"
-                          required
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="+234 123 456 7890"
-                          className="h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="schoolName" className="block text-sm font-black text-gray-700">
-                          School Name *
-                        </label>
-                        <Input
-                          id="schoolName"
-                          name="schoolName"
-                          type="text"
-                          required
-                          value={formData.schoolName}
-                          onChange={handleChange}
-                          placeholder="Your School Name"
-                          className="h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label htmlFor="schoolType" className="block text-sm font-black text-gray-700">
-                          School Type *
-                        </label>
-                        <select
-                          id="schoolType"
-                          name="schoolType"
-                          required
-                          value={formData.schoolType}
-                          onChange={handleChange}
-                          className="w-full h-12 rounded-xl border border-gray-200 backdrop-blur-sm bg-white/50 px-4 py-2 text-base shadow-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-colors"
-                        >
-                          <option value="">Select school type</option>
-                          <option value="primary">Primary School</option>
-                          <option value="secondary">Secondary School</option>
-                          <option value="mixed">Mixed (Primary & Secondary)</option>
-                          <option value="tertiary">Tertiary Institution</option>
-                          <option value="other">Other</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label htmlFor="studentCount" className="block text-sm font-black text-gray-700">
-                          Number of Students
-                        </label>
-                        <Input
-                          id="studentCount"
-                          name="studentCount"
-                          type="number"
-                          value={formData.studentCount}
-                          onChange={handleChange}
-                          placeholder="500"
-                          className="h-12 rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label htmlFor="message" className="block text-sm font-black text-gray-700">
-                        Additional Information
-                      </label>
-                      <Textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        placeholder="Tell us about your specific needs, requirements, or questions..."
-                        rows={5}
-                        className="resize-none rounded-xl border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 backdrop-blur-sm bg-white/50"
-                      />
-                    </div>
-
-                    {submitStatus === 'error' && (
-                      <div className="p-4 backdrop-blur-xl bg-red-50/80 border-2 border-red-200 rounded-xl text-red-700 font-bold">
-                        There was an error submitting your request. Please try again or contact us directly.
-                      </div>
-                    )}
-
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      size="lg"
-                      className="w-full bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white text-lg py-7 rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 font-black disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center justify-center gap-3">
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Submitting...
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          <Send className="w-5 h-5" />
-                          Send Request
-                        </span>
-                      )}
-                    </Button>
-                  </form>
-                )}
-              </CardContent>
-            </Card>
+            {/* Dots */}
+            <div className="flex justify-center gap-2 mt-6">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveTestimonial(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    activeTestimonial === index 
+                      ? 'bg-purple-600 w-8' 
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-32 px-4 sm:px-6 lg:px-8 relative bg-gradient-to-b from-gray-50 to-white">
-        <div className="absolute inset-0 opacity-3">
-          <Image
-            src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1920&q=80"
-            alt="Office"
-            fill
-            className="object-cover"
-          />
-        </div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-20 space-y-6">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900">
-              Get in Touch
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Simple, Transparent Pricing
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 font-medium">
-              Have questions? We're here to help you succeed
+            <p className="text-xl text-gray-600">
+              Choose the perfect plan for your school size
             </p>
-          </div>
-
-          {/* Team Hero */}
-          <div className="relative h-96 rounded-3xl overflow-hidden shadow-2xl mb-16 group">
-            <Image
-              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80"
-              alt="Our team"
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/50 to-transparent flex items-end p-12">
-              <div className="text-white max-w-3xl">
-                <h3 className="text-4xl md:text-5xl font-black mb-4">Expert Support Team</h3>
-                <p className="text-xl text-white/90 font-medium">
-                  Our dedicated team is ready to help you transform your school management experience
-                </p>
-              </div>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: Mail,
-                title: 'Email Us',
-                content: 'info@compasse.africa',
-                link: 'mailto:info@compasse.africa',
-                description: 'Send us an email anytime',
-                gradient: 'from-blue-500 to-cyan-500',
+                name: 'Starter',
+                price: '₦30,000',
+                period: '/month',
+                description: 'Perfect for small schools & nurseries',
+                students: 'Up to 100 students',
+                features: [
+                  'Student & Staff Management',
+                  'Basic Reports',
+                  'Parent Portal',
+                  'SMS Notifications',
+                  'Email Support',
+                ],
+                highlight: false,
+                gradient: 'from-gray-600 to-gray-700',
               },
               {
-                icon: Phone,
-                title: 'Call Us',
-                content: '+234 (0) 123 456 7890',
-                link: 'tel:+2341234567890',
-                description: 'Mon-Fri 9am-5pm WAT',
-                gradient: 'from-green-500 to-emerald-500',
+                name: 'Professional',
+                price: '₦75,000',
+                period: '/month',
+                description: 'Most popular for growing schools',
+                students: 'Up to 500 students',
+                features: [
+                  'Everything in Starter',
+                  'Advanced Analytics',
+                  'Finance Management',
+                  'Library System',
+                  'Priority Support',
+                  'Custom Branding',
+                ],
+                highlight: true,
+                gradient: 'from-purple-600 to-pink-600',
               },
               {
-                icon: MapPin,
-                title: 'Visit Us',
-                content: 'Lagos, Nigeria',
-                link: '#',
-                description: 'Schedule a meeting',
-                gradient: 'from-orange-500 to-amber-500',
+                name: 'Enterprise',
+                price: 'Custom',
+                period: '',
+                description: 'For large institutions',
+                students: 'Unlimited students',
+                features: [
+                  'Everything in Professional',
+                  'Multiple Campuses',
+                  'API Access',
+                  'Dedicated Support',
+                  'Custom Features',
+                  'On-premise Option',
+                ],
+                highlight: false,
+                gradient: 'from-indigo-600 to-blue-600',
               },
-            ].map((contact, index) => (
-              <Card key={index} className="text-center border-0 backdrop-blur-xl bg-white/70 hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 group">
-                <CardContent className="p-8">
-                  <div className={`w-20 h-20 bg-gradient-to-br ${contact.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-125 group-hover:rotate-6 transition-all duration-500 shadow-xl`}>
-                    <contact.icon className="w-10 h-10 text-white" />
+            ].map((plan, index) => (
+              <Card key={index} className={`relative border-0 ${plan.highlight ? 'shadow-2xl scale-105' : 'shadow-lg'} hover:shadow-2xl transition-all`}>
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-full">
+                    RECOMMENDED
                   </div>
-                  <h3 className="text-2xl font-black text-gray-900 mb-2">{contact.title}</h3>
-                  <p className="text-gray-500 mb-4 text-sm font-semibold">{contact.description}</p>
-                  <a
-                    href={contact.link}
-                    className="text-orange-600 hover:text-blue-600 font-black text-lg transition-colors inline-block group/link"
-                  >
-                    {contact.content}
-                    <ArrowRight className="w-4 h-4 inline-block ml-2 group-hover/link:translate-x-1 transition-transform" />
-                  </a>
+                )}
+                <CardContent className="p-8">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <p className="text-gray-600 mb-2">{plan.description}</p>
+                  <p className="text-sm text-purple-600 font-semibold mb-4">{plan.students}</p>
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
+                    <span className="text-gray-600">{plan.period}</span>
+                  </div>
+                  <ul className="space-y-3 mb-8">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className={`w-full bg-gradient-to-r ${plan.gradient} text-white hover:shadow-lg transition-all`}>
+                    {plan.name === 'Enterprise' ? 'Contact Sales' : 'Start Free Trial'}
+                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -925,30 +552,173 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-gray-300 py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
-            <a href="#" className="flex items-center group">
-              <Image
-                src="/logo.jpg"
-                alt="Logo"
-                width={40}
-                height={40}
-                className="rounded-lg object-contain transition-transform group-hover:scale-110"
-              />
-            </a>
-            <div className="flex flex-wrap justify-center gap-8 text-sm font-semibold">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#contact" className="hover:text-white transition-colors">Contact Us</a>
-            </div>
-            <p className="text-sm text-gray-400">
-              &copy; {new Date().getFullYear()} Compasse Africa. All rights reserved.
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Ready to Transform Your School?
+          </h2>
+          <p className="text-xl text-gray-600 mb-8">
+            Join hundreds of African schools already using Compasse
+          </p>
+          
+          <form onSubmit={handleSubmit} className="max-w-md mx-auto space-y-4">
+            <Input
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="h-14 text-lg"
+            />
+            <Button type="submit" size="lg" className="w-full h-14 text-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-xl transition-all hover:scale-105">
+              Start Your Free Trial
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <p className="text-sm text-gray-500">
+              No credit card required • 14-day free trial • Cancel anytime
             </p>
+          </form>
+
+          {/* Additional Trust Indicators */}
+          <div className="flex justify-center gap-8 mt-12 flex-wrap">
+            <div className="flex items-center gap-2 text-gray-700">
+              <Cloud className="w-5 h-5 text-blue-600" />
+              <span>Cloud-Based</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Shield className="w-5 h-5 text-green-600" />
+              <span>SSL Secured</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Smartphone className="w-5 h-5 text-purple-600" />
+              <span>Mobile Ready</span>
+            </div>
+            <div className="flex items-center gap-2 text-gray-700">
+              <Clock className="w-5 h-5 text-orange-600" />
+              <span>24/7 Support</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-xl font-bold">Compasse</span>
+              </div>
+              <p className="text-gray-400">
+                Empowering African schools with modern management solutions.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-bold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition">Features</a></li>
+                <li><a href="#" className="hover:text-white transition">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition">Demo</a></li>
+                <li><a href="#" className="hover:text-white transition">Support</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-bold mb-4">Company</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition">About Us</a></li>
+                <li><a href="#" className="hover:text-white transition">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition">Contact</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-bold mb-4">Contact</h3>
+              <ul className="space-y-3 text-gray-400">
+                <li className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  info@compasse.africa
+                </li>
+                <li className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  +234 123 456 7890
+                </li>
+                <li className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Lagos, Nigeria
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+            <p>© 2025 Compasse Africa. All rights reserved.</p>
           </div>
         </div>
       </footer>
+
+      {/* CSS for Animations */}
+      <style jsx>{`
+        @keyframes blob {
+          0% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+          100% { transform: translate(0px, 0px) scale(1); }
+        }
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+          100% { transform: translateY(0px); }
+        }
+        @keyframes gradient {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 5s ease infinite;
+        }
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+        .animate-fade-in {
+          animation: fadeIn 1s ease-in;
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 1s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   )
 }
