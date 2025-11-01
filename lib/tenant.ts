@@ -4,6 +4,7 @@ import { create } from "zustand"
 // import { getSchoolBySubdomain, type School } from "./auth" // Remove old imports
 // import { getDynamicSchoolBySubdomain, type DynamicSchool } from "./dynamic-schools" // Remove old imports
 import { tenantService, type Tenant } from "@/lib/api/tenants" // Import new tenantService and Tenant interface
+import { getTenantFromHostname } from "@/lib/tenant-server" // Import server-side utility for client use
 
 export interface TenantState {
   currentTenant: Tenant | null // Renamed to currentTenant
@@ -204,58 +205,5 @@ export const useTenant = create<TenantStore>()((set, get) => ({
   },
 }))
 
-export const getTenantFromHostname = (hostname: string) => {
-  const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || "theqcare.org"; // IMPORTANT: Set this in .env.local
-
-  // Ensure BASE_DOMAIN is always a string for split operations
-  const baseDomainParts = BASE_DOMAIN.split('.');
-
-  // Handle localhost development
-  if (hostname === "localhost" || hostname.startsWith("localhost:")) {
-    return {
-      subdomain: null,
-      isSuperAdmin: true,
-    }
-  }
-
-  // Handle subdomains (e.g., demo.yourbase.com)
-  if (hostname.includes(`.${BASE_DOMAIN}`)) {
-    const parts = hostname.split('.')
-    
-    // Check if it's a valid base domain
-    if (parts[parts.length - baseDomainParts.length] === baseDomainParts[0] && parts[parts.length - 1] === baseDomainParts[baseDomainParts.length - 1]) {
-      // If it's the main site (yourbase.com), treat as super admin
-      if (parts.length === baseDomainParts.length) {
-        return {
-          subdomain: null,
-          isSuperAdmin: true,
-        }
-      }
-      
-      // If it's a subdomain (e.g., demo.yourbase.com), extract subdomain
-      if (parts.length > baseDomainParts.length) {
-        return {
-          subdomain: parts[0],
-          isSuperAdmin: false,
-        }
-      }
-    }
-  }
-
-  // For custom domains, we'll rely on `initializeTenant` to fetch all tenants
-  // and match the full hostname to a tenant's domain. Here, we can't definitively
-  // say if it's a tenant or super admin without an API call.
-  // Default to non-super-admin with null subdomain, and initializeTenant will resolve.
-  return {
-    subdomain: null,
-    isSuperAdmin: false, // Assume not super admin unless explicitly matched to base domain or localhost
-  }
-}
-
-// Server-side tenant detection utility (no change here, it uses getTenantFromHostname)
-export const getServerTenant = (request: Request) => {
-  const url = new URL(request.url)
-  const hostname = url.hostname
-
-  return getTenantFromHostname(hostname)
-}
+// Re-export for backward compatibility (client can still use getTenantFromHostname)
+export { getTenantFromHostname }

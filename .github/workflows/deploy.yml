@@ -93,9 +93,17 @@ jobs:
             # Make sure ecosystem.config.js exists
             if [ ! -f "ecosystem.config.js" ]; then
               echo "⚠️ ecosystem.config.js not found, starting with npm"
-              pm2 start npm --name "my-compasse-app" -- start || exit 1
+              PORT=9000 pm2 start npm --name "my-compasse-app" -- start || exit 1
             else
-              pm2 start ecosystem.config.js || pm2 start npm --name "my-compasse-app" -- start || exit 1
+              pm2 start ecosystem.config.js || PORT=9000 pm2 start npm --name "my-compasse-app" -- start || exit 1
+            fi
+            
+            # Wait a bit and check if it started successfully
+            sleep 3
+            if ! pm2 list | grep -q "my-compasse-app.*online"; then
+              echo "⚠️ PM2 app may not have started correctly, showing full status:"
+              pm2 list
+              pm2 logs my-compasse-app --lines 20 --nostream
             fi
             
             echo "💾 Saving PM2 configuration..."
@@ -107,8 +115,18 @@ jobs:
             echo "📊 PM2 Process Status:"
             pm2 list
             
-            echo "📋 Recent PM2 Logs:"
-            pm2 logs my-compasse-app --lines 30 --nostream || echo "⚠️ Could not fetch logs"
+            echo "📋 Recent PM2 Logs (errors first):"
+            pm2 logs my-compasse-app --err --lines 50 --nostream || echo "⚠️ Could not fetch error logs"
+            echo ""
+            echo "📋 Recent PM2 Logs (all):"
+            pm2 logs my-compasse-app --lines 50 --nostream || echo "⚠️ Could not fetch logs"
+            
+            echo "🔍 Checking PM2 process details:"
+            pm2 describe my-compasse-app || echo "⚠️ Could not describe process"
+            
+            echo "🔍 Checking for runtime errors..."
+            # Check if app is actually responding
+            curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" http://localhost:9000 || echo "⚠️ App not responding on localhost:9000"
             
             echo "🔍 Checking port status..."
             if netstat -tlnp 2>/dev/null | grep -q ":9000"; then
