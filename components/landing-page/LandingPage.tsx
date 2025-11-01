@@ -214,7 +214,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto w-full">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div className="text-center lg:text-left space-y-8 animate-fade-in-up">
+            <div className="text-center lg:text-left space-y-8">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 border border-orange-200 rounded-full">
                 <Network className="w-4 h-4 text-[#FFA500] animate-pulse" />
                 <span className="text-sm font-semibold text-[#003366]">Trusted by 500+ African Schools</span>
@@ -226,7 +226,7 @@ export function LandingPage() {
                 <span className="bg-gradient-to-r from-[#FFA500] to-[#FF8C00] bg-clip-text text-transparent animate-gradient">
                   Management System
                 </span>
-              </h1>
+            </h1>
 
               <p className="text-xl text-gray-600 max-w-lg">
                 Complete solution for Pre-Schools, Creches, Primary & Secondary Schools across Africa. 
@@ -346,7 +346,7 @@ export function LandingPage() {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Everything you need to run your school efficiently, all in one integrated platform
             </p>
-          </div>
+            </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
@@ -360,7 +360,7 @@ export function LandingPage() {
                 </CardContent>
               </Card>
             ))}
-          </div>
+            </div>
 
           {/* CTA */}
           <div className="text-center mt-12">
@@ -368,8 +368,8 @@ export function LandingPage() {
               See All Features
               <ChevronRight className="ml-2 w-5 h-5" />
             </Button>
-          </div>
-        </div>
+            </div>
+            </div>
       </section>
 
       {/* Interactive Stats */}
@@ -377,7 +377,7 @@ export function LandingPage() {
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full filter blur-3xl animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#FFA500] rounded-full filter blur-3xl animate-pulse animation-delay-2000"></div>
-        </div>
+            </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -392,7 +392,7 @@ export function LandingPage() {
                 <div className="text-4xl md:text-5xl font-bold mb-2 group-hover:scale-110 transition-transform">{stat.number}</div>
                 <div className="text-lg font-semibold">{stat.label}</div>
                 <div className="text-sm opacity-75">{stat.sublabel}</div>
-              </div>
+            </div>
             ))}
           </div>
         </div>
@@ -437,9 +437,9 @@ export function LandingPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+            </div>
                 ))}
-              </div>
+            </div>
             </div>
 
             {/* Dots */}
@@ -538,7 +538,7 @@ export function LandingPage() {
                   <div className="mb-6">
                     <span className="text-4xl font-bold text-[#003366]">{plan.price}</span>
                     <span className="text-gray-600">{plan.period}</span>
-                  </div>
+            </div>
                   <ul className="space-y-3 mb-8">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-center gap-3">
