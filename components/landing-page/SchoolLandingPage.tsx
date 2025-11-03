@@ -270,8 +270,10 @@ export function SchoolLandingPage() {
   }, [])
 
   // Format subdomain to proper school name
-  const formatSchoolName = (sub: string | null): string => {
-    if (!sub) return 'Excellence Academy'
+  const formatSchoolName = (sub: string | null, tenantName?: string): string => {
+    // Prioritize tenant name if available
+    if (tenantName) return tenantName
+    if (!sub) return 'School'
     // Convert subdomain to proper case and add appropriate suffix
     const formatted = sub
       .split('-')
@@ -299,12 +301,11 @@ export function SchoolLandingPage() {
     )
   }
 
-  const displayName = currentTenant?.name || formatSchoolName(subdomain)
-  const schoolDomain = subdomain || 'excellence'
+  const displayName = currentTenant?.name || formatSchoolName(subdomain, currentTenant?.name)
+  const schoolDomain = subdomain || currentTenant?.domain?.split('.')[0] || 'school'
 
   return (
     <>
-      <style jsx global>{customStyles}</style>
       <div className="min-h-screen bg-white">
       {/* Professional Navigation Bar */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
@@ -699,7 +700,7 @@ export function SchoolLandingPage() {
                 <MapPin className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Visit Us</h3>
-              <p className="text-slate-600">123 Education Avenue<br />Excellence City, EC 12345</p>
+              <p className="text-slate-600">{currentTenant?.domain || '123 Education Avenue'}<br />{displayName} Campus</p>
             </div>
             
             <div className="text-center">
