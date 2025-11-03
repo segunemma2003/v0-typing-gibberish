@@ -12,9 +12,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 // import { useAuth } from "@/hooks/use-auth" // Remove old useAuth hook
 import { useTenant } from "@/lib/tenant"
 import { getPortalRoute } from "@/lib/auth"
-import { Building2 } from "lucide-react"
+import { Building2, School } from "lucide-react"
 import { useLogin, useMe } from "@/lib/api/auth" // Import new useLogin and useMe hooks
 import { useQueryClient } from "@tanstack/react-query"
+import Image from "next/image"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -22,9 +23,18 @@ export function LoginForm() {
   const [error, setError] = useState("")
   // const { login, isLoading } = useAuth() // Old useAuth destructuring
   const { mutate: loginUser, isPending: isLoading, isError, error: loginError } = useLogin() // New useLogin hook
-  const { currentSchool } = useTenant()
+  const { currentTenant, subdomain } = useTenant()
   const router = useRouter()
   const queryClient = useQueryClient();
+
+  // Map currentTenant to currentSchool for backward compatibility
+  const currentSchool = currentTenant ? {
+    id: currentTenant.id.toString(),
+    name: currentTenant.name,
+    subdomain: subdomain || null,
+  } : null
+  
+  const schoolName = currentTenant?.name || (subdomain ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} School` : 'Compasse')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,8 +42,8 @@ export function LoginForm() {
 
     console.log("=== LOGIN ATTEMPT ===")
     console.log("Email:", email)
-    console.log("Current School:", currentSchool?.name)
-    console.log("Current School ID:", currentSchool?.id)
+    console.log("Current School:", currentTenant?.name || schoolName)
+    console.log("Current Tenant ID:", currentTenant?.id)
     console.log("Hostname:", typeof window !== 'undefined' ? window.location.hostname : 'N/A')
 
     loginUser({ email, password }, {
@@ -74,12 +84,12 @@ export function LoginForm() {
           }
           
           // Check if user belongs to current school
-          // This also needs adjustment based on the new API's `user.tenant` structure vs `currentSchool`
-          // For now, comparing `user.tenant.id` with `currentSchool.id` if available.
-          if (currentSchool && user.tenant && user.tenant.id !== currentSchool.id) {
+          // This also needs adjustment based on the new API's `user.tenant` structure vs `currentTenant`
+          // For now, comparing `user.tenant.id` with `currentTenant.id` if available.
+          if (currentTenant && user.tenant && user.tenant.id !== currentTenant.id) {
             console.log("=== SCHOOL MISMATCH ===")
             console.log("User Tenant ID:", user.tenant.id)
-            console.log("Current School ID:", currentSchool.id)
+            console.log("Current Tenant ID:", currentTenant.id)
             setError("You don't have access to this school")
             // useAuth.getState().logout() // Old logout, handled by `apiClient` or a separate `useLogout`
             localStorage.removeItem('token'); // Manually remove token if needed, or rely on global logout
@@ -106,14 +116,20 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        {currentSchool && (
+        {currentTenant ? (
+          <div className="mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
+              <School className="w-8 h-8 text-white" />
+            </div>
+          </div>
+        ) : (
           <div className="mx-auto w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mb-4">
             <Building2 className="w-6 h-6 text-white" />
           </div>
         )}
-        <CardTitle className="text-2xl font-bold">{currentSchool ? currentSchool.name : "Compasse"}</CardTitle>
+        <CardTitle className="text-2xl font-bold">{schoolName}</CardTitle>
         <CardDescription>
-          {currentSchool ? `Sign in to ${currentSchool.name} portal` : "Sign in to your school portal"}
+          {currentTenant ? `Sign in to ${currentTenant.name} portal` : "Sign in to your school portal"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -149,38 +165,21 @@ export function LoginForm() {
             {isLoading ? "Signing in..." : "Sign In"}
           </Button>
         </form>
-        <div className="mt-4 text-sm text-muted-foreground">
-          <p>Demo credentials for {currentSchool?.name}:</p>
-          {currentSchool?.subdomain === 'demo' && (
-            <>
-              <p>admin@school.edu / password123</p>
-              <p>teacher@school.edu / password123</p>
-              <p>student@school.edu / password123</p>
-              <p>parent@school.edu / password123</p>
-            </>
-          )}
-          {currentSchool?.subdomain === 'test' && (
-            <>
-              <p>admin@test.edu / password123</p>
-              <p>teacher@test.edu / password123</p>
-              <p>student@test.edu / password123</p>
-            </>
-          )}
-          {currentSchool?.subdomain === 'greenwood' && (
-            <>
-              <p>admin@greenwood.edu / password123</p>
-              <p>teacher@greenwood.edu / password123</p>
-              <p>student@greenwood.edu / password123</p>
-            </>
-          )}
-          {currentSchool?.subdomain === 'riverside' && (
-            <>
-              <p>admin@riverside.edu / password123</p>
-              <p>teacher@riverside.edu / password123</p>
-              <p>student@riverside.edu / password123</p>
-            </>
-          )}
-        </div>
+        {currentTenant && (
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p className="font-semibold mb-2">Sign in to {currentTenant.name}</p>
+            {subdomain === 'demo' && (
+              <>
+                <p className="text-xs">Demo: admin@school.edu / password123</p>
+              </>
+            )}
+            {subdomain === 'test' && (
+              <>
+                <p className="text-xs">Demo: admin@test.edu / password123</p>
+              </>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   )

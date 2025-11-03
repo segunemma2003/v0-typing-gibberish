@@ -50,9 +50,132 @@ import {
   Brain,
   Rocket,
   Play,
+  Camera,
+  Eye,
 } from 'lucide-react'
 import { useTenant } from '@/lib/tenant'
 import Link from 'next/link'
+
+// Add custom styles for animations
+const customStyles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-slideIn {
+    animation: slideIn 0.6s ease-out;
+  }
+  
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+`
+
+// Professional school imagery - using high-quality educational institution photos
+const schoolGallery = [
+  {
+    url: 'https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=80',
+    title: 'Main Campus Building',
+    category: 'Campus',
+    description: 'Our historic main building featuring modern classrooms and administrative offices',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1200&q=80',
+    title: 'University Hall',
+    category: 'Academic',
+    description: 'State-of-the-art lecture halls with advanced technology',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1200&q=80',
+    title: 'Student Life',
+    category: 'Students',
+    description: 'Vibrant student community and collaborative learning',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1200&q=80',
+    title: 'Central Library',
+    category: 'Library',
+    description: 'Extensive collection with over 100,000 books and digital resources',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=1200&q=80',
+    title: 'Sports Complex',
+    category: 'Athletics',
+    description: 'Olympic-standard sports facilities for all students',
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200&q=80',
+    title: 'Modern Classrooms',
+    category: 'Facilities',
+    description: 'Interactive learning spaces with smart boards and technology',
+  },
+]
+
+// Featured facilities with stunning imagery
+const featuredFacilities = [
+  {
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80',
+    title: 'Science & Research Center',
+    description: 'Advanced laboratories for physics, chemistry, and biology',
+    features: ['30+ Lab Stations', '3D Microscopes', 'Research Equipment'],
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80',
+    title: 'Digital Learning Hub',
+    description: 'Technology-enabled learning with cutting-edge resources',
+    features: ['200+ Computers', 'VR Lab', 'Coding Studios'],
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80',
+    title: 'Student Residence',
+    description: 'Comfortable boarding facilities with modern amenities',
+    features: ['24/7 Security', 'Study Lounges', 'Recreation Areas'],
+  },
+]
+
+// Campus life imagery
+const campusLife = [
+  {
+    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&q=80',
+    title: 'Collaborative Learning',
+    icon: Users,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80',
+    title: 'Group Studies',
+    icon: BookOpen,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80',
+    title: 'Campus Events',
+    icon: Calendar,
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=800&q=80',
+    title: 'Outdoor Activities',
+    icon: Dumbbell,
+  },
+]
 
 // Portal Access Cards with refined design
 const portalAccess = [
@@ -136,6 +259,7 @@ export function SchoolLandingPage() {
   const { currentTenant, subdomain, isLoading } = useTenant()
   const [mounted, setMounted] = useState(false)
   const [activeTestimonial, setActiveTestimonial] = useState(0)
+  const [selectedGalleryImage, setSelectedGalleryImage] = useState(0)
 
   useEffect(() => {
     setMounted(true)
@@ -144,6 +268,25 @@ export function SchoolLandingPage() {
     }, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  // Format subdomain to proper school name
+  const formatSchoolName = (sub: string | null): string => {
+    if (!sub) return 'Excellence Academy'
+    // Convert subdomain to proper case and add appropriate suffix
+    const formatted = sub
+      .split('-')
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+    
+    // Add appropriate suffix if not already present
+    const suffixes = ['School', 'Academy', 'Institute', 'College', 'High', 'Prep']
+    const hasSuffix = suffixes.some(suffix => formatted.toLowerCase().includes(suffix.toLowerCase()))
+    
+    if (!hasSuffix) {
+      return `${formatted} Academy`
+    }
+    return formatted
+  }
 
   if (!mounted || isLoading) {
     return (
@@ -156,11 +299,13 @@ export function SchoolLandingPage() {
     )
   }
 
-  const schoolName = currentTenant?.name || (subdomain ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} School` : 'Excellence Academy')
-  const displayName = currentTenant?.name || schoolName
+  const displayName = currentTenant?.name || formatSchoolName(subdomain)
+  const schoolDomain = subdomain || 'excellence'
 
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      <style jsx global>{customStyles}</style>
+      <div className="min-h-screen bg-white">
       {/* Professional Navigation Bar */}
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -196,48 +341,51 @@ export function SchoolLandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section with Video Background Effect */}
-      <section className="relative min-h-[600px] bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 overflow-hidden">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full filter blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-500 rounded-full filter blur-3xl animate-pulse animation-delay-2000"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full filter blur-3xl animate-pulse animation-delay-4000"></div>
+      {/* Hero Section with Beautiful Campus Image */}
+      <section className="relative min-h-[700px] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <img 
+            src="https://images.unsplash.com/photo-1562774053-701939374585?w=1920&q=80" 
+            alt="School Campus"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/60"></div>
         </div>
         
-        {/* Grid Pattern Overlay */}
+        {/* Animated Overlay Pattern */}
         <div 
-          className="absolute inset-0 opacity-20"
+          className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' width='60' height='60' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 60 0 L 0 0 0 60' fill='none' stroke='white' stroke-width='0.5' opacity='0.1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)'/%3E%3C/svg%3E")`,
           }}
         ></div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
-              <span className="text-white font-medium">Admissions Open 2025</span>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full mb-8 border border-white/20">
+              <Sparkles className="w-5 h-5 text-yellow-400" />
+              <span className="text-white font-semibold text-sm tracking-wide">ADMISSIONS OPEN 2025-2026</span>
             </div>
             
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
               Welcome to
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-300 to-white">
                 {displayName}
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto mb-8 leading-relaxed">
-              Nurturing minds, building futures. Join our community of excellence where every student discovers their potential.
+            <p className="text-xl md:text-2xl text-gray-100 max-w-3xl mx-auto mb-10 leading-relaxed font-light">
+              Where Excellence Meets Opportunity. Empowering students to achieve their dreams through world-class education and holistic development.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 shadow-xl">
+              <Button size="lg" className="bg-white text-slate-900 hover:bg-gray-100 shadow-2xl font-semibold px-8">
                 <Play className="mr-2 w-5 h-5" />
-                Virtual Tour
+                Take Virtual Tour
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 backdrop-blur-md">
-                Download Prospectus
+              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white/10 backdrop-blur-md font-semibold px-8">
+                Download Brochure
                 <FileText className="ml-2 w-5 h-5" />
               </Button>
             </div>
@@ -246,41 +394,108 @@ export function SchoolLandingPage() {
         
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <ChevronRight className="w-6 h-6 text-white rotate-90" />
+          <ChevronRight className="w-8 h-8 text-white rotate-90 drop-shadow-lg" />
         </div>
       </section>
 
-      {/* Portal Access Section */}
-      <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
+      {/* Beautiful Campus Gallery */}
+      <section className="py-20 bg-gradient-to-b from-white to-slate-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Access Your Portal</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Our Beautiful Campus</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Secure login for administrators, teachers, students, and parents
+              Explore our state-of-the-art facilities designed to inspire learning and growth
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* Main Featured Image */}
+            <div className="relative h-[500px] rounded-2xl overflow-hidden group">
+              <img 
+                src={schoolGallery[selectedGalleryImage].url}
+                alt={schoolGallery[selectedGalleryImage].title}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-8">
+                <span className="inline-block px-3 py-1 bg-blue-600 text-white text-sm font-semibold rounded-full mb-3">
+                  {schoolGallery[selectedGalleryImage].category}
+                </span>
+                <h3 className="text-3xl font-bold text-white mb-2">
+                  {schoolGallery[selectedGalleryImage].title}
+                </h3>
+                <p className="text-gray-200">
+                  {schoolGallery[selectedGalleryImage].description}
+                </p>
+              </div>
+            </div>
+            
+            {/* Thumbnail Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {schoolGallery.map((image, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedGalleryImage(index)}
+                  className={`relative h-[238px] rounded-xl overflow-hidden cursor-pointer group ${
+                    selectedGalleryImage === index ? 'ring-4 ring-blue-600 ring-offset-2' : ''
+                  }`}
+                >
+                  <img 
+                    src={image.url}
+                    alt={image.title}
+                    className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110 group-hover:brightness-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute bottom-4 left-4 right-4 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white font-semibold text-sm">{image.title}</p>
+                  </div>
+                  {selectedGalleryImage === index && (
+                    <div className="absolute top-4 right-4">
+                      <Eye className="w-5 h-5 text-white drop-shadow-lg" />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Portal Access Section - Enhanced */}
+      <section className="py-20 bg-gradient-to-b from-white to-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full mb-4">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-semibold text-blue-900">SECURE ACCESS</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Portal Login</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Access your personalized dashboard and resources
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {portalAccess.map((portal, index) => (
               <Link key={index} href={portal.href}>
-                <Card className="group h-full hover:shadow-2xl transition-all duration-300 border-slate-200 overflow-hidden cursor-pointer">
-                  <div className={`h-2 bg-gradient-to-r ${portal.gradient}`}></div>
+                <Card className="group h-full hover:shadow-2xl transition-all duration-500 border-0 bg-white overflow-hidden cursor-pointer transform hover:-translate-y-2">
+                  <div className={`h-1 bg-gradient-to-r ${portal.gradient}`}></div>
                   <CardContent className="p-6">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${portal.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <portal.icon className="w-7 h-7 text-white" />
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${portal.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
+                      <portal.icon className="w-8 h-8 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">{portal.title}</h3>
-                    <p className="text-slate-600 text-sm mb-4">{portal.description}</p>
-                    <ul className="space-y-1 mb-4">
+                    <p className="text-slate-600 text-sm mb-4 line-clamp-2">{portal.description}</p>
+                    <ul className="space-y-2 mb-4">
                       {portal.features.map((feature, idx) => (
                         <li key={idx} className="text-sm text-slate-500 flex items-center">
-                          <CheckCircle className="w-3 h-3 text-green-500 mr-2" />
-                          {feature}
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
+                          <span className="line-clamp-1">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="flex items-center text-blue-600 font-medium group-hover:gap-3 transition-all">
-                      Access Portal
+                    <div className="flex items-center text-blue-600 font-semibold group-hover:gap-3 transition-all">
+                      Login Now
                       <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </CardContent>
@@ -332,25 +547,69 @@ export function SchoolLandingPage() {
         </div>
       </section>
 
-      {/* Campus Facilities */}
-      <section id="facilities" className="py-20 bg-gradient-to-b from-slate-50 to-white">
+      {/* Featured Facilities with Images */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">World-Class Facilities</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">World-Class Facilities</h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Modern infrastructure to support holistic development
+              Modern infrastructure designed for 21st-century learning
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {facilities.map((facility, index) => (
-              <div key={index} className="flex items-start gap-4 p-6 bg-white rounded-2xl hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <facility.icon className="w-6 h-6 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredFacilities.map((facility, index) => (
+              <Card key={index} className="group overflow-hidden hover:shadow-2xl transition-all duration-500">
+                <div className="relative h-64 overflow-hidden">
+                  <img 
+                    src={facility.image}
+                    alt={facility.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">{facility.title}</h3>
-                  <p className="text-slate-600 text-sm">{facility.desc}</p>
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">{facility.title}</h3>
+                  <p className="text-slate-600 mb-4">{facility.description}</p>
+                  <div className="space-y-2">
+                    {facility.features.map((feature, idx) => (
+                      <div key={idx} className="flex items-center text-sm text-slate-500">
+                        <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
+                        {feature}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Campus Life Photo Grid */}
+      <section className="py-20 bg-gradient-to-b from-slate-50 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Campus Life</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+              Experience the vibrant community and endless opportunities
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {campusLife.map((item, index) => (
+              <div key={index} className="relative group overflow-hidden rounded-2xl">
+                <div className="aspect-square">
+                  <img 
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:brightness-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4">
+                    <item.icon className="w-6 h-6 text-white mb-2" />
+                    <p className="text-white font-semibold">{item.title}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -456,7 +715,7 @@ export function SchoolLandingPage() {
                 <Mail className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-lg font-semibold text-slate-900 mb-2">Email Us</h3>
-              <p className="text-slate-600">info@{subdomain || 'excellence'}.edu<br />admissions@{subdomain || 'excellence'}.edu</p>
+              <p className="text-slate-600">info@{schoolDomain}.edu<br />admissions@{schoolDomain}.edu</p>
             </div>
           </div>
         </div>
@@ -518,5 +777,6 @@ export function SchoolLandingPage() {
         </div>
       </footer>
     </div>
+    </>
   )
 }
