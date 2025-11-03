@@ -36,6 +36,7 @@ export function middleware(request: NextRequest) {
     // Define an array of allowed top-level role-specific routes (login pages)
     const allowedBaseRoutes = [
       "/",
+      "/login",
       "/super-admin",
       "/admin",
       "/teacher",
@@ -47,6 +48,9 @@ export function middleware(request: NextRequest) {
       "/quiz",
       "/transport",
     ];
+
+    // Allow subdomains to access root path for school landing page
+    // No redirect needed - the page component will handle showing school landing page
 
     // If it's the base domain (e.g., compasse.net) AND no tenant subdomain is detected
     // AND the current path is NOT one of the allowed base routes, then redirect to home.
