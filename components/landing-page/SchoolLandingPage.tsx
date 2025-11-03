@@ -261,6 +261,31 @@ export function SchoolLandingPage() {
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(0)
 
+  // Fallback: Extract subdomain directly from hostname if tenant hook doesn't provide it
+  const getSubdomainFromHostname = (): string | null => {
+    if (typeof window === 'undefined') return null
+    const hostname = window.location.hostname
+    const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'compasse.net'
+    
+    // Handle localhost
+    if (hostname === 'localhost' || hostname.startsWith('localhost:')) {
+      return null
+    }
+    
+    // Check if hostname contains base domain
+    if (hostname.includes(`.${BASE_DOMAIN}`)) {
+      const parts = hostname.split('.')
+      const baseDomainParts = BASE_DOMAIN.split('.')
+      
+      // If it's a subdomain (e.g., test.compasse.net)
+      if (parts.length > baseDomainParts.length) {
+        return parts[0] // Return the first part as subdomain
+      }
+    }
+    
+    return null
+  }
+
   useEffect(() => {
     setMounted(true)
     const interval = setInterval(() => {
@@ -272,8 +297,11 @@ export function SchoolLandingPage() {
   // Debug: Log subdomain and tenant info
   useEffect(() => {
     if (mounted) {
-      console.log('SchoolLandingPage - Subdomain:', subdomain)
+      const detectedSubdomain = subdomain || getSubdomainFromHostname()
+      console.log('SchoolLandingPage - Subdomain from hook:', subdomain)
+      console.log('SchoolLandingPage - Subdomain from hostname:', getSubdomainFromHostname())
       console.log('SchoolLandingPage - CurrentTenant:', currentTenant)
+      console.log('SchoolLandingPage - Final subdomain:', detectedSubdomain)
     }
   }, [mounted, subdomain, currentTenant])
 
@@ -295,9 +323,12 @@ export function SchoolLandingPage() {
     )
   }
 
+  // Get subdomain from hook or fallback to hostname extraction
+  const detectedSubdomain = subdomain || getSubdomainFromHostname()
+  
   // Always prioritize currentTenant name, then format subdomain if available
-  const displayName = currentTenant?.name || (subdomain ? formatSchoolName(subdomain) : 'School')
-  const schoolDomain = subdomain || currentTenant?.domain?.split('.')[0] || 'school'
+  const displayName = currentTenant?.name || (detectedSubdomain ? formatSchoolName(detectedSubdomain) : 'School')
+  const schoolDomain = detectedSubdomain || currentTenant?.domain?.split('.')[0] || 'school'
 
   return (
     <>
