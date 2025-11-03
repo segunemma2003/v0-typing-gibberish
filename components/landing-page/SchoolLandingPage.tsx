@@ -269,25 +269,19 @@ export function SchoolLandingPage() {
     return () => clearInterval(interval)
   }, [])
 
-  // Format subdomain to proper school name
-  const formatSchoolName = (sub: string | null, tenantName?: string): string => {
-    // Prioritize tenant name if available
-    if (tenantName) return tenantName
-    if (!sub) return 'School'
-    // Convert subdomain to proper case and add appropriate suffix
-    const formatted = sub
-      .split('-')
-      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
-    
-    // Add appropriate suffix if not already present
-    const suffixes = ['School', 'Academy', 'Institute', 'College', 'High', 'Prep']
-    const hasSuffix = suffixes.some(suffix => formatted.toLowerCase().includes(suffix.toLowerCase()))
-    
-    if (!hasSuffix) {
-      return `${formatted} Academy`
+  // Debug: Log subdomain and tenant info
+  useEffect(() => {
+    if (mounted) {
+      console.log('SchoolLandingPage - Subdomain:', subdomain)
+      console.log('SchoolLandingPage - CurrentTenant:', currentTenant)
     }
-    return formatted
+  }, [mounted, subdomain, currentTenant])
+
+  // Format subdomain to proper school name (capitalize first letter)
+  const formatSchoolName = (sub: string): string => {
+    if (!sub) return 'School'
+    // Simply capitalize first letter: "test" -> "Test", "greenwood-high" -> "Greenwood-high"
+    return sub.charAt(0).toUpperCase() + sub.slice(1)
   }
 
   if (!mounted || isLoading) {
@@ -301,7 +295,8 @@ export function SchoolLandingPage() {
     )
   }
 
-  const displayName = currentTenant?.name || formatSchoolName(subdomain, currentTenant?.name)
+  // Always prioritize currentTenant name, then format subdomain if available
+  const displayName = currentTenant?.name || (subdomain ? formatSchoolName(subdomain) : 'School')
   const schoolDomain = subdomain || currentTenant?.domain?.split('.')[0] || 'school'
 
   return (
