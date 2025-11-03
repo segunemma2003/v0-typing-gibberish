@@ -19,9 +19,15 @@ export function TenantGuard({
   requireSuperAdmin = false,
   allowedRoles = [],
 }: TenantGuardProps) {
-  const { currentSchool, isSuperAdmin, isLoading: tenantLoading } = useTenant()
+  const { currentTenant, isSuperAdmin, isLoading: tenantLoading } = useTenant()
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
   const router = useRouter()
+  
+  // Map currentTenant to currentSchool for backward compatibility
+  const currentSchool = currentTenant ? {
+    id: currentTenant.id.toString(),
+    name: currentTenant.name,
+  } : null
 
   useEffect(() => {
     console.log("TenantGuard: Checking permissions", {
@@ -44,7 +50,7 @@ export function TenantGuard({
     // Check super admin requirement
     if (requireSuperAdmin && !isSuperAdmin) {
       console.log("TenantGuard: Redirecting - Super admin required but not super admin")
-      router.push("/")
+      router.push("/login")
       return
     }
 
@@ -53,37 +59,37 @@ export function TenantGuard({
       console.log("TenantGuard: Redirecting - School required but no current school")
       console.log("TenantGuard: Debug info:", {
         hostname: typeof window !== 'undefined' ? window.location.hostname : 'N/A',
-        subdomain,
         isSuperAdmin,
         tenantLoading,
         authLoading,
         currentSchool: currentSchool?.name || 'None'
       })
-      router.push("/")
+      router.push("/login")
       return
     }
 
     // Check authentication
     if (!isAuthenticated || !user) {
       console.log("TenantGuard: Redirecting - Not authenticated")
-      router.push("/")
+      router.push("/login")
       return
     }
 
     // Check role permissions
     if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
       console.log("TenantGuard: Redirecting - Role not allowed", { userRole: user.role, allowedRoles })
-      router.push("/")
+      router.push("/login")
       return
     }
 
     // Check if user belongs to current school (for non-super admin)
-    if (!isSuperAdmin && currentSchool && user.schoolId !== currentSchool.id) {
+    // Note: This check might need adjustment based on your API structure
+    if (!isSuperAdmin && currentSchool && user.tenant && user.tenant.id !== currentTenant?.id) {
       console.log("TenantGuard: Redirecting - User doesn't belong to current school", {
-        userSchoolId: user.schoolId,
-        currentSchoolId: currentSchool.id
+        userTenantId: user.tenant.id,
+        currentTenantId: currentTenant?.id
       })
-      router.push("/")
+      router.push("/login")
       return
     }
 
@@ -94,6 +100,7 @@ export function TenantGuard({
     requireSchool,
     requireSuperAdmin,
     allowedRoles,
+    currentTenant,
     currentSchool,
     isSuperAdmin,
     isAuthenticated,
@@ -118,7 +125,7 @@ export function TenantGuard({
   if (requireSchool && !currentSchool) return null
   if (!isAuthenticated || !user) return null
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) return null
-  if (!isSuperAdmin && currentSchool && user.schoolId !== currentSchool.id) return null
+  if (!isSuperAdmin && currentTenant && user.tenant && user.tenant.id !== currentTenant.id) return null
 
   return <>{children}</>
 }
