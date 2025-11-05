@@ -2,8 +2,12 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+if (!API_BASE_URL) {
+  console.warn('⚠️ NEXT_PUBLIC_API_BASE_URL is not set. API calls may fail.');
+}
+
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || 'http://31.97.155.60:8078',
   headers: {
     'Content-Type': 'application/json',
   },
