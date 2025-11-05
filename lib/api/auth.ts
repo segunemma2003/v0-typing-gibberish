@@ -36,6 +36,13 @@ interface RegisterRequest extends LoginRequest {
 export const authService = {
   register: async (data: RegisterRequest): Promise<AuthResponse> => {
     const response = await apiClient.post('/auth/register', data);
+    // Store token on successful registration
+    if (response.data.token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        console.log('✅ Token stored after registration');
+      }
+    }
     return response.data;
   },
 
@@ -43,7 +50,12 @@ export const authService = {
     const response = await apiClient.post('/auth/login', data);
     // Store token on successful login
     if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        console.log('✅ Token stored in localStorage:', response.data.token.substring(0, 20) + '...');
+      }
+    } else {
+      console.warn('⚠️ No token in login response');
     }
     return response.data;
   },
@@ -56,7 +68,10 @@ export const authService = {
   logout: async (): Promise<{ message: string }> => {
     const response = await apiClient.post('/auth/logout');
     // Clear token on logout
-    localStorage.removeItem('token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      console.log('✅ Token cleared from localStorage');
+    }
     return response.data;
   },
 };
@@ -93,11 +108,8 @@ export const useMe = () => {
     queryFn: authService.me,
     staleTime: 1000 * 60 * 5, // 5 minutes
     // You might want to enable this query only if a token exists
-    enabled: !!localStorage.getItem('token'),
-    // Optional: Handle redirection if unauthorized (e.g., in apiClient interceptor)
-    onError: (error) => {
-      console.error('Failed to fetch user data', error);
-    },
+    enabled: typeof window !== 'undefined' ? !!localStorage.getItem('token') : false,
+    retry: false, // Don't retry on error to avoid infinite loops
   });
 };
 

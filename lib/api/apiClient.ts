@@ -28,9 +28,15 @@ const apiClient = axios.create({
 // Request interceptor to add the authorization token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only access localStorage on client-side
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+        console.log('🔑 Token added to request:', token.substring(0, 20) + '...');
+      } else {
+        console.warn('⚠️ No token found in localStorage');
+      }
     }
     return config;
   },
@@ -39,19 +45,44 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token expiration or refresh (optional, more advanced)
+// Response interceptor to handle token expiration or refresh
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Log successful authenticated requests
+    if (response.config.headers?.Authorization) {
+      console.log('✅ Authenticated request successful:', response.config.url);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
-    // Example: If 401 Unauthorized and not a login/refresh request
+    
+    // Handle network errors or errors without response
+    if (!error.response) {
+      console.error('❌ Network error or no response:', error.message);
+      return Promise.reject(error);
+    }
+    
+    // Handle 401 Unauthorized - token expired or invalid
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      // Here you might try to refresh the token
-      // For simplicity, we'll just clear token and redirect to login
-      localStorage.removeItem('token');
-      // window.location.href = '/login'; // Redirect to login page
+      console.warn('⚠️ 401 Unauthorized - Clearing token');
+      
+      // Clear token on client-side only
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        // Optionally redirect to login page
+        // window.location.href = '/login';
+      }
     }
+    
+    // Log other errors
+    if (error.response.status >= 500) {
+      console.error('❌ Server error:', error.response.status, error.response.data);
+    } else if (error.response.status >= 400) {
+      console.warn('⚠️ Client error:', error.response.status, error.response.data);
+    }
+    
     return Promise.reject(error);
   }
 );

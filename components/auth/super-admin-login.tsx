@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useAuth } from "@/hooks/use-auth"
+import { useLogin } from "@/lib/api/auth"
+import { useQueryClient } from "@tanstack/react-query"
 import { SchoolAccessGuide } from "@/components/demo/school-access-guide"
 import { Shield, Building2 } from "lucide-react"
 
@@ -18,7 +19,8 @@ export function SuperAdminLogin() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [showSchoolGuide, setShowSchoolGuide] = useState(true)
-  const { login, isLoading } = useAuth()
+  const { mutate: loginUser, isPending: isLoading } = useLogin()
+  const queryClient = useQueryClient()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,23 +29,30 @@ export function SuperAdminLogin() {
 
     console.log("Super admin login attempt:", { email })
 
-    const success = await login(email, password)
-    if (success) {
-      const user = useAuth.getState().user
-      console.log("Super admin login successful:", { user: user?.name, role: user?.role })
-      
-      if (user && user.role === "super_admin") {
-        console.log("Redirecting to super admin dashboard")
-        router.replace("/super-admin")
-      } else {
-        console.log("Access denied - not super admin")
-        setError("Access denied. Super admin credentials required.")
-        useAuth.getState().logout()
-      }
-    } else {
-      console.log("Super admin login failed")
-      setError("Invalid email or password")
-    }
+    loginUser({ email, password }, {
+      onSuccess: (data) => {
+        console.log("Super admin login successful:", { user: data.user?.name, role: data.user?.role })
+        
+        // Invalidate queries to refetch user data
+        queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+        
+        if (data.user && data.user.role === "super_admin") {
+          console.log("Redirecting to super admin dashboard")
+          router.replace("/super-admin")
+        } else {
+          console.log("Access denied - not super admin")
+          setError("Access denied. Super admin credentials required.")
+          // Clear token if not super admin
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token')
+          }
+        }
+      },
+      onError: (err: any) => {
+        console.error("Super admin login failed:", err)
+        setError(err?.response?.data?.message || "Invalid email or password")
+      },
+    })
   }
 
   if (showSchoolGuide) {
