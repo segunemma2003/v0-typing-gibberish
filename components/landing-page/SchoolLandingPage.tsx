@@ -28,6 +28,8 @@ import {
   Zap,
   BookOpenCheck,
   Trophy,
+  AlertCircle,
+  ArrowLeft,
   Mail,
   Phone,
   MapPin,
@@ -256,7 +258,7 @@ const facilities = [
 ]
 
 export function SchoolLandingPage() {
-  const { currentTenant, subdomain, isLoading } = useTenant()
+  const { currentTenant, subdomain, isLoading, error } = useTenant()
   const [mounted, setMounted] = useState(false)
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [selectedGalleryImage, setSelectedGalleryImage] = useState(0)
@@ -325,6 +327,55 @@ export function SchoolLandingPage() {
 
   // Get subdomain from hook or fallback to hostname extraction
   const detectedSubdomain = subdomain || getSubdomainFromHostname()
+  
+  // Show error page if subdomain doesn't exist
+  if (!isLoading && error && detectedSubdomain) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">School Not Found</h1>
+          
+          <p className="text-slate-600 mb-4">
+            The subdomain <span className="font-semibold text-slate-900">{detectedSubdomain}</span> does not exist in our system.
+          </p>
+          
+          {error && (
+            <p className="text-sm text-red-600 mb-6 bg-red-50 p-3 rounded-lg">
+              {error}
+            </p>
+          )}
+          
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 mb-6">
+              Please verify the subdomain is correct. If you believe this is an error, please contact support.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <Button 
+                variant="default"
+                onClick={() => window.location.href = '/'}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Go to Main Site
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => window.location.reload()}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   
   // Always prioritize currentTenant name, then format subdomain if available
   const displayName = currentTenant?.name || (detectedSubdomain ? formatSchoolName(detectedSubdomain) : 'School')

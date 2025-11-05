@@ -45,8 +45,7 @@ interface GetUsersParams {
 interface UpdateUserRequest {
   name?: string;
   phone?: string;
-  status?: 'active' | 'inactive' | 'suspended
-';
+  status?: 'active' | 'inactive' | 'suspended';
 }
 
 export const userService = {

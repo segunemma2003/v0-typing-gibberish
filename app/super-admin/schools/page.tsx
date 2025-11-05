@@ -1,28 +1,77 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { mockSchools, type School } from "@/lib/auth"
-import { Building2, Plus, Search, Eye, Edit, Trash2, Users, Calendar, Globe } from "lucide-react"
+import { useTenants, useDeleteTenant } from "@/lib/api/tenants"
+import { Building2, Plus, Search, Eye, Edit, Trash2, Users, Calendar, Globe, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 
 export default function SchoolsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [schools] = useState<School[]>(mockSchools)
+  const { data: tenantsData, isLoading, error } = useTenants()
+  const deleteTenant = useDeleteTenant()
 
-  const filteredSchools = schools.filter(
-    (school) =>
-      school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      school.subdomain.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      school.principalName.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  // Extract tenants array from response
+  const tenants = useMemo(() => {
+    if (!tenantsData) return []
+    if (Array.isArray(tenantsData.data)) return tenantsData.data
+    if ((tenantsData as any).tenants?.data) return (tenantsData as any).tenants.data
+    return []
+  }, [tenantsData])
 
-  const handleDeleteSchool = (schoolId: string) => {
-    // In a real app, this would call an API to delete the school
-    console.log("Delete school:", schoolId)
+  const filteredTenants = useMemo(() => {
+    if (!tenants) return []
+    return tenants.filter(
+      (tenant) =>
+        tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tenant.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tenant.domain.split('.')[0] || '').toLowerCase().includes(searchTerm.toLowerCase()),
+    )
+  }, [tenants, searchTerm])
+
+  const handleDeleteSchool = async (tenantId: number) => {
+    if (!confirm("Are you sure you want to delete this school? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      await deleteTenant.mutateAsync(tenantId)
+      toast.success("School deleted successfully")
+    } catch (error: any) {
+      console.error("Error deleting school:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete school"
+      toast.error("Error deleting school", {
+        description: errorMessage,
+      })
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
+          <p className="text-gray-600">Loading schools...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="text-center py-12">
+            <div className="text-red-600 mb-4">Error loading schools. Please try again later.</div>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -59,70 +108,75 @@ export default function SchoolsPage() {
 
       {/* Schools Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredSchools.map((school) => (
-          <Card key={school.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-white" />
+        {filteredTenants.map((tenant) => {
+          const subdomain = tenant.domain.split('.')[0]
+          return (
+            <Card key={tenant.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                      <Building2 className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{tenant.name}</CardTitle>
+                      <CardDescription>{tenant.domain}</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">{school.name}</CardTitle>
-                    <CardDescription>{school.subdomain}.compasse.com</CardDescription>
+                  <Badge variant={tenant.status === 'active' ? "default" : "secondary"}>
+                    {tenant.status === 'active' ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Schools: {tenant.schools_count || 0}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Users: {tenant.users_count || 0}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Globe className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600">Subdomain: {subdomain}</span>
                   </div>
                 </div>
-                <Badge variant={school.isActive ? "default" : "secondary"}>
-                  {school.isActive ? "Active" : "Inactive"}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">Principal: {school.principalName}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Globe className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">{school.settings.timezone}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-600">
-                    {new Date(school.settings.academicYearStart).getFullYear()} -{" "}
-                    {new Date(school.settings.academicYearEnd).getFullYear()}
-                  </span>
-                </div>
-              </div>
 
-              <div className="pt-4 border-t flex items-center justify-between">
-                <div className="text-xs text-gray-500">Created {school.createdAt.toLocaleDateString()}</div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                  <Link href={`/super-admin/schools/${school.id}/edit`}>
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4" />
+                <div className="pt-4 border-t flex items-center justify-between">
+                  <div className="text-xs text-gray-500">
+                    Database: {tenant.database_name || 'N/A'}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Link href={`https://${tenant.domain}`} target="_blank">
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Link href={`/super-admin/schools/${tenant.id}/edit`}>
+                      <Button variant="outline" size="sm">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteSchool(tenant.id)}
+                      className="text-red-600 hover:text-red-700"
+                      disabled={deleteTenant.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteSchool(school.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
-      {filteredSchools.length === 0 && (
+      {filteredTenants.length === 0 && (
         <Card>
           <CardContent className="text-center py-12">
             <Building2 className="w-12 h-12 text-gray-400 mx-auto mb-4" />

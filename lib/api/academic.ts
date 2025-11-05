@@ -73,6 +73,26 @@ export const academicService = {
     const response = await apiClient.post('/subjects', data);
     return response.data;
   },
+
+  updateClass: async ({ id, data }: { id: number; data: Partial<CreateClassRequest> }): Promise<{ message: string; class: Class }> => {
+    const response = await apiClient.put(`/classes/${id}`, data);
+    return response.data;
+  },
+
+  deleteClass: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/classes/${id}`);
+    return response.data;
+  },
+
+  updateSubject: async ({ id, data }: { id: number; data: Partial<CreateSubjectRequest> }): Promise<{ message: string; subject: Subject }> => {
+    const response = await apiClient.put(`/subjects/${id}`, data);
+    return response.data;
+  },
+
+  deleteSubject: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/subjects/${id}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -110,6 +130,52 @@ export const useCreateSubject = () => {
     mutationFn: academicService.createSubject,
     onSuccess: (data) => {
       console.log('Subject created successfully', data);
+      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+    },
+  });
+};
+
+export const useUpdateClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.updateClass,
+    onSuccess: (data, variables) => {
+      console.log('Class updated successfully', data);
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+      queryClient.invalidateQueries({ queryKey: ['class', variables.id] });
+    },
+  });
+};
+
+export const useDeleteClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.deleteClass,
+    onSuccess: () => {
+      console.log('Class deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+    },
+  });
+};
+
+export const useUpdateSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.updateSubject,
+    onSuccess: (data, variables) => {
+      console.log('Subject updated successfully', data);
+      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['subject', variables.id] });
+    },
+  });
+};
+
+export const useDeleteSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.deleteSubject,
+    onSuccess: () => {
+      console.log('Subject deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
     },
   });

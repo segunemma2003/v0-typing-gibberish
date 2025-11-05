@@ -6,8 +6,20 @@ if (!API_BASE_URL) {
   console.warn('⚠️ NEXT_PUBLIC_API_BASE_URL is not set. API calls may fail.');
 }
 
+// Construct base URL with API version prefix
+const getBaseURL = () => {
+  const base = API_BASE_URL || 'http://31.97.155.60:8078';
+  // Remove trailing slash if present
+  const cleanBase = base.replace(/\/$/, '');
+  // Add /api/v1 prefix if not already present
+  if (!cleanBase.includes('/api/v1')) {
+    return `${cleanBase}/api/v1`;
+  }
+  return cleanBase;
+};
+
 const apiClient = axios.create({
-  baseURL: API_BASE_URL || 'http://31.97.155.60:8078',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },

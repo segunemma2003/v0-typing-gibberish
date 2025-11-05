@@ -69,6 +69,11 @@ export const teacherService = {
     const response = await apiClient.post('/teachers', data);
     return response.data;
   },
+
+  updateTeacher: async ({ id, data }: { id: number; data: Partial<CreateTeacherRequest> }): Promise<{ message: string; teacher: Teacher }> => {
+    const response = await apiClient.put(`/teachers/${id}`, data);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -95,6 +100,18 @@ export const useCreateTeacher = () => {
     onSuccess: (data) => {
       console.log('Teacher created successfully', data);
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
+    },
+  });
+};
+
+export const useUpdateTeacher = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: teacherService.updateTeacher,
+    onSuccess: (data, variables) => {
+      console.log('Teacher updated successfully', data);
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
+      queryClient.invalidateQueries({ queryKey: ['teacher', variables.id] });
     },
   });
 };

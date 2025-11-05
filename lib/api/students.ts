@@ -64,14 +64,21 @@ interface GetStudentsParams {
 }
 
 interface CreateStudentRequest {
-  name: string;
-  class_id: number;
-  arm_id: number;
-  guardian_id: number;
+  school_id: number;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
   date_of_birth: string;
   gender: string;
-  address: string;
-  phone: string;
+  class_id: number;
+  arm_id: number;
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
+  address?: string;
+  phone?: string;
+  email?: string; // Optional - will be auto-generated if not provided
+  username?: string; // Optional - will be auto-generated if not provided
 }
 
 interface UpdateStudentRequest {
@@ -132,6 +139,47 @@ interface GetStudentResultsParams {
   subject_id?: number;
 }
 
+interface GenerateAdmissionNumberRequest {
+  school_id: number;
+  class_id: number;
+}
+
+interface GenerateAdmissionNumberResponse {
+  admission_number: string;
+  format: string;
+  explanation: string;
+}
+
+interface GenerateStudentCredentialsRequest {
+  first_name: string;
+  last_name: string;
+  school_id: number;
+}
+
+interface GenerateStudentCredentialsResponse {
+  email: string;
+  username: string;
+  explanation: {
+    email: string;
+    username: string;
+  };
+}
+
+interface CreateStudentResponse {
+  message: string;
+  student: Student & {
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    admission_date: string;
+    user: {
+      id: number;
+      email: string;
+      role: string;
+    };
+  };
+}
+
 export const studentService = {
   getStudents: async (params?: GetStudentsParams): Promise<StudentListResponse> => {
     const response = await apiClient.get('/students', { params });
@@ -143,8 +191,18 @@ export const studentService = {
     return response.data;
   },
 
-  createStudent: async (data: CreateStudentRequest): Promise<{ message: string; student: Student }> => {
+  createStudent: async (data: CreateStudentRequest): Promise<CreateStudentResponse> => {
     const response = await apiClient.post('/students', data);
+    return response.data;
+  },
+
+  generateAdmissionNumber: async (data: GenerateAdmissionNumberRequest): Promise<GenerateAdmissionNumberResponse> => {
+    const response = await apiClient.post('/students/generate-admission-number', data);
+    return response.data;
+  },
+
+  generateStudentCredentials: async (data: GenerateStudentCredentialsRequest): Promise<GenerateStudentCredentialsResponse> => {
+    const response = await apiClient.post('/students/generate-credentials', data);
     return response.data;
   },
 
@@ -189,6 +247,18 @@ export const useCreateStudent = () => {
       console.log('Student created successfully', data);
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
+  });
+};
+
+export const useGenerateAdmissionNumber = () => {
+  return useMutation({
+    mutationFn: studentService.generateAdmissionNumber,
+  });
+};
+
+export const useGenerateStudentCredentials = () => {
+  return useMutation({
+    mutationFn: studentService.generateStudentCredentials,
   });
 };
 
