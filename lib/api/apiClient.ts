@@ -8,7 +8,7 @@ if (!API_BASE_URL) {
 
 // Construct base URL with API version prefix
 const getBaseURL = () => {
-  const base = API_BASE_URL || 'http://31.97.155.60:8078';
+  const base = API_BASE_URL || 'https://api.compasse.net';
   // Remove trailing slash if present
   const cleanBase = base.replace(/\/$/, '');
   // Add /api/v1 prefix if not already present

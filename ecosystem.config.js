@@ -16,7 +16,7 @@ module.exports = {
         NEXT_PUBLIC_BASE_DOMAIN: 'compasse.net',
         // Set your backend API URL here or via environment variable
         // PM2 will pick up environment variables set before starting
-        NEXT_PUBLIC_API_BASE_URL: 'http://31.97.155.60:8078',
+        NEXT_PUBLIC_API_BASE_URL: 'https://api.compasse.net',
       },
       // Explicitly set port to match Nginx configuration
       env_production: {
@@ -25,7 +25,7 @@ module.exports = {
         HOSTNAME: '0.0.0.0',
         NEXT_PUBLIC_BASE_DOMAIN: 'compasse.net',
         // Set your backend API URL here or via environment variable
-        NEXT_PUBLIC_API_BASE_URL: 'http://31.97.155.60:8078',
+        NEXT_PUBLIC_API_BASE_URL: 'https://api.compasse.net',
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',

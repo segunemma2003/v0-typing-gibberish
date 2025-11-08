@@ -12,7 +12,7 @@ interface HealthResponse {
 export const healthService = {
   getHealth: async (): Promise<HealthResponse> => {
     // Health check endpoint is at /api/health (not /api/v1/health)
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://31.97.155.60:8078'}/api/health`);
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.compasse.net'}/api/health`);
     return response.data;
   },
 };
