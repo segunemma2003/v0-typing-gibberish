@@ -22,13 +22,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // In production, you would:
-    // 1. Save to database
-    // 2. Send email notification to admin team
-    // 3. Send confirmation email to user
-    // 4. Trigger CRM integration if applicable
-    // 5. Create a lead in your marketing system
-
+ 
     // For now, we'll just log it and return success
     console.log("Quotation request received:", {
       name,
