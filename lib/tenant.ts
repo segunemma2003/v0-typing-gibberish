@@ -108,11 +108,12 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               console.log("Found school:", schoolResponse.school.name, "Tenant:", schoolResponse.tenant.name);
               
               // Map the API response to Tenant format
+              const tenantDomain = schoolResponse.tenant.domain || "";
               const tenant: Tenant = {
                 id: schoolResponse.tenant.id,
                 name: schoolResponse.tenant.name,
-                domain: schoolResponse.tenant.domain,
-                database_name: schoolResponse.tenant.domain.replace(/\./g, '_'),
+                domain: tenantDomain,
+                database_name: tenantDomain ? tenantDomain.replace(/\./g, "_") : schoolResponse.tenant.name.replace(/\s+/g, "_").toLowerCase(),
                 status: schoolResponse.tenant.status,
                 schools_count: 1,
                 users_count: 0,
@@ -162,26 +163,29 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               } else if (Array.isArray(tenantsResponse)) {
                 allTenants = tenantsResponse;
               }
-              
-          const foundTenant = allTenants.find(
-                (t: Tenant) => t.domain.split('.')[0] === detectedSubdomain || t.domain === detectedHostname
-          );
 
-          if (foundTenant) {
+              const foundTenant = allTenants.find((t: Tenant) => {
+                if (!t.domain) return false;
+                const domain = t.domain.toLowerCase();
+                const sub = domain.split(".")[0];
+                return sub === detectedSubdomain || domain === detectedHostname?.toLowerCase();
+              });
+
+              if (foundTenant) {
                 console.log("Found tenant via fallback:", foundTenant.name);
-            set({
+                set({
                   currentTenant: foundTenant,
-              currentSchool: {
-                id: foundTenant.id.toString(),
-                name: foundTenant.name,
-                subdomain: detectedSubdomain,
-              },
-              subdomain: detectedSubdomain,
-              isSuperAdmin: false,
-              isLoading: false,
+                  currentSchool: {
+                    id: foundTenant.id.toString(),
+                    name: foundTenant.name,
+                    subdomain: detectedSubdomain,
+                  },
+                  subdomain: detectedSubdomain,
+                  isSuperAdmin: false,
+                  isLoading: false,
                   error: null,
-            });
-            return;
+                });
+                return;
               }
             } catch (fallbackError) {
               console.error("Fallback also failed:", fallbackError);
@@ -252,9 +256,12 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               allTenants = tenantsResponse;
             }
 
-          const foundTenant = allTenants.find(
-              (t: Tenant) => t.domain.split('.')[0] === detectedSubdomain || t.domain === detectedHostname
-          );
+          const foundTenant = allTenants.find((t: Tenant) => {
+              if (!t.domain) return false;
+              const domain = t.domain.toLowerCase();
+              const sub = domain.split(".")[0];
+              return sub === detectedSubdomain || domain === detectedHostname?.toLowerCase();
+          });
 
           if (foundTenant) {
             console.log("Found tenant server-side:", foundTenant.name);
