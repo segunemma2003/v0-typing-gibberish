@@ -9,6 +9,7 @@ import { getTenantFromHostname } from "@/lib/tenant-server" // Import server-sid
 
 export interface TenantState {
   currentTenant: Tenant | null // Renamed to currentTenant
+  currentSchool: { id: string; name: string; subdomain?: string | null } | null
   subdomain: string | null
   isSuperAdmin: boolean
   isLoading: boolean
@@ -24,23 +25,34 @@ interface TenantStore extends TenantState {
 
 export const useTenant = create<TenantStore>()((set, get) => ({
   currentTenant: null, // Renamed
+  currentSchool: null,
   subdomain: null,
   isSuperAdmin: false,
   isLoading: true,
   error: null,
 
   setTenant: (subdomain, tenant, isSuperAdmin) => { // Updated parameter
+    const currentSchool = tenant
+      ? {
+          id: tenant.id.toString(),
+          name: tenant.name,
+          subdomain,
+        }
+      : null
     set({
       subdomain,
       currentTenant: tenant, // Renamed
       isSuperAdmin,
       isLoading: false,
+      currentSchool,
+      error: null,
     })
   },
 
   clearTenant: () => {
     set({
       currentTenant: null, // Renamed
+      currentSchool: null,
       subdomain: null,
       isSuperAdmin: false,
       isLoading: false,
@@ -77,9 +89,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
           console.log("Detected as super admin")
           set({
             currentTenant: null, // Renamed
+            currentSchool: null,
             subdomain: null,
             isSuperAdmin: true,
             isLoading: false,
+            error: null,
           })
           return
         }
@@ -106,6 +120,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
 
               set({
                 currentTenant: tenant,
+                currentSchool: {
+                  id: tenant.id.toString(),
+                  name: tenant.name,
+                  subdomain: detectedSubdomain,
+                },
                 subdomain: detectedSubdomain,
                 isSuperAdmin: false,
                 isLoading: false,
@@ -121,6 +140,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             if (error?.response?.status === 404 || error?.message?.includes("not found") || error?.message?.includes("School not found")) {
               set({
                 currentTenant: null,
+                currentSchool: null,
                 subdomain: detectedSubdomain,
                 isSuperAdmin: false,
                 isLoading: false,
@@ -151,6 +171,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
                 console.log("Found tenant via fallback:", foundTenant.name);
             set({
                   currentTenant: foundTenant,
+              currentSchool: {
+                id: foundTenant.id.toString(),
+                name: foundTenant.name,
+                subdomain: detectedSubdomain,
+              },
               subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
@@ -164,6 +189,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             
             set({
               currentTenant: null,
+              currentSchool: null,
               subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
@@ -177,9 +203,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         console.log("No subdomain detected and not super admin. Defaulting to super admin or no tenant.");
         set({
           currentTenant: null, // Renamed
+          currentSchool: null,
           subdomain: null,
           isSuperAdmin: true, // Assuming default to super_admin on base domain
           isLoading: false,
+          error: null,
         });
         return;
         // --- End of API-driven Tenant Resolution --- //
@@ -201,9 +229,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         if (isSuperAdmin) {
           set({
             currentTenant: null, // Renamed
+            currentSchool: null,
             subdomain: null,
             isSuperAdmin: true,
             isLoading: false,
+            error: null,
           })
           return
         }
@@ -230,6 +260,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             console.log("Found tenant server-side:", foundTenant.name);
             set({
                 currentTenant: foundTenant,
+                currentSchool: {
+                  id: foundTenant.id.toString(),
+                  name: foundTenant.name,
+                  subdomain: detectedSubdomain,
+                },
               subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
@@ -240,6 +275,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             console.log("No active tenant found server-side for subdomain/domain:", detectedSubdomain || detectedHostname);
             set({
                 currentTenant: null,
+                currentSchool: null,
                 subdomain: detectedSubdomain,
                 isSuperAdmin: false,
                 isLoading: false,
@@ -251,6 +287,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             console.error("Error fetching tenant server-side:", error);
             set({
               currentTenant: null,
+              currentSchool: null,
               subdomain: detectedSubdomain,
               isSuperAdmin: false,
               isLoading: false,
@@ -265,15 +302,18 @@ export const useTenant = create<TenantStore>()((set, get) => ({
       console.log("Final fallback - treating as super admin (no tenant detected at all)")
       set({
         currentTenant: null, // Renamed
+        currentSchool: null,
         subdomain: null,
         isSuperAdmin: true,
         isLoading: false,
+        error: null,
       })
 
     } catch (error) {
       console.error("Error initializing tenant:", error)
       set({
         currentTenant: null, // Renamed
+        currentSchool: null,
         subdomain: null,
         isSuperAdmin: false,
         isLoading: false,

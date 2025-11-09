@@ -143,7 +143,11 @@ export function Sidebar({ items, title, navItems, userRole }: SidebarProps) {
         <div className="p-3 border-t border-sidebar-border">
           <Button
             variant="ghost"
-            onClick={logout}
+            onClick={() => {
+              logout().catch((error) => {
+                console.error("Logout failed:", error)
+              })
+            }}
             className={`w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent ${
               collapsed ? "px-2" : "px-3"
             }`}

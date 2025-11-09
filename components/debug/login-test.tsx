@@ -14,9 +14,13 @@ export function LoginTest() {
     console.log("Current School:", currentSchool)
     console.log("Subdomain:", subdomain)
     
-    const success = await login("admin@school.edu", "password123")
-    console.log("Login success:", success)
-    console.log("User after login:", useAuth.getState().user)
+    try {
+      const response = await login("admin@school.edu", "password123")
+      console.log("Login success:", !!response?.token)
+      console.log("User after login:", useAuth.getState().user)
+    } catch (error) {
+      console.error("Login test failed:", error)
+    }
   }
 
   if (process.env.NODE_ENV === 'production') {

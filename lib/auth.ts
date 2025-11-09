@@ -11,180 +11,27 @@ export type UserRole =
   | "house_master"
 
 export interface User {
-  id: string
+  id: string | number
   email: string
   name: string
   role: UserRole
-  schoolId: string // For super_admin, this will be null or "global"
+  schoolId?: string | null // For super_admin, this will be null or "global"
   avatar?: string
-  isActive: boolean
-  createdAt: Date
-  updatedAt: Date
+  status?: string | null
+  tenant?: {
+    id: number | string
+    name: string
+    domain?: string | null
+  } | null
+  isActive?: boolean
+  createdAt?: string | Date | null
+  updatedAt?: string | Date | null
 }
 
 export interface AuthState {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-}
-
-// Mock authentication for demo purposes
-export const mockUsers: User[] = [
-  {
-    id: "0",
-    email: "superadmin@compasse.com",
-    name: "Super Administrator",
-    role: "super_admin",
-    schoolId: "global",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  // Demo Elementary School users
-  {
-    id: "1",
-    email: "admin@school.edu",
-    name: "John Administrator",
-    role: "admin",
-    schoolId: "school-demo",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "2",
-    email: "teacher@school.edu",
-    name: "Sarah Teacher",
-    role: "teacher",
-    schoolId: "school-demo",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "3",
-    email: "student@school.edu",
-    name: "Mike Student",
-    role: "student",
-    schoolId: "school-demo",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "4",
-    email: "parent@school.edu",
-    name: "Lisa Parent",
-    role: "parent",
-    schoolId: "school-demo",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  // Test High School users
-  {
-    id: "5",
-    email: "admin@test.edu",
-    name: "Test Administrator",
-    role: "admin",
-    schoolId: "school-test",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "6",
-    email: "teacher@test.edu",
-    name: "Test Teacher",
-    role: "teacher",
-    schoolId: "school-test",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "7",
-    email: "student@test.edu",
-    name: "Test Student",
-    role: "student",
-    schoolId: "school-test",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  // Greenwood High School users
-  {
-    id: "8",
-    email: "admin@greenwood.edu",
-    name: "Greenwood Administrator",
-    role: "admin",
-    schoolId: "school-1",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "9",
-    email: "teacher@greenwood.edu",
-    name: "Greenwood Teacher",
-    role: "teacher",
-    schoolId: "school-1",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "10",
-    email: "student@greenwood.edu",
-    name: "Greenwood Student",
-    role: "student",
-    schoolId: "school-1",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  // Riverside Academy users
-  {
-    id: "11",
-    email: "admin@riverside.edu",
-    name: "Riverside Administrator",
-    role: "admin",
-    schoolId: "school-2",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "12",
-    email: "teacher@riverside.edu",
-    name: "Riverside Teacher",
-    role: "teacher",
-    schoolId: "school-2",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: "13",
-    email: "student@riverside.edu",
-    name: "Riverside Student",
-    role: "student",
-    schoolId: "school-2",
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-]
-
-export const authenticateUser = async (email: string, password: string): Promise<User | null> => {
-  // Mock authentication - in real app, this would call your backend
-  await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulate API call
-
-  const user = mockUsers.find((u) => u.email === email)
-  if (user && password === "password123") {
-    return user
-  }
-  return null
 }
 
 export const getRoleDisplayName = (role: UserRole): string => {

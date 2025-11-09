@@ -20,7 +20,7 @@ export function TenantGuard({
   allowedRoles = [],
 }: TenantGuardProps) {
   const { currentTenant, isSuperAdmin, isLoading: tenantLoading } = useTenant()
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { user, isAuthenticated, isLoading: authLoading, initializeAuth } = useAuth()
   const router = useRouter()
   
   // Map currentTenant to currentSchool for backward compatibility
@@ -28,6 +28,12 @@ export function TenantGuard({
     id: currentTenant.id.toString(),
     name: currentTenant.name,
   } : null
+
+  useEffect(() => {
+    initializeAuth().catch((error) => {
+      console.error("TenantGuard: Failed to initialize auth", error)
+    })
+  }, [initializeAuth])
 
   useEffect(() => {
     console.log("TenantGuard: Checking permissions", {

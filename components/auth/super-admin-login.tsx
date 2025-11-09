@@ -9,19 +9,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useLogin } from "@/lib/api/auth"
+import { Shield } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth"
 import { useQueryClient } from "@tanstack/react-query"
-import { SchoolAccessGuide } from "@/components/demo/school-access-guide"
-import { Shield, Building2 } from "lucide-react"
 
 export function SuperAdminLogin() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
-  const [showSchoolGuide, setShowSchoolGuide] = useState(true)
-  const { mutate: loginUser, isPending: isLoading } = useLogin()
-  const queryClient = useQueryClient()
+  const { login, logout, isLoading } = useAuth()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,62 +27,36 @@ export function SuperAdminLogin() {
 
     console.log("Super admin login attempt:", { email })
 
-    loginUser({ email, password }, {
-      onSuccess: (data) => {
-        console.log("Super admin login successful:", { user: data.user?.name, role: data.user?.role })
-        
-        // Invalidate queries to refetch user data
-        queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
-        
-        if (data.user && data.user.role === "super_admin") {
-          console.log("Redirecting to super admin dashboard")
-          router.replace("/super-admin")
-        } else {
-          console.log("Access denied - not super admin")
-          setError("Access denied. Super admin credentials required.")
-          // Clear token if not super admin
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token')
-          }
-        }
-      },
-      onError: (err: any) => {
-        console.error("Super admin login failed:", err)
-        setError(err?.response?.data?.message || "Invalid email or password")
-      },
-    })
-  }
+    try {
+      const data = await login(email, password)
 
-  if (showSchoolGuide) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="w-full max-w-6xl space-y-6">
-          <SchoolAccessGuide />
-          <div className="text-center">
-            <Button
-              variant="outline"
-              onClick={() => setShowSchoolGuide(false)}
-              className="bg-white"
-            >
-              <Shield className="w-4 h-4 mr-2" />
-              Super Admin Login
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+      console.log("Super admin login successful:", { user: data.user?.name, role: data.user?.role })
+
+      // Invalidate queries to refetch user data
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] });
+
+      if (data.user && data.user.role === "super_admin") {
+        console.log("Redirecting to super admin dashboard")
+        router.replace("/super-admin")
+        return
+      }
+
+      console.log("Access denied - not super admin")
+      setError("Access denied. Super admin credentials required.")
+      await logout()
+    } catch (err: any) {
+      console.error("Super admin login failed:", err)
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Invalid email or password"
+      setError(message)
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md space-y-4">
-        <Button
-          variant="ghost"
-          onClick={() => setShowSchoolGuide(true)}
-          className="mb-4"
-        >
-          ← Back to Schools
-        </Button>
         <Card className="w-full shadow-xl">
         <CardHeader className="text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
