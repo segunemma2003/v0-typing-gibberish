@@ -110,7 +110,8 @@ interface SchoolOrganogram {
 export const schoolService = {
   getSchoolById: async (id: number): Promise<School> => {
     const response = await apiClient.get(`/schools/${id}`);
-    return response.data;
+    // API returns { school: {...}, stats: {...} } but we want just the school object
+    return response.data.school || response.data;
   },
 
   updateSchool: async ({ id, data }: { id: number; data: UpdateSchoolRequest }): Promise<{ message: string; school: School }> => {
@@ -120,6 +121,7 @@ export const schoolService = {
 
   getSchoolStats: async (id: number): Promise<{ stats: SchoolStats }> => {
     const response = await apiClient.get(`/schools/${id}/stats`);
+    // API returns { stats: {...} }
     return response.data;
   },
 

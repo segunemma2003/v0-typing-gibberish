@@ -59,6 +59,11 @@ export const userService = {
     return response.data;
   },
 
+  createUser: async (data: { name: string; email: string; role: string; password?: string; phone?: string }): Promise<{ message: string; user: User }> => {
+    const response = await apiClient.post('/users', data);
+    return response.data;
+  },
+
   updateUser: async ({ id, data }: { id: number; data: UpdateUserRequest }): Promise<{ message: string; user: User }> => {
     const response = await apiClient.put(`/users/${id}`, data);
     return response.data;
@@ -66,6 +71,16 @@ export const userService = {
 
   deleteUser: async (id: number): Promise<{ message: string }> => {
     const response = await apiClient.delete(`/users/${id}`);
+    return response.data;
+  },
+
+  activateUser: async (id: number): Promise<{ message: string; user: User }> => {
+    const response = await apiClient.post(`/users/${id}/activate`);
+    return response.data;
+  },
+
+  suspendUser: async (id: number): Promise<{ message: string; user: User }> => {
+    const response = await apiClient.post(`/users/${id}/suspend`);
     return response.data;
   },
 };
@@ -108,6 +123,38 @@ export const useDeleteUser = () => {
       console.log('User deleted successfully');
       // Invalidate relevant queries to refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: userService.createUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useActivateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: userService.activateUser,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', variables] });
+    },
+  });
+};
+
+export const useSuspendUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: userService.suspendUser,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user', variables] });
     },
   });
 };

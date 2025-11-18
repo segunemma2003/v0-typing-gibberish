@@ -25,7 +25,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add the authorization token
+// Request interceptor to add the authorization token and tenant context
 apiClient.interceptors.request.use(
   (config) => {
     // Only access localStorage on client-side
@@ -36,6 +36,12 @@ apiClient.interceptors.request.use(
         console.log('🔑 Token added to request:', token.substring(0, 20) + '...');
       } else {
         console.warn('⚠️ No token found in localStorage');
+      }
+
+      // Add tenant context if available
+      const tenantId = localStorage.getItem('tenant_id');
+      if (tenantId) {
+        config.headers['X-Tenant-ID'] = tenantId;
       }
     }
     return config;

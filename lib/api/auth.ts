@@ -74,7 +74,8 @@ export const authService = {
 
   me: async (): Promise<ApiUser> => {
     const response = await apiClient.get("/auth/me");
-    return response.data;
+    // API returns { user: {...} } but we want just the user object
+    return response.data.user || response.data;
   },
 
   logout: async (): Promise<{ message: string }> => {
@@ -83,6 +84,27 @@ export const authService = {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
       console.log("✅ Token cleared from localStorage");
+    }
+    return response.data;
+  },
+
+  forgotPassword: async (data: { email: string; tenant_id?: string }): Promise<{ message: string; token?: string }> => {
+    const response = await apiClient.post("/auth/forgot-password", data);
+    return response.data;
+  },
+
+  resetPassword: async (data: { email: string; token: string; password: string; password_confirmation: string; tenant_id?: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post("/auth/reset-password", data);
+    return response.data;
+  },
+
+  refreshToken: async (): Promise<{ token: string; token_type: string }> => {
+    const response = await apiClient.post("/auth/refresh-token");
+    // Update token if refresh successful
+    if (response.data.token) {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", response.data.token);
+      }
     }
     return response.data;
   },
@@ -135,5 +157,23 @@ export const useLogout = () => {
       // Optionally, redirect to login page
       // window.location.href = '/login';
     },
+  });
+};
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: authService.forgotPassword,
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: authService.resetPassword,
+  });
+};
+
+export const useRefreshToken = () => {
+  return useMutation({
+    mutationFn: authService.refreshToken,
   });
 };

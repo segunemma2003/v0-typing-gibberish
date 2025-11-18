@@ -43,11 +43,10 @@ interface GetSchoolBySubdomainResponse {
 
 export const publicService = {
   getSchoolBySubdomain: async (subdomain: string): Promise<GetSchoolBySubdomainResponse> => {
-    // Public endpoint doesn't require /api/v1 prefix - it's at /api/v1/schools/subdomain/{subdomain}
-    const response = await apiClient.get(`/schools/subdomain/${subdomain}`);
-    return response.data;
+    const response = await apiClient.get(`/schools/subdomain/${encodeURIComponent(subdomain)}`)
+    return response.data
   },
-};
+}
 
 // 2. TanStack Query Hooks
 

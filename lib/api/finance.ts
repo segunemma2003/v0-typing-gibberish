@@ -48,18 +48,81 @@ interface PaymentResponse {
 
 export const financeService = {
   // Fees Management
-  getFees: async (): Promise<FeeListResponse> => {
-    const response = await apiClient.get('/fees');
+  getFees: async (params?: { page?: number; per_page?: number; student_id?: number; status?: string }): Promise<FeeListResponse> => {
+    const response = await apiClient.get('/financial/fees', { params });
+    return response.data;
+  },
+
+  getFeeById: async (id: number): Promise<Fee> => {
+    const response = await apiClient.get(`/financial/fees/${id}`);
     return response.data;
   },
 
   createFee: async (data: CreateFeeRequest): Promise<{ message: string; fee: Fee }> => {
-    const response = await apiClient.post('/fees', data);
+    const response = await apiClient.post('/financial/fees', data);
+    return response.data;
+  },
+
+  updateFee: async ({ id, data }: { id: number; data: Partial<CreateFeeRequest> }): Promise<{ message: string; fee: Fee }> => {
+    const response = await apiClient.put(`/financial/fees/${id}`, data);
+    return response.data;
+  },
+
+  deleteFee: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/financial/fees/${id}`);
     return response.data;
   },
 
   payFee: async ({ id, data }: { id: number; data: PayFeeRequest }): Promise<{ message: string; payment: PaymentResponse }> => {
-    const response = await apiClient.post(`/fees/${id}/pay`, data);
+    const response = await apiClient.post(`/financial/fees/${id}/pay`, data);
+    return response.data;
+  },
+
+  getStudentFees: async (studentId: number): Promise<FeeListResponse> => {
+    const response = await apiClient.get(`/financial/fees/student/${studentId}`);
+    return response.data;
+  },
+
+  getFeeStructure: async (): Promise<{ data: any[] }> => {
+    const response = await apiClient.get('/financial/fees/structure');
+    return response.data;
+  },
+
+  createFeeStructure: async (data: any): Promise<{ message: string; structure: any }> => {
+    const response = await apiClient.post('/financial/fees/structure', data);
+    return response.data;
+  },
+
+  updateFeeStructure: async ({ id, data }: { id: number; data: any }): Promise<{ message: string; structure: any }> => {
+    const response = await apiClient.put(`/financial/fees/structure/${id}`, data);
+    return response.data;
+  },
+
+  // Payments
+  getPayments: async (params?: { page?: number; per_page?: number; student_id?: number }): Promise<{ data: PaymentResponse[] }> => {
+    const response = await apiClient.get('/financial/payments', { params });
+    return response.data;
+  },
+
+  getPaymentById: async (id: number): Promise<PaymentResponse> => {
+    const response = await apiClient.get(`/financial/payments/${id}`);
+    return response.data;
+  },
+
+  createPayment: async (data: PayFeeRequest & { fee_id: number }): Promise<{ message: string; payment: PaymentResponse }> => {
+    const response = await apiClient.post('/financial/payments', data);
+    return response.data;
+  },
+
+  getStudentPayments: async (studentId: number): Promise<{ data: PaymentResponse[] }> => {
+    const response = await apiClient.get(`/financial/payments/student/${studentId}`);
+    return response.data;
+  },
+
+  getPaymentReceipt: async (id: number): Promise<Blob> => {
+    const response = await apiClient.get(`/financial/payments/receipt/${id}`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

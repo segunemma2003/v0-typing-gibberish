@@ -45,24 +45,81 @@ interface NotificationListResponse {
 
 export const communicationService = {
   // Messages
-  getMessages: async (): Promise<MessageListResponse> => {
-    const response = await apiClient.get('/messages');
+  getMessages: async (params?: { page?: number; per_page?: number; search?: string }): Promise<MessageListResponse> => {
+    const response = await apiClient.get('/communication/messages', { params });
+    return response.data;
+  },
+
+  getMessageById: async (id: number): Promise<Message> => {
+    const response = await apiClient.get(`/communication/messages/${id}`);
     return response.data;
   },
 
   sendMessage: async (data: SendMessageRequest): Promise<{ message: string }> => {
-    const response = await apiClient.post('/messages', data);
+    const response = await apiClient.post('/communication/messages', data);
+    return response.data;
+  },
+
+  updateMessage: async ({ id, data }: { id: number; data: Partial<SendMessageRequest> }): Promise<{ message: string; updated_message: Message }> => {
+    const response = await apiClient.put(`/communication/messages/${id}`, data);
+    return response.data;
+  },
+
+  deleteMessage: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/communication/messages/${id}`);
+    return response.data;
+  },
+
+  markMessageAsRead: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.put(`/communication/messages/${id}/read`);
     return response.data;
   },
 
   // Notifications
-  getNotifications: async (): Promise<NotificationListResponse> => {
-    const response = await apiClient.get('/notifications');
+  getNotifications: async (params?: { page?: number; per_page?: number; read?: boolean }): Promise<NotificationListResponse> => {
+    const response = await apiClient.get('/communication/notifications', { params });
+    return response.data;
+  },
+
+  getNotificationById: async (id: number): Promise<Notification> => {
+    const response = await apiClient.get(`/communication/notifications/${id}`);
+    return response.data;
+  },
+
+  createNotification: async (data: { title: string; message: string; type: string; recipient_ids?: number[] }): Promise<{ message: string; notification: Notification }> => {
+    const response = await apiClient.post('/communication/notifications', data);
+    return response.data;
+  },
+
+  updateNotification: async ({ id, data }: { id: number; data: Partial<{ title: string; message: string; type: string }> }): Promise<{ message: string; notification: Notification }> => {
+    const response = await apiClient.put(`/communication/notifications/${id}`, data);
+    return response.data;
+  },
+
+  deleteNotification: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/communication/notifications/${id}`);
     return response.data;
   },
 
   markNotificationAsRead: async (id: number): Promise<{ message: string }> => {
-    const response = await apiClient.put(`/notifications/${id}/read`);
+    const response = await apiClient.put(`/communication/notifications/${id}/read`);
+    return response.data;
+  },
+
+  markAllNotificationsAsRead: async (): Promise<{ message: string }> => {
+    const response = await apiClient.put('/communication/notifications/read-all');
+    return response.data;
+  },
+
+  // SMS
+  sendSMS: async (data: { phone: string; message: string; recipient_ids?: number[] }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/communication/sms/send', data);
+    return response.data;
+  },
+
+  // Email
+  sendEmail: async (data: { email: string; subject: string; message: string; recipient_ids?: number[] }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/communication/email/send', data);
     return response.data;
   },
 };

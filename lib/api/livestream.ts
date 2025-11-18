@@ -70,27 +70,42 @@ interface UpdateLivestreamRequest {
 
 export const livestreamService = {
   getLivestreams: async (params?: GetLivestreamsParams): Promise<LivestreamListResponse> => {
-    const response = await apiClient.get('/livestreams', { params });
+    const response = await apiClient.get('/livestreams/livestreams', { params });
     return response.data;
   },
 
   getLivestreamById: async (id: number): Promise<Livestream> => {
-    const response = await apiClient.get(`/livestreams/${id}`);
+    const response = await apiClient.get(`/livestreams/livestreams/${id}`);
     return response.data;
   },
 
   createLivestream: async (data: CreateLivestreamRequest): Promise<{ message: string; livestream: Livestream }> => {
-    const response = await apiClient.post('/livestreams', data);
+    const response = await apiClient.post('/livestreams/livestreams', data);
     return response.data;
   },
 
   updateLivestream: async ({ id, data }: { id: number; data: UpdateLivestreamRequest }): Promise<{ message: string; livestream: Livestream }> => {
-    const response = await apiClient.put(`/livestreams/${id}`, data);
+    const response = await apiClient.put(`/livestreams/livestreams/${id}`, data);
     return response.data;
   },
 
   deleteLivestream: async (id: number): Promise<{ message: string }> => {
-    const response = await apiClient.delete(`/livestreams/${id}`);
+    const response = await apiClient.delete(`/livestreams/livestreams/${id}`);
+    return response.data;
+  },
+
+  joinLivestream: async (id: number): Promise<{ message: string; livestream: Livestream }> => {
+    const response = await apiClient.post(`/livestreams/${id}/join`);
+    return response.data;
+  },
+
+  leaveLivestream: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/livestreams/${id}/leave`);
+    return response.data;
+  },
+
+  getLivestreamAttendance: async (id: number): Promise<{ data: any[] }> => {
+    const response = await apiClient.get(`/livestreams/${id}/attendance`);
     return response.data;
   },
 

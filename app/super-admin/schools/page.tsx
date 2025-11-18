@@ -15,12 +15,8 @@ export default function SchoolsPage() {
   const { data: tenantsData, isLoading, error } = useTenants()
   const deleteTenant = useDeleteTenant()
 
-  // Extract tenants array from response
   const tenants = useMemo(() => {
-    if (!tenantsData) return []
-    if (Array.isArray(tenantsData.data)) return tenantsData.data
-    if ((tenantsData as any).tenants?.data) return (tenantsData as any).tenants.data
-    return []
+    return tenantsData?.tenants ?? []
   }, [tenantsData])
 
   const filteredTenants = useMemo(() => {
@@ -28,8 +24,8 @@ export default function SchoolsPage() {
     return tenants.filter(
       (tenant) =>
         tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tenant.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (tenant.domain.split('.')[0] || '').toLowerCase().includes(searchTerm.toLowerCase()),
+        (tenant.domain ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (tenant.subdomain ?? "").toLowerCase().includes(searchTerm.toLowerCase()),
     )
   }, [tenants, searchTerm])
 
@@ -109,7 +105,8 @@ export default function SchoolsPage() {
       {/* Schools Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredTenants.map((tenant) => {
-          const subdomain = tenant.domain.split('.')[0]
+          const domain = tenant.domain ?? (tenant.subdomain ? `${tenant.subdomain}.compasse.net` : null)
+          const subdomain = tenant.subdomain ?? domain?.split(".")[0] ?? "n/a"
           return (
             <Card key={tenant.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -120,11 +117,11 @@ export default function SchoolsPage() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{tenant.name}</CardTitle>
-                      <CardDescription>{tenant.domain}</CardDescription>
+                      <CardDescription>{domain ?? "Domain not assigned"}</CardDescription>
                     </div>
                   </div>
-                  <Badge variant={tenant.status === 'active' ? "default" : "secondary"}>
-                    {tenant.status === 'active' ? "Active" : "Inactive"}
+                  <Badge variant={(tenant.status ?? "").toLowerCase() === "active" ? "default" : "secondary"}>
+                    {tenant.status ?? "unknown"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -132,11 +129,11 @@ export default function SchoolsPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center space-x-2">
                     <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Schools: {tenant.schools_count || 0}</span>
+                    <span className="text-gray-600">Schools: {tenant.schools_count ?? 0}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Users className="w-4 h-4 text-gray-500" />
-                    <span className="text-gray-600">Users: {tenant.users_count || 0}</span>
+                    <span className="text-gray-600">Users: {tenant.users_count ?? 0}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Globe className="w-4 h-4 text-gray-500" />
@@ -146,14 +143,21 @@ export default function SchoolsPage() {
 
                 <div className="pt-4 border-t flex items-center justify-between">
                   <div className="text-xs text-gray-500">
-                    Database: {tenant.database_name || 'N/A'}
+                    Database: {tenant.database_name || "N/A"}
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Link href={`https://${tenant.domain}`} target="_blank">
-                      <Button variant="outline" size="sm">
-                        <Eye className="w-4 h-4" />
+                    {domain ? (
+                      <Link href={`https://${domain}`} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        <Eye className="w-4 h-4 mr-1" />
+                        N/A
                       </Button>
-                    </Link>
+                    )}
                     <Link href={`/super-admin/schools/${tenant.id}/edit`}>
                       <Button variant="outline" size="sm">
                         <Edit className="w-4 h-4" />
