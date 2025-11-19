@@ -1,49 +1,61 @@
-import apiClient from './apiClient';
+import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
+
+// Public API client (no authentication required)
+const getPublicBaseURL = () => {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.compasse.net';
+  const cleanBase = base.replace(/\/$/, '');
+  // Add /api/v1 prefix if not already present
+  if (!cleanBase.includes('/api/v1')) {
+    return `${cleanBase}/api/v1`;
+  }
+  return cleanBase;
+};
+
+// Create a public API client without auth interceptors
+const publicApiClient = axios.create({
+  baseURL: getPublicBaseURL(),
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 // 1. Service Functions
 
 interface TenantInfo {
-  id: number;
+  id: string;
   name: string;
   subdomain: string;
-  domain: string;
   status: string;
 }
 
 interface SchoolInfo {
   id: number;
   name: string;
+  code: string;
   address: string;
   phone: string;
   email: string;
   website: string;
-  logo: string;
+  logo: string | null;
   status: string;
-  academic_year: string;
-  term: string;
-  settings: Record<string, any>;
-  created_at: string;
-  updated_at: string;
-}
-
-interface SchoolStats {
-  students: number;
-  teachers: number;
-  classes: number;
+  [key: string]: any; // Allow additional fields
 }
 
 interface GetSchoolBySubdomainResponse {
+  exists: boolean;
   success: boolean;
-  subdomain: string;
-  tenant: TenantInfo;
   school: SchoolInfo;
-  stats: SchoolStats;
+  tenant: TenantInfo;
 }
 
 export const publicService = {
+  /**
+   * Get school details by subdomain (no authentication required)
+   * Endpoint: GET /api/v1/schools/by-subdomain/{subdomain}
+   */
   getSchoolBySubdomain: async (subdomain: string): Promise<GetSchoolBySubdomainResponse> => {
-    const response = await apiClient.get(`/schools/subdomain/${encodeURIComponent(subdomain)}`)
+    const response = await publicApiClient.get(`/schools/by-subdomain/${encodeURIComponent(subdomain)}`)
     return response.data
   },
 }

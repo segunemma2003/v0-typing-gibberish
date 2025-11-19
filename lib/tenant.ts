@@ -101,16 +101,19 @@ export const useTenant = create<TenantStore>()((set, get) => ({
         if (detectedSubdomain) {
           console.log("Attempting to fetch school for subdomain:", detectedSubdomain);
           try {
-            // Use public API to get school by subdomain
+            // Use public API to get school by subdomain (no auth required)
+            // Endpoint: GET /api/v1/schools/by-subdomain/{subdomain}
             const schoolResponse = await publicService.getSchoolBySubdomain(detectedSubdomain);
             
-            if (schoolResponse.success && schoolResponse.tenant && schoolResponse.school) {
+            // Check if school exists
+            if (schoolResponse.exists && schoolResponse.success && schoolResponse.tenant && schoolResponse.school) {
               console.log("Found school:", schoolResponse.school.name, "Tenant:", schoolResponse.tenant.name);
               
               // Map the API response to Tenant format
-              const tenantDomain = schoolResponse.tenant.domain || "";
+              // Note: tenant.id is now a string (UUID) from the API
+              const tenantDomain = (schoolResponse.tenant as any).domain || "";
               const tenant: Tenant = {
-                id: schoolResponse.tenant.id,
+                id: schoolResponse.tenant.id.toString(),
                 name: schoolResponse.tenant.name,
                 domain: tenantDomain,
                 database_name: tenantDomain ? tenantDomain.replace(/\./g, "_") : schoolResponse.tenant.name.replace(/\s+/g, "_").toLowerCase(),
@@ -122,8 +125,8 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               set({
                 currentTenant: tenant,
                 currentSchool: {
-                  id: tenant.id.toString(),
-                  name: tenant.name,
+                  id: schoolResponse.school.id.toString(),
+                  name: schoolResponse.school.name,
                   subdomain: detectedSubdomain,
                 },
                 subdomain: detectedSubdomain,
@@ -133,6 +136,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               });
               return;
             } else {
+              // School doesn't exist or response indicates failure
               throw new Error("School not found");
             }
           } catch (error: any) {

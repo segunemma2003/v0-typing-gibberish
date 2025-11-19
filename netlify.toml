@@ -10,7 +10,7 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Force HTTPS
+# Force HTTPS and Security Headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -20,10 +20,3 @@
 
 # Next.js rewrites are handled automatically by @netlify/plugin-nextjs
 # Don't add manual redirects as they can conflict with the plugin
-
-# Redirect rules for different subdomains
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
