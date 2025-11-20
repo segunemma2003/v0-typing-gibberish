@@ -104,14 +104,7 @@ export function SuperAdminLogin() {
               {isLoading ? "Signing in..." : "Access Super Admin"}
             </Button>
           </form>
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center space-x-2 text-blue-800 mb-2">
-              <Building2 className="w-4 h-4" />
-              <span className="text-sm font-medium">Demo Credentials</span>
-            </div>
-            <p className="text-sm text-blue-700">superadmin@compasse.com</p>
-            <p className="text-sm text-blue-700">password123</p>
-          </div>
+      
         </CardContent>
       </Card>
       </div>

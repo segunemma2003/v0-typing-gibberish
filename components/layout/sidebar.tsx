@@ -66,7 +66,7 @@ export function Sidebar({ items, title, navItems, userRole }: SidebarProps) {
                   {title || (isSuperAdmin ? "Super Admin" : currentSchool?.name || "Compasse")}
                 </span>
                 {currentSchool && !collapsed && (
-                  <span className="text-xs text-sidebar-foreground/70">{currentSchool.subdomain}.compasse.com</span>
+                  <span className="text-xs text-sidebar-foreground/70">{currentSchool.subdomain}.compasse.net</span>
                 )}
               </div>
             </div>

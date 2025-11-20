@@ -87,11 +87,11 @@ export function SchoolForm({ school, onSave, onCancel, isLoading }: SchoolFormPr
                   placeholder="schoolname"
                   required
                 />
-                <span className="text-sm text-gray-500">.compasse.com</span>
+                <span className="text-sm text-gray-500">.compasse.net</span>
               </div>
               {formData.subdomain && (
                 <Badge variant="outline" className="text-xs">
-                  URL: {formData.subdomain}.compasse.com
+                  URL: {formData.subdomain}.compasse.net
                 </Badge>
               )}
             </div>
