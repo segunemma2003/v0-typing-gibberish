@@ -23,10 +23,13 @@ const publicApiClient = axios.create({
 // 1. Service Functions
 
 interface TenantInfo {
-  id: string;
+  id: string | number; // Can be UUID string or number
   name: string;
   subdomain: string;
   status: string;
+  domain?: string;
+  has_database?: boolean;
+  [key: string]: any; // Allow additional fields
 }
 
 interface SchoolInfo {
@@ -45,7 +48,7 @@ interface SchoolInfo {
 interface GetSchoolBySubdomainResponse {
   exists: boolean;
   success: boolean;
-  school: SchoolInfo;
+  school?: SchoolInfo; // Optional - may not be in response
   tenant: TenantInfo;
 }
 

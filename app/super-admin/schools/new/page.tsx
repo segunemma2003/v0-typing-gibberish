@@ -40,13 +40,18 @@ export default function NewSchoolPage() {
 
       const response = await createTenant.mutateAsync(tenantData)
       
+      console.log("School created successfully, redirecting...", response)
+      
       toast.success("School created successfully!", {
         description: `Admin credentials: ${response.admin_credentials?.email} - Password: ${response.admin_credentials?.password}`,
         duration: 10000,
       })
 
-      // Redirect to schools list page (using replace to avoid back button issues)
-      router.replace("/super-admin/schools")
+      // Redirect to schools list page - use window.location for more reliable redirect
+      // Using setTimeout to ensure toast is displayed before redirect
+      setTimeout(() => {
+        window.location.href = "/super-admin/schools"
+      }, 100)
     } catch (error: any) {
       console.error("Error creating school:", error)
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to create school"

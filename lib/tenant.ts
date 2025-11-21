@@ -103,13 +103,14 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             // Endpoint: GET /api/v1/schools/by-subdomain/{subdomain}
             const schoolResponse = await publicService.getSchoolBySubdomain(detectedSubdomain);
             
-            // Check if school exists
-            if (schoolResponse.exists && schoolResponse.success && schoolResponse.tenant && schoolResponse.school) {
-              console.log("Found school:", schoolResponse.school.name, "Tenant:", schoolResponse.tenant.name);
+            // Check if school/tenant exists
+            // API may return tenant without school field, so we check for tenant
+            if (schoolResponse.exists && schoolResponse.success && schoolResponse.tenant) {
+              console.log("Found tenant:", schoolResponse.tenant.name, "School:", schoolResponse.school?.name || "N/A");
               
               // Map the API response to Tenant format
-              // Note: tenant.id is now a string (UUID) from the API
-              const tenantDomain = (schoolResponse.tenant as any).domain || "";
+              // Note: tenant.id can be string (UUID) or number from the API
+              const tenantDomain = schoolResponse.tenant.domain || "";
               const tenant: Tenant = {
                 id: schoolResponse.tenant.id.toString(),
                 name: schoolResponse.tenant.name,
@@ -120,11 +121,17 @@ export const useTenant = create<TenantStore>()((set, get) => ({
                 users_count: 0,
               };
 
+              // Use school data if available, otherwise use tenant data for school
+              const schoolData = schoolResponse.school || {
+                id: typeof schoolResponse.tenant.id === 'number' ? schoolResponse.tenant.id : 0,
+                name: schoolResponse.tenant.name,
+              };
+
               set({
                 currentTenant: tenant,
                 currentSchool: {
-                  id: schoolResponse.school.id.toString(),
-                  name: schoolResponse.school.name,
+                  id: schoolData.id.toString(),
+                  name: schoolData.name,
                   subdomain: detectedSubdomain,
                 },
                 subdomain: detectedSubdomain,
@@ -135,6 +142,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               return;
             } else {
               // School doesn't exist or response indicates failure
+              console.error("School not found - Response:", schoolResponse);
               throw new Error("School not found");
             }
           } catch (error: any) {
@@ -202,12 +210,14 @@ export const useTenant = create<TenantStore>()((set, get) => ({
             // Endpoint: GET /api/v1/schools/by-subdomain/{subdomain}
             const schoolResponse = await publicService.getSchoolBySubdomain(detectedSubdomain);
             
-            // Check if school exists
-            if (schoolResponse.exists && schoolResponse.success && schoolResponse.tenant && schoolResponse.school) {
-              console.log("Found school server-side:", schoolResponse.school.name, "Tenant:", schoolResponse.tenant.name);
+            // Check if school/tenant exists
+            // API may return tenant without school field, so we check for tenant
+            if (schoolResponse.exists && schoolResponse.success && schoolResponse.tenant) {
+              console.log("Found tenant server-side:", schoolResponse.tenant.name, "School:", schoolResponse.school?.name || "N/A");
               
               // Map the API response to Tenant format
-              const tenantDomain = (schoolResponse.tenant as any).domain || "";
+              // Note: tenant.id can be string (UUID) or number from the API
+              const tenantDomain = schoolResponse.tenant.domain || "";
               const tenant: Tenant = {
                 id: schoolResponse.tenant.id.toString(),
                 name: schoolResponse.tenant.name,
@@ -218,11 +228,17 @@ export const useTenant = create<TenantStore>()((set, get) => ({
                 users_count: 0,
               };
 
+              // Use school data if available, otherwise use tenant data for school
+              const schoolData = schoolResponse.school || {
+                id: typeof schoolResponse.tenant.id === 'number' ? schoolResponse.tenant.id : 0,
+                name: schoolResponse.tenant.name,
+              };
+
               set({
                 currentTenant: tenant,
                 currentSchool: {
-                  id: schoolResponse.school.id.toString(),
-                  name: schoolResponse.school.name,
+                  id: schoolData.id.toString(),
+                  name: schoolData.name,
                   subdomain: detectedSubdomain,
                 },
                 subdomain: detectedSubdomain,
@@ -233,6 +249,7 @@ export const useTenant = create<TenantStore>()((set, get) => ({
               return;
             } else {
               // School doesn't exist
+              console.error("School not found server-side - Response:", schoolResponse);
               throw new Error("School not found");
             }
           } catch (error: any) {
