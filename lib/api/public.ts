@@ -12,6 +12,55 @@ const getPublicBaseURL = () => {
   return cleanBase;
 };
 
+// Helper function to extract subdomain from hostname
+const getSubdomainFromHostname = (hostname: string): string | null => {
+  const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'compasse.net';
+  
+  // Handle localhost development
+  if (hostname === 'localhost' || hostname.startsWith('localhost:')) {
+    // Try to get from URL params
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('school');
+    }
+    return null;
+  }
+  
+  // Check if hostname contains base domain
+  if (hostname.includes(`.${BASE_DOMAIN}`)) {
+    const parts = hostname.split('.');
+    const baseDomainParts = BASE_DOMAIN.split('.');
+    
+    // If it's a subdomain (e.g., test.compasse.net)
+    if (parts.length > baseDomainParts.length) {
+      return parts[0]; // Return the first part as subdomain
+    }
+  }
+  
+  // Handle other subdomain patterns (e.g., subdomain.domain.com)
+  const parts = hostname.split('.');
+  if (parts.length >= 3) {
+    return parts[0];
+  }
+  
+  return null;
+};
+
+// Helper function to get current subdomain
+const getCurrentSubdomain = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // First, try to get from localStorage (if stored)
+  const storedSubdomain = localStorage.getItem('subdomain');
+  if (storedSubdomain) {
+    return storedSubdomain;
+  }
+  
+  // Otherwise, extract from hostname
+  const hostname = window.location.hostname;
+  return getSubdomainFromHostname(hostname);
+};
+
 // Create a public API client without auth interceptors
 const publicApiClient = axios.create({
   baseURL: getPublicBaseURL(),
@@ -19,6 +68,24 @@ const publicApiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Request interceptor to add X-Subdomain header for public API calls
+publicApiClient.interceptors.request.use(
+  (config) => {
+    // Add subdomain header for all subdomain API calls
+    if (typeof window !== 'undefined') {
+      const subdomain = getCurrentSubdomain();
+      if (subdomain) {
+        config.headers['X-Subdomain'] = subdomain;
+        console.log('🌐 X-Subdomain header added to public API:', subdomain);
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // 1. Service Functions
 
@@ -56,9 +123,16 @@ export const publicService = {
   /**
    * Get school details by subdomain (no authentication required)
    * Endpoint: GET /api/v1/schools/by-subdomain/{subdomain}
+   * Note: X-Subdomain header is automatically added by the interceptor
    */
   getSchoolBySubdomain: async (subdomain: string): Promise<GetSchoolBySubdomainResponse> => {
-    const response = await publicApiClient.get(`/schools/by-subdomain/${encodeURIComponent(subdomain)}`)
+    // The X-Subdomain header will be automatically added by the interceptor
+    // But we can also explicitly set it for this specific call
+    const response = await publicApiClient.get(`/schools/by-subdomain/${encodeURIComponent(subdomain)}`, {
+      headers: {
+        'X-Subdomain': subdomain,
+      },
+    })
     return response.data
   },
 }

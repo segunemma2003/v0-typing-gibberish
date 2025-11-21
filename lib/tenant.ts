@@ -37,6 +37,16 @@ export const useTenant = create<TenantStore>()((set, get) => ({
           subdomain,
         }
       : null
+    
+    // Store subdomain in localStorage for API interceptors
+    if (typeof window !== 'undefined') {
+      if (subdomain) {
+        localStorage.setItem('subdomain', subdomain);
+      } else {
+        localStorage.removeItem('subdomain');
+      }
+    }
+    
     set({
       subdomain,
       currentTenant: tenant, // Renamed
@@ -48,6 +58,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
   },
 
   clearTenant: () => {
+    // Clear subdomain from localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('subdomain');
+    }
+    
     set({
       currentTenant: null, // Renamed
       currentSchool: null,
@@ -126,6 +141,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
                 id: typeof schoolResponse.tenant.id === 'number' ? schoolResponse.tenant.id : 0,
                 name: schoolResponse.tenant.name,
               };
+
+              // Store subdomain in localStorage for API interceptors
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('subdomain', detectedSubdomain);
+              }
 
               set({
                 currentTenant: tenant,
@@ -233,6 +253,11 @@ export const useTenant = create<TenantStore>()((set, get) => ({
                 id: typeof schoolResponse.tenant.id === 'number' ? schoolResponse.tenant.id : 0,
                 name: schoolResponse.tenant.name,
               };
+
+              // Store subdomain in localStorage for API interceptors
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('subdomain', detectedSubdomain);
+              }
 
               set({
                 currentTenant: tenant,
