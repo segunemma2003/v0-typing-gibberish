@@ -45,8 +45,8 @@ export default function NewSchoolPage() {
         duration: 10000,
       })
 
-      // Redirect to schools list
-      router.push("/super-admin/schools")
+      // Redirect to schools list page (using replace to avoid back button issues)
+      router.replace("/super-admin/schools")
     } catch (error: any) {
       console.error("Error creating school:", error)
       const errorMessage = error?.response?.data?.message || error?.message || "Failed to create school"
