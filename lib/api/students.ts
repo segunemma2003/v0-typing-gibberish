@@ -211,6 +211,11 @@ export const studentService = {
     return response.data;
   },
 
+  deleteStudent: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/students/${id}`);
+    return response.data;
+  },
+
   getStudentAttendance: async (id: number, params?: GetStudentAttendanceParams): Promise<StudentAttendanceResponse> => {
     const response = await apiClient.get(`/students/${id}/attendance`, { params });
     return response.data;
@@ -270,6 +275,17 @@ export const useUpdateStudent = () => {
       console.log('Student updated successfully', data);
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: ['student', variables.id] });
+    },
+  });
+};
+
+export const useDeleteStudent = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: studentService.deleteStudent,
+    onSuccess: () => {
+      console.log('Student deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['students'] });
     },
   });
 };

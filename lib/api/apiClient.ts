@@ -62,9 +62,49 @@ const getCurrentSubdomain = (): string | null => {
     return storedSubdomain;
   }
   
-  // Otherwise, extract from hostname
+  // Otherwise, extract from hostname (more reliable)
   const hostname = window.location.hostname;
-  return getSubdomainFromHostname(hostname);
+  const subdomain = getSubdomainFromHostname(hostname);
+  
+  // If we found a subdomain from hostname, store it in localStorage for next time
+  if (subdomain && typeof window !== 'undefined') {
+    localStorage.setItem('subdomain', subdomain);
+  }
+  
+  return subdomain;
+};
+
+// Helper function to get subdomain for header (always tries to get it)
+const getSubdomainForHeader = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  // Priority 1: Check localStorage (fastest)
+  const storedSubdomain = localStorage.getItem('subdomain');
+  if (storedSubdomain) {
+    return storedSubdomain;
+  }
+  
+  // Priority 2: Extract from current URL/hostname
+  const hostname = window.location.hostname;
+  const subdomain = getSubdomainFromHostname(hostname);
+  
+  // If we found a subdomain, store it for next time
+  if (subdomain) {
+    localStorage.setItem('subdomain', subdomain);
+    return subdomain;
+  }
+  
+  // Priority 3: Check URL search params (for localhost development)
+  if (hostname === 'localhost' || hostname.startsWith('localhost:')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const schoolParam = urlParams.get('school');
+    if (schoolParam) {
+      localStorage.setItem('subdomain', schoolParam);
+      return schoolParam;
+    }
+  }
+  
+  return null;
 };
 
 const apiClient = axios.create({
@@ -93,11 +133,18 @@ apiClient.interceptors.request.use(
         config.headers['X-Tenant-ID'] = tenantId;
       }
 
-      // Add subdomain header for all subdomain API calls
-      const subdomain = getCurrentSubdomain();
+      // Add subdomain header for all subdomain API calls (critical for multi-tenancy)
+      // Always try to get subdomain, even if localStorage doesn't have it yet
+      const subdomain = getSubdomainForHeader();
       if (subdomain) {
         config.headers['X-Subdomain'] = subdomain;
         console.log('🌐 X-Subdomain header added:', subdomain);
+      } else {
+        // Log warning if no subdomain found (might be super admin or base domain)
+        const hostname = window.location.hostname;
+        if (hostname && !hostname.includes('localhost') && !hostname.includes('compasse.net')) {
+          console.warn('⚠️ No subdomain detected for X-Subdomain header. Hostname:', hostname);
+        }
       }
     }
     return config;
