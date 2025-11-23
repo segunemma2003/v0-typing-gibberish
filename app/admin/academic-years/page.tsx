@@ -3,7 +3,7 @@
 /// <reference types="react" />
 /// <reference types="react-dom" />
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -37,23 +37,54 @@ export default function AcademicYearsPage() {
     status: "pending" as "pending" | "active" | "completed",
   })
 
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading academic years'
+      toast.error(`Error loading academic years: ${errorMessage}`)
+    }
+  }, [error])
+
   const handleAdd = async () => {
-    console.log("handleAdd called", formData)
-    
-    if (!formData.name || !formData.start_date || !formData.end_date) {
-      toast.error("Please fill in required fields (Name, Start Date, End Date)")
-      return
-    }
-
-    const startDate = new Date(formData.start_date)
-    const endDate = new Date(formData.end_date)
-    
-    if (endDate <= startDate) {
-      toast.error("End date must be after start date")
-      return
-    }
-
     try {
+      console.log("handleAdd called", formData)
+      
+      // Validate required fields
+      if (!formData.name || !formData.name.trim()) {
+        toast.error("Academic year name is required")
+        return
+      }
+      
+      if (!formData.start_date) {
+        toast.error("Start date is required")
+        return
+      }
+      
+      if (!formData.end_date) {
+        toast.error("End date is required")
+        return
+      }
+
+      // Validate date format
+      const startDate = new Date(formData.start_date)
+      const endDate = new Date(formData.end_date)
+      
+      if (isNaN(startDate.getTime())) {
+        toast.error("Invalid start date format")
+        return
+      }
+      
+      if (isNaN(endDate.getTime())) {
+        toast.error("Invalid end date format")
+        return
+      }
+      
+      // Validate date logic
+      if (endDate <= startDate) {
+        toast.error("End date must be after start date")
+        return
+      }
+
       const payload = {
         name: formData.name.trim(),
         start_date: formData.start_date,
@@ -71,7 +102,25 @@ export default function AcademicYearsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error creating academic year:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create academic year"
+      
+      // Extract error message from various possible formats
+      let errorMessage = "Failed to create academic year"
+      
+      if (error?.response?.data) {
+        const data = error.response.data
+        errorMessage = data.message || data.error || data.detail || JSON.stringify(data)
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors object
+        const errors = error.response.data.errors
+        const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+          const msg = Array.isArray(messages) ? messages.join(", ") : messages
+          return `${field}: ${msg}`
+        })
+        errorMessage = errorMessages.join("; ")
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     }
   }
@@ -89,17 +138,48 @@ export default function AcademicYearsPage() {
   }
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.start_date || !formData.end_date) {
-      toast.error("Please fill in required fields")
-      return
-    }
-
-    if (new Date(formData.end_date) <= new Date(formData.start_date)) {
-      toast.error("End date must be after start date")
-      return
-    }
-
     try {
+      if (!editingId) {
+        toast.error("No academic year selected for editing")
+        return
+      }
+      
+      // Validate required fields
+      if (!formData.name || !formData.name.trim()) {
+        toast.error("Academic year name is required")
+        return
+      }
+      
+      if (!formData.start_date) {
+        toast.error("Start date is required")
+        return
+      }
+      
+      if (!formData.end_date) {
+        toast.error("End date is required")
+        return
+      }
+
+      // Validate date format
+      const startDate = new Date(formData.start_date)
+      const endDate = new Date(formData.end_date)
+      
+      if (isNaN(startDate.getTime())) {
+        toast.error("Invalid start date format")
+        return
+      }
+      
+      if (isNaN(endDate.getTime())) {
+        toast.error("Invalid end date format")
+        return
+      }
+
+      // Validate date logic
+      if (endDate <= startDate) {
+        toast.error("End date must be after start date")
+        return
+      }
+
       await updateAcademicYear.mutateAsync({
         id: editingId,
         data: {
@@ -117,37 +197,87 @@ export default function AcademicYearsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error updating academic year:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update academic year"
+      
+      // Extract error message from various possible formats
+      let errorMessage = "Failed to update academic year"
+      
+      if (error?.response?.data) {
+        const data = error.response.data
+        errorMessage = data.message || data.error || data.detail || JSON.stringify(data)
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors object
+        const errors = error.response.data.errors
+        const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+          const msg = Array.isArray(messages) ? messages.join(", ") : messages
+          return `${field}: ${msg}`
+        })
+        errorMessage = errorMessages.join("; ")
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     }
   }
 
   const handleDelete = async (id: number) => {
-    const year = academicYears.find((y: any) => y.id === id)
-    if (year?.is_current) {
-      toast.error("Cannot delete the current academic year")
-      return
-    }
-    
-    if (!confirm("Are you sure you want to delete this academic year?")) return
-
     try {
+      if (!id) {
+        toast.error("Invalid academic year ID")
+        return
+      }
+      
+      const year = academicYears.find((y: any) => y.id === id)
+      if (!year) {
+        toast.error("Academic year not found")
+        return
+      }
+      
+      if (year?.is_current) {
+        toast.error("Cannot delete the current academic year")
+        return
+      }
+      
+      if (!confirm("Are you sure you want to delete this academic year?")) {
+        return
+      }
+
       await deleteAcademicYear.mutateAsync(id)
       toast.success("Academic year deleted successfully")
       refetch()
     } catch (error: any) {
       console.error("Error deleting academic year:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete academic year"
+      
+      // Extract error message from various possible formats
+      let errorMessage = "Failed to delete academic year"
+      
+      if (error?.response?.data) {
+        const data = error.response.data
+        errorMessage = data.message || data.error || data.detail || JSON.stringify(data)
+      } else if (error?.response?.data?.errors) {
+        // Handle validation errors object
+        const errors = error.response.data.errors
+        const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+          const msg = Array.isArray(messages) ? messages.join(", ") : messages
+          return `${field}: ${msg}`
+        })
+        errorMessage = errorMessages.join("; ")
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
       toast.error(errorMessage)
     }
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error loading academic years'
+    
     return (
       <div className="p-6">
         <Card>
           <CardContent className="pt-6">
-            <p className="text-red-500">Error loading academic years: {error instanceof Error ? error.message : 'Unknown error'}</p>
+            <p className="text-red-500">Error loading academic years: {errorMessage}</p>
             <Button onClick={() => refetch()} className="mt-4">
               Retry
             </Button>
@@ -245,19 +375,26 @@ export default function AcademicYearsPage() {
             <div className="flex gap-2 mt-4">
               <Button
                 type="button"
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                onClick={async (e: React.MouseEvent<HTMLButtonElement>) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  console.log("Button clicked!", {
-                    editingId,
-                    formData,
-                    isCreatingPending: createAcademicYear.isPending,
-                    isUpdatingPending: updateAcademicYear.isPending
-                  })
-                  if (editingId) {
-                    handleUpdate()
-                  } else {
-                    handleAdd()
+                  
+                  if (createAcademicYear.isPending || updateAcademicYear.isPending) {
+                    toast.info("Please wait, operation in progress...")
+                    return
+                  }
+                  
+                  try {
+                    if (editingId) {
+                      await handleUpdate()
+                    } else {
+                      await handleAdd()
+                    }
+                  } catch (error: any) {
+                    // Additional catch for unexpected errors
+                    console.error("Unexpected error in button click:", error)
+                    const errorMessage = error?.message || "An unexpected error occurred"
+                    toast.error(errorMessage)
                   }
                 }}
                 disabled={!!createAcademicYear.isPending || !!updateAcademicYear.isPending}
