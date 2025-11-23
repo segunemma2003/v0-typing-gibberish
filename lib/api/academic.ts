@@ -51,6 +51,55 @@ interface CreateSubjectRequest {
   teacher_ids: number[];
 }
 
+interface AcademicYear {
+  id: number;
+  school_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  status: 'pending' | 'active' | 'completed';
+  total_terms?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+interface Term {
+  id: number;
+  school_id: number;
+  academic_year_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current: boolean;
+  status: 'pending' | 'active' | 'completed';
+  created_at: string;
+  updated_at?: string;
+  academic_year?: {
+    id: number;
+    name: string;
+    start_date?: string;
+    end_date?: string;
+  };
+}
+
+interface CreateAcademicYearRequest {
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current?: boolean;
+  status?: 'pending' | 'active' | 'completed';
+}
+
+interface CreateTermRequest {
+  academic_year_id: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_current?: boolean;
+  status?: 'pending' | 'active' | 'completed';
+}
+
 export const academicService = {
   // Classes
   getClasses: async (): Promise<ClassListResponse> => {
@@ -95,14 +144,54 @@ export const academicService = {
   },
 
   // Academic Years
-  getAcademicYears: async (): Promise<{ data: any[] }> => {
-    const response = await apiClient.get('/academic-years');
+  getAcademicYears: async (params?: { per_page?: number; page?: number; status?: string; is_current?: boolean }): Promise<{ data: AcademicYear[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
+    const response = await apiClient.get('/academic-years', { params });
+    return response.data;
+  },
+
+  getAcademicYearById: async (id: number): Promise<{ academic_year: AcademicYear & { terms?: Term[]; statistics?: any } }> => {
+    const response = await apiClient.get(`/academic-years/${id}`);
+    return response.data;
+  },
+
+  createAcademicYear: async (data: CreateAcademicYearRequest): Promise<{ message: string; academic_year: AcademicYear }> => {
+    const response = await apiClient.post('/academic-years', data);
+    return response.data;
+  },
+
+  updateAcademicYear: async ({ id, data }: { id: number; data: Partial<CreateAcademicYearRequest> }): Promise<{ message: string; academic_year: AcademicYear }> => {
+    const response = await apiClient.put(`/academic-years/${id}`, data);
+    return response.data;
+  },
+
+  deleteAcademicYear: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/academic-years/${id}`);
     return response.data;
   },
 
   // Terms
-  getTerms: async (): Promise<{ data: any[] }> => {
-    const response = await apiClient.get('/terms');
+  getTerms: async (params?: { per_page?: number; page?: number; academic_year_id?: number; status?: string; is_current?: boolean }): Promise<{ data: Term[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
+    const response = await apiClient.get('/terms', { params });
+    return response.data;
+  },
+
+  getTermById: async (id: number): Promise<{ term: Term & { academic_year?: AcademicYear; statistics?: any } }> => {
+    const response = await apiClient.get(`/terms/${id}`);
+    return response.data;
+  },
+
+  createTerm: async (data: CreateTermRequest): Promise<{ message: string; term: Term }> => {
+    const response = await apiClient.post('/terms', data);
+    return response.data;
+  },
+
+  updateTerm: async ({ id, data }: { id: number; data: Partial<CreateTermRequest> }): Promise<{ message: string; term: Term }> => {
+    const response = await apiClient.put(`/terms/${id}`, data);
+    return response.data;
+  },
+
+  deleteTerm: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/terms/${id}`);
     return response.data;
   },
 };
@@ -194,17 +283,98 @@ export const useDeleteSubject = () => {
 };
 
 // Academic Years
-export const useAcademicYears = () => {
+export const useAcademicYears = (params?: { per_page?: number; page?: number; status?: string; is_current?: boolean }) => {
   return useQuery({
-    queryKey: ['academicYears'],
-    queryFn: academicService.getAcademicYears,
+    queryKey: ['academicYears', params],
+    queryFn: () => academicService.getAcademicYears(params),
+  });
+};
+
+export const useAcademicYear = (id: number) => {
+  return useQuery({
+    queryKey: ['academicYear', id],
+    queryFn: () => academicService.getAcademicYearById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateAcademicYear = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.createAcademicYear,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] });
+    },
+  });
+};
+
+export const useUpdateAcademicYear = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.updateAcademicYear,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] });
+      queryClient.invalidateQueries({ queryKey: ['academicYear', variables.id] });
+    },
+  });
+};
+
+export const useDeleteAcademicYear = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.deleteAcademicYear,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] });
+    },
   });
 };
 
 // Terms
-export const useTerms = () => {
+export const useTerms = (params?: { per_page?: number; page?: number; academic_year_id?: number; status?: string; is_current?: boolean }) => {
   return useQuery({
-    queryKey: ['terms'],
-    queryFn: academicService.getTerms,
+    queryKey: ['terms', params],
+    queryFn: () => academicService.getTerms(params),
+  });
+};
+
+export const useTerm = (id: number) => {
+  return useQuery({
+    queryKey: ['term', id],
+    queryFn: () => academicService.getTermById(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateTerm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.createTerm,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['terms'] });
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] }); // Refresh academic years to update term counts
+    },
+  });
+};
+
+export const useUpdateTerm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.updateTerm,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['terms'] });
+      queryClient.invalidateQueries({ queryKey: ['term', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] });
+    },
+  });
+};
+
+export const useDeleteTerm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.deleteTerm,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['terms'] });
+      queryClient.invalidateQueries({ queryKey: ['academicYears'] });
+    },
   });
 };
