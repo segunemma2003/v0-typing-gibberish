@@ -1,6 +1,9 @@
 "use client"
 
-import { useState } from "react"
+/// <reference types="react" />
+/// <reference types="react-dom" />
+
+import React, { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -176,7 +179,7 @@ export default function AcademicYearsPage() {
                 <Label>Academic Year Name *</Label>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
                   placeholder="e.g., 2024/2025"
                 />
               </div>
@@ -201,7 +204,7 @@ export default function AcademicYearsPage() {
                 <Input
                   type="date"
                   value={formData.start_date}
-                  onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, start_date: e.target.value})}
                 />
               </div>
               <div className="space-y-2">
@@ -209,7 +212,7 @@ export default function AcademicYearsPage() {
                 <Input
                   type="date"
                   value={formData.end_date}
-                  onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, end_date: e.target.value})}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -218,7 +221,7 @@ export default function AcademicYearsPage() {
                     type="checkbox"
                     id="is_current"
                     checked={formData.is_current}
-                    onChange={(e) => setFormData({...formData, is_current: e.target.checked})}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, is_current: e.target.checked})}
                     className="w-4 h-4 rounded border-gray-300"
                   />
                   <Label htmlFor="is_current" className="cursor-pointer">
@@ -232,6 +235,7 @@ export default function AcademicYearsPage() {
             </div>
             <div className="flex gap-2 mt-4">
               <Button
+                type="button"
                 onClick={editingId ? handleUpdate : handleAdd}
                 disabled={createAcademicYear.isPending || updateAcademicYear.isPending}
               >
@@ -246,7 +250,7 @@ export default function AcademicYearsPage() {
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+              <Button type="button" variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
                 Cancel
               </Button>
             </div>
