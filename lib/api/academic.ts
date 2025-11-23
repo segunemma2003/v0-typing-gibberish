@@ -93,6 +93,18 @@ export const academicService = {
     const response = await apiClient.delete(`/subjects/${id}`);
     return response.data;
   },
+
+  // Academic Years
+  getAcademicYears: async (): Promise<{ data: any[] }> => {
+    const response = await apiClient.get('/academic-years');
+    return response.data;
+  },
+
+  // Terms
+  getTerms: async (): Promise<{ data: any[] }> => {
+    const response = await apiClient.get('/terms');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
