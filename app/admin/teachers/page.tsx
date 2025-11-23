@@ -7,95 +7,154 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Filter, Download, Edit, Trash2, X } from "lucide-react"
+import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2 } from "lucide-react"
+import { useTeachers, useCreateTeacher, useUpdateTeacher, useDeleteTeacher } from "@/lib/api/teachers"
+import { useSubjects } from "@/lib/api/academic"
+import { useClasses } from "@/lib/api/academic"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 export default function TeachersPage() {
   const [showAddForm, setShowAddForm] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [teachers, setTeachers] = useState([
-    {
-      id: "1",
-      name: "Dr. Sarah Wilson",
-      email: "sarah.wilson@school.edu",
-      subjects: ["Mathematics", "Physics"],
-      department: "Science",
-      status: "Active",
-      joinDate: "2020-08-15",
-    },
-    {
-      id: "2",
-      name: "Mr. John Davis",
-      email: "john.davis@school.edu",
-      subjects: ["English Literature", "Creative Writing"],
-      department: "Languages",
-      status: "Active",
-      joinDate: "2019-09-01",
-    },
-    {
-      id: "3",
-      name: "Ms. Emily Chen",
-      email: "emily.chen@school.edu",
-      subjects: ["History", "Geography"],
-      department: "Social Studies",
-      status: "On Leave",
-      joinDate: "2021-01-10",
-    },
-  ])
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const { data: teachersResponse, isLoading, error, refetch } = useTeachers()
+  const { data: subjectsResponse } = useSubjects()
+  const { data: classesResponse } = useClasses()
+
+  const subjects = subjectsResponse?.data || []
+  const classes = classesResponse?.data || []
+  const teachers = teachersResponse?.data || []
+
+  const createTeacher = useCreateTeacher()
+  const updateTeacher = useUpdateTeacher()
+  const deleteTeacher = useDeleteTeacher()
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    subjects: "",
-    department: "",
+    phone: "",
+    subjects: [] as number[],
+    classes: [] as number[],
+    qualification: "",
+    experience_years: "",
   })
 
-  const handleAdd = () => {
-    if (!formData.name || !formData.email) return
-    
-    const newTeacher = {
-      id: `${Date.now()}`,
-      name: formData.name,
-      email: formData.email,
-      subjects: formData.subjects.split(',').map(s => s.trim()),
-      department: formData.department,
-      status: "Active",
-      joinDate: new Date().toISOString().split('T')[0],
+  const handleAdd = async () => {
+    if (!formData.name) {
+      toast.error("Please fill in required fields")
+      return
     }
-    setTeachers([...teachers, newTeacher])
-    setFormData({ name: "", email: "", subjects: "", department: "" })
-    setShowAddForm(false)
+
+    try {
+      await createTeacher.mutateAsync({
+      name: formData.name,
+        subjects: formData.subjects,
+        classes: formData.classes,
+        qualification: formData.qualification || undefined,
+        experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
+        phone: formData.phone || undefined,
+      })
+      toast.success("Teacher created successfully")
+      setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+      setShowAddForm(false)
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to create teacher")
+    }
   }
 
-  const handleEdit = (id: string) => {
-    const teacher = teachers.find(t => t.id === id)
-    if (teacher) {
+  const handleEdit = (teacher: any) => {
       setFormData({
-        name: teacher.name,
-        email: teacher.email,
-        subjects: teacher.subjects.join(', '),
-        department: teacher.department,
-      })
-      setEditingId(id)
+      name: teacher.name || "",
+      email: teacher.email || "",
+      phone: teacher.phone || "",
+      subjects: teacher.subjects?.map((s: any) => s.id) || [],
+      classes: teacher.classes?.map((c: any) => c.id) || [],
+      qualification: teacher.qualification || "",
+      experience_years: teacher.experience_years?.toString() || "",
+    })
+    setEditingId(teacher.id)
       setShowAddForm(true)
     }
-  }
 
-  const handleUpdate = () => {
-    if (!editingId) return
-    setTeachers(teachers.map(t => 
-      t.id === editingId 
-        ? { ...t, name: formData.name, email: formData.email, subjects: formData.subjects.split(',').map(s => s.trim()), department: formData.department }
-        : t
-    ))
-    setFormData({ name: "", email: "", subjects: "", department: "" })
+  const handleUpdate = async () => {
+    if (!editingId || !formData.name) {
+      toast.error("Please fill in required fields")
+      return
+    }
+
+    try {
+      await updateTeacher.mutateAsync({
+        id: editingId,
+        data: {
+          name: formData.name,
+          subjects: formData.subjects,
+          classes: formData.classes,
+          qualification: formData.qualification || undefined,
+          experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
+          phone: formData.phone || undefined,
+        },
+      })
+      toast.success("Teacher updated successfully")
+      setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
     setEditingId(null)
     setShowAddForm(false)
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to update teacher")
+    }
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this teacher?")) {
-      setTeachers(teachers.filter(t => t.id !== id))
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this teacher?")) return
+
+    try {
+      await deleteTeacher.mutateAsync(id)
+      toast.success("Teacher deleted successfully")
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete teacher")
     }
+  }
+
+  const toggleSubject = (subjectId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      subjects: prev.subjects.includes(subjectId)
+        ? prev.subjects.filter((id) => id !== subjectId)
+        : [...prev.subjects, subjectId],
+    }))
+  }
+
+  const toggleClass = (classId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      classes: prev.classes.includes(classId)
+        ? prev.classes.filter((id) => id !== classId)
+        : [...prev.classes, classId],
+    }))
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">Error loading teachers: {error?.message || "Unknown error"}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -106,7 +165,13 @@ export default function TeachersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Teachers</h1>
           <p className="text-muted-foreground">Manage teaching staff and assignments</p>
         </div>
-        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ name: "", email: "", subjects: "", department: "" }) }}>
+        <Button
+          onClick={() => {
+            setShowAddForm(true)
+            setEditingId(null)
+            setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Teacher
         </Button>
@@ -118,7 +183,14 @@ export default function TeachersPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>{editingId ? "Edit Teacher" : "Add New Teacher"}</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowAddForm(false)
+                  setEditingId(null)
+                }}
+              >
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -129,41 +201,92 @@ export default function TeachersPage() {
                 <Label>Full Name *</Label>
                 <Input 
                   value={formData.name} 
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter full name"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email *</Label>
+                <Label>Phone</Label>
                 <Input 
-                  type="email"
-                  value={formData.email} 
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  placeholder="teacher@school.edu"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="+1234567890"
                 />
               </div>
               <div className="space-y-2">
+                <Label>Qualification</Label>
+                <Input 
+                  value={formData.qualification}
+                  onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                  placeholder="e.g., B.Ed, M.Sc"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Experience (Years)</Label>
+                <Input 
+                  type="number"
+                  value={formData.experience_years}
+                  onChange={(e) => setFormData({ ...formData, experience_years: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2 md:col-span-2">
                 <Label>Subjects</Label>
-                <Input 
-                  value={formData.subjects} 
-                  onChange={(e) => setFormData({...formData, subjects: e.target.value})}
-                  placeholder="e.g., Mathematics, Physics"
-                />
+                <div className="flex flex-wrap gap-2 border rounded-lg p-3 min-h-[60px]">
+                  {subjects.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No subjects available</p>
+                  ) : (
+                    subjects.map((subject: any) => (
+                      <Badge
+                        key={subject.id}
+                        variant={formData.subjects.includes(subject.id) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => toggleSubject(subject.id)}
+                      >
+                        {subject.name}
+                      </Badge>
+                    ))
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Department</Label>
-                <Input 
-                  value={formData.department} 
-                  onChange={(e) => setFormData({...formData, department: e.target.value})}
-                  placeholder="e.g., Science"
-                />
+              <div className="space-y-2 md:col-span-2">
+                <Label>Classes</Label>
+                <div className="flex flex-wrap gap-2 border rounded-lg p-3 min-h-[60px]">
+                  {classes.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No classes available</p>
+                  ) : (
+                    classes.map((classItem: any) => (
+                      <Badge
+                        key={classItem.id}
+                        variant={formData.classes.includes(classItem.id) ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => toggleClass(classItem.id)}
+                      >
+                        {classItem.name} ({classItem.level})
+                      </Badge>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd}>
-                {editingId ? "Update" : "Add"} Teacher
+              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createTeacher.isPending || updateTeacher.isPending}>
+                {createTeacher.isPending || updateTeacher.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {editingId ? "Updating..." : "Adding..."}
+                  </>
+                ) : (
+                  <>{editingId ? "Update" : "Add"} Teacher</>
+                )}
               </Button>
-              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddForm(false)
+                  setEditingId(null)
+                }}
+              >
                 Cancel
               </Button>
             </div>
@@ -177,7 +300,12 @@ export default function TeachersPage() {
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Search teachers..." className="pl-10" />
+              <Input
+                placeholder="Search teachers..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
@@ -199,44 +327,69 @@ export default function TeachersPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {teachers.map((teacher) => (
+            {teachers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No teachers found</p>
+            ) : (
+              teachers
+                .filter((teacher: any) => {
+                  if (!searchTerm) return true
+                  const search = searchTerm.toLowerCase()
+                  return (
+                    teacher.name?.toLowerCase().includes(search) ||
+                    teacher.email?.toLowerCase().includes(search) ||
+                    teacher.phone?.toLowerCase().includes(search)
+                  )
+                })
+                .map((teacher: any) => (
               <div key={teacher.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <Avatar>
                     <AvatarFallback>
                       {teacher.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                            ?.split(" ")
+                            .map((n: string) => n[0])
+                            .join("") || "T"}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <h3 className="font-medium">{teacher.name}</h3>
                     <p className="text-sm text-muted-foreground">{teacher.email}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      {teacher.subjects.map((subject) => (
-                        <Badge key={subject} variant="outline" className="text-xs">
-                          {subject}
+                          {teacher.subjects && teacher.subjects.length > 0 ? (
+                            teacher.subjects.map((subject: any) => (
+                              <Badge key={subject.id} variant="outline" className="text-xs">
+                                {subject.name}
                         </Badge>
-                      ))}
+                            ))
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No subjects assigned</span>
+                          )}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <p className="text-sm font-medium">{teacher.department}</p>
-                    <p className="text-sm text-muted-foreground">Since {teacher.joinDate}</p>
+                        {teacher.qualification && <p className="text-sm font-medium">{teacher.qualification}</p>}
+                        {teacher.experience_years && (
+                          <p className="text-sm text-muted-foreground">{teacher.experience_years} years experience</p>
+                        )}
                   </div>
-                  <Badge variant={teacher.status === "Active" ? "default" : "secondary"}>{teacher.status}</Badge>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(teacher.id)}>
+                      <Badge variant={teacher.status === "active" ? "default" : "secondary"}>{teacher.status}</Badge>
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(teacher)}>
                     <Edit className="w-4 h-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(teacher.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(teacher.id)}
+                        disabled={deleteTeacher.isPending}
+                      >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
-            ))}
+                ))
+            )}
           </div>
         </CardContent>
       </Card>

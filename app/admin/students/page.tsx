@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2 } from "lucide-react"
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/lib/api/students"
 import { useClasses } from "@/lib/api/academic"
+import { useSchools } from "@/lib/api/schools"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
@@ -26,15 +27,16 @@ export default function StudentsPage() {
   const { data: classesResponse } = useClasses()
   const classes = classesResponse?.data || []
 
+  const { data: schoolsResponse } = useSchools()
+  const schools = schoolsResponse?.data || []
+  const currentSchoolId = schools?.[0]?.id // Get first school ID (admin should only have access to one school)
+
   const createStudent = useCreateStudent()
   const updateStudent = useUpdateStudent()
   const deleteStudent = useDeleteStudent()
 
   const students = studentsResponse?.data || []
 
-  // Get selected class's arms for dropdown
-  const selectedClass = classes.find((c: any) => c.id.toString() === formData.class_id)
-  const availableArms = selectedClass?.arms || []
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -46,15 +48,24 @@ export default function StudentsPage() {
     gender: "",
   })
 
+  // Get selected class's arms for dropdown
+  const selectedClass = classes.find((c: any) => c.id.toString() === formData.class_id)
+  const availableArms = selectedClass?.arms || []
+
   const handleAdd = async () => {
     if (!formData.first_name || !formData.last_name) {
       toast.error("Please fill in required fields")
       return
     }
     
+    if (!currentSchoolId) {
+      toast.error("School information not available")
+      return
+    }
+
     try {
       await createStudent.mutateAsync({
-        school_id: 1, // This should come from context
+        school_id: currentSchoolId,
         first_name: formData.first_name,
         last_name: formData.last_name,
         email: formData.email || undefined,
@@ -74,7 +85,7 @@ export default function StudentsPage() {
   }
 
   const handleEdit = (student: any) => {
-    setFormData({
+      setFormData({
       first_name: student.name?.split(' ')[0] || "",
       last_name: student.name?.split(' ').slice(1).join(' ') || "",
       email: student.email || "",
@@ -85,8 +96,8 @@ export default function StudentsPage() {
       gender: student.gender || "",
     })
     setEditingId(student.id)
-    setShowAddForm(true)
-  }
+      setShowAddForm(true)
+    }
 
   const handleUpdate = async () => {
     if (!editingId || !formData.first_name || !formData.last_name) {
@@ -105,8 +116,8 @@ export default function StudentsPage() {
       })
       toast.success("Student updated successfully")
       setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
-      setEditingId(null)
-      setShowAddForm(false)
+    setEditingId(null)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to update student")
@@ -274,7 +285,7 @@ export default function StudentsPage() {
                   </>
                 ) : (
                   <>
-                    {editingId ? "Update" : "Add"} Student
+                {editingId ? "Update" : "Add"} Student
                   </>
                 )}
               </Button>
@@ -329,20 +340,20 @@ export default function StudentsPage() {
               <p className="text-muted-foreground">No students found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+          <div className="space-y-4">
               {students.map((student: any) => (
-                <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <Avatar>
-                      <AvatarFallback>
-                        {student.name
+              <div key={student.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <Avatar>
+                    <AvatarFallback>
+                      {student.name
                           ?.split(" ")
                           .map((n: string) => n[0])
                           .join("")
                           .toUpperCase() || "S"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
                       <h3 className="font-medium">{student.name || 'N/A'}</h3>
                       <p className="text-sm text-muted-foreground">
                         {student.email || student.admission_number || 'No email'}
@@ -351,22 +362,22 @@ export default function StudentsPage() {
                         <p className="text-xs text-muted-foreground">Admission: {student.admission_number}</p>
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
                       {student.class && (
                         <p className="text-sm font-medium">{student.class.name}</p>
                       )}
                       {student.arm && (
                         <p className="text-sm text-muted-foreground">{student.arm.name}</p>
                       )}
-                    </div>
+                  </div>
                     <Badge variant={student.status === "active" ? "default" : "secondary"}>
                       {student.status || "active"}
                     </Badge>
                     <Button variant="outline" size="sm" onClick={() => handleEdit(student)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <Edit className="w-4 h-4" />
+                  </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -376,13 +387,13 @@ export default function StudentsPage() {
                       {deleteStudent.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
-                        <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4" />
                       )}
-                    </Button>
-                  </div>
+                  </Button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           )}
         </CardContent>
       </Card>

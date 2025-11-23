@@ -6,77 +6,134 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Bell, Send, Trash2, Edit, Search } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Plus, Bell, Send, Trash2, Edit, Search, X, Loader2 } from "lucide-react"
+import { useAnnouncements, useCreateAnnouncement, useUpdateAnnouncement, useDeleteAnnouncement, usePublishAnnouncement } from "@/lib/api/announcements"
+import { toast } from "sonner"
 
 export default function AnnouncementsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    message: "",
-    priority: "normal",
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const { data: announcementsResponse, isLoading, error, refetch } = useAnnouncements({
+    search: searchTerm || undefined,
+    per_page: 100,
   })
 
-  const announcements = [
-    {
-      id: "1",
-      title: "Parent-Teacher Meeting",
-      message: "Annual parent-teacher meeting scheduled for April 15th. All parents are requested to attend.",
-      date: "2024-03-28",
-      priority: "high",
-      author: "Principal",
-      recipients: "All Parents",
-      status: "Published",
-    },
-    {
-      id: "2",
-      title: "Sports Day Announcement",
-      message: "The annual sports day will be held on April 20th. Students are encouraged to participate.",
-      date: "2024-03-25",
-      priority: "normal",
-      author: "Sports Coordinator",
-      recipients: "All Students",
-      status: "Published",
-    },
-    {
-      id: "3",
-      title: "Library Hours Extended",
-      message: "Library will now be open until 6 PM on weekdays to accommodate student study needs.",
-      date: "2024-03-20",
-      priority: "low",
-      author: "Librarian",
-      recipients: "All Students",
-      status: "Published",
-    },
-    {
-      id: "4",
-      title: "Exam Schedule Released",
-      message: "Mid-term examination schedule has been released. Please check the student portal for details.",
-      date: "2024-03-18",
-      priority: "high",
-      author: "Academic Coordinator",
-      recipients: "All Students & Parents",
-      status: "Published",
-    },
-  ]
+  const createAnnouncement = useCreateAnnouncement()
+  const updateAnnouncement = useUpdateAnnouncement()
+  const deleteAnnouncement = useDeleteAnnouncement()
+  const publishAnnouncement = usePublishAnnouncement()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const announcements = announcementsResponse?.data || []
+
+  const [formData, setFormData] = useState({
+    title: "",
+    content: "",
+    type: "general",
+    status: "draft" as "draft" | "published",
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Creating announcement:", formData)
-    setShowCreateForm(false)
-    setFormData({ title: "", message: "", priority: "normal" })
+    if (!formData.title || !formData.content) {
+      toast.error("Please fill in required fields")
+      return
+    }
+
+    try {
+      if (editingId) {
+        await updateAnnouncement.mutateAsync({
+          id: editingId,
+          data: {
+            title: formData.title,
+            content: formData.content,
+            type: formData.type || undefined,
+            status: formData.status,
+          },
+        })
+        toast.success("Announcement updated successfully")
+      } else {
+        await createAnnouncement.mutateAsync({
+          title: formData.title,
+          content: formData.content,
+          type: formData.type || undefined,
+          status: formData.status,
+        })
+        toast.success("Announcement created successfully")
+      }
+      setShowCreateForm(false)
+      setEditingId(null)
+      setFormData({ title: "", content: "", type: "general", status: "draft" })
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to save announcement")
+    }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "destructive"
-      case "normal":
+  const handleEdit = (announcement: any) => {
+    setFormData({
+      title: announcement.title || "",
+      content: announcement.content || "",
+      type: announcement.type || "general",
+      status: announcement.status || "draft",
+    })
+    setEditingId(announcement.id)
+    setShowCreateForm(true)
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this announcement?")) return
+
+    try {
+      await deleteAnnouncement.mutateAsync(id)
+      toast.success("Announcement deleted successfully")
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to delete announcement")
+    }
+  }
+
+  const handlePublish = async (id: number) => {
+    try {
+      await publishAnnouncement.mutateAsync(id)
+      toast.success("Announcement published successfully")
+      refetch()
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to publish announcement")
+    }
+  }
+
+  const getPriorityColor = (status: string) => {
+    switch (status) {
+      case "published":
         return "default"
-      case "low":
+      case "draft":
         return "secondary"
       default:
-        return "default"
+        return "outline"
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-destructive">Error loading announcements: {error?.message || "Unknown error"}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -87,23 +144,42 @@ export default function AnnouncementsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
           <p className="text-muted-foreground">Manage school announcements and notifications</p>
         </div>
-        <Button onClick={() => setShowCreateForm(!showCreateForm)}>
+        <Button
+          onClick={() => {
+            setShowCreateForm(true)
+            setEditingId(null)
+            setFormData({ title: "", content: "", type: "general", status: "draft" })
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" />
           New Announcement
         </Button>
       </div>
 
-      {/* Create Form */}
+      {/* Create/Edit Form */}
       {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Create New Announcement</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{editingId ? "Edit Announcement" : "Create New Announcement"}</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowCreateForm(false)
+                  setEditingId(null)
+                  setFormData({ title: "", content: "", type: "general", status: "draft" })
+                }}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
             <CardDescription>Broadcast important information to students, parents, and staff</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Title</label>
+              <div className="space-y-2">
+                <Label>Title *</Label>
                 <Input
                   placeholder="Enter announcement title"
                   value={formData.title}
@@ -111,38 +187,66 @@ export default function AnnouncementsPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Message</label>
+              <div className="space-y-2">
+                <Label>Content *</Label>
                 <Textarea
-                  placeholder="Enter announcement message"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Enter announcement content"
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   rows={4}
                   required
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium">Priority</label>
-                <div className="flex gap-2 mt-2">
-                  {["low", "normal", "high"].map((priority) => (
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Input
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  placeholder="e.g., general, urgent, event"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <div className="flex gap-2">
+                  {(["draft", "published"] as const).map((status) => (
                     <Button
-                      key={priority}
+                      key={status}
                       type="button"
-                      variant={formData.priority === priority ? "default" : "outline"}
+                      variant={formData.status === status ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setFormData({ ...formData, priority })}
+                      onClick={() => setFormData({ ...formData, status })}
                     >
-                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
                     </Button>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button type="submit">
-                  <Send className="w-4 h-4 mr-2" />
-                  Publish Announcement
+                <Button
+                  type="submit"
+                  disabled={createAnnouncement.isPending || updateAnnouncement.isPending}
+                >
+                  {createAnnouncement.isPending || updateAnnouncement.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      {editingId ? "Update" : "Create"} Announcement
+                    </>
+                  )}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowCreateForm(false)
+                    setEditingId(null)
+                    setFormData({ title: "", content: "", type: "general", status: "draft" })
+                  }}
+                >
                   Cancel
                 </Button>
               </div>
@@ -156,46 +260,83 @@ export default function AnnouncementsPage() {
         <CardContent className="pt-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input placeholder="Search announcements..." className="pl-10" />
+            <Input
+              placeholder="Search announcements..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </CardContent>
       </Card>
 
       {/* Announcements List */}
       <div className="space-y-4">
-        {announcements.map((announcement) => (
-          <Card key={announcement.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Bell className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                    <CardDescription className="mt-1">{announcement.message}</CardDescription>
-                    <div className="flex items-center gap-3 mt-3">
-                      <Badge variant={getPriorityColor(announcement.priority)}>
-                        {announcement.priority.toUpperCase()}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">By: {announcement.author}</span>
-                      <span className="text-xs text-muted-foreground">To: {announcement.recipients}</span>
-                      <span className="text-xs text-muted-foreground">{announcement.date}</span>
+        {announcements.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground py-8">No announcements found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          announcements.map((announcement: any) => (
+            <Card key={announcement.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Bell className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{announcement.title}</CardTitle>
+                      <CardDescription className="mt-1">{announcement.content}</CardDescription>
+                      <div className="flex items-center gap-3 mt-3">
+                        {announcement.type && (
+                          <Badge variant="outline">{announcement.type}</Badge>
+                        )}
+                        <Badge variant={getPriorityColor(announcement.status)}>
+                          {announcement.status}
+                        </Badge>
+                        {announcement.published_at && (
+                          <span className="text-xs text-muted-foreground">
+                            Published: {new Date(announcement.published_at).toLocaleDateString()}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground">
+                          Created: {new Date(announcement.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex gap-2">
+                    {announcement.status === "draft" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePublish(announcement.id)}
+                        disabled={publishAnnouncement.isPending}
+                      >
+                        <Send className="w-4 h-4 mr-1" />
+                        Publish
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(announcement)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(announcement.id)}
+                      disabled={deleteAnnouncement.isPending}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-        ))}
+              </CardHeader>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   )
