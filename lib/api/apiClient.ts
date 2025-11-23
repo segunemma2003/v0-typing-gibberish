@@ -20,6 +20,8 @@ const getBaseURL = () => {
 
 // Helper function to extract subdomain from hostname
 const getSubdomainFromHostname = (hostname: string): string | null => {
+  if (!hostname) return null;
+  
   const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'compasse.net';
   
   // Handle localhost development
@@ -27,26 +29,40 @@ const getSubdomainFromHostname = (hostname: string): string | null => {
     // Try to get from URL params
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get('school');
+      const schoolParam = urlParams.get('school');
+      if (schoolParam) return schoolParam;
     }
     return null;
   }
   
-  // Check if hostname contains base domain
+  // Check if hostname contains base domain (e.g., schoolname.compasse.net)
   if (hostname.includes(`.${BASE_DOMAIN}`)) {
     const parts = hostname.split('.');
     const baseDomainParts = BASE_DOMAIN.split('.');
     
     // If it's a subdomain (e.g., test.compasse.net)
+    // parts would be: ['test', 'compasse', 'net']
+    // baseDomainParts would be: ['compasse', 'net']
+    // parts.length (3) > baseDomainParts.length (2) = true, so return 'test'
     if (parts.length > baseDomainParts.length) {
-      return parts[0]; // Return the first part as subdomain
+      const subdomain = parts[0];
+      console.log('🔍 Extracted subdomain from hostname:', hostname, '->', subdomain);
+      return subdomain;
+    }
+    
+    // If hostname equals base domain exactly (e.g., compasse.net), no subdomain
+    if (hostname === BASE_DOMAIN) {
+      return null;
     }
   }
   
   // Handle other subdomain patterns (e.g., subdomain.domain.com)
+  // For cases where hostname is something like "test.example.com"
   const parts = hostname.split('.');
-  if (parts.length >= 3) {
-    return parts[0];
+  if (parts.length >= 3 && !hostname.endsWith(`.${BASE_DOMAIN}`)) {
+    const subdomain = parts[0];
+    console.log('🔍 Extracted subdomain from generic pattern:', hostname, '->', subdomain);
+    return subdomain;
   }
   
   return null;
@@ -136,14 +152,35 @@ apiClient.interceptors.request.use(
       // Add subdomain header for all subdomain API calls (critical for multi-tenancy)
       // Always try to get subdomain, even if localStorage doesn't have it yet
       const subdomain = getSubdomainForHeader();
+      const hostname = window.location.hostname;
+      
       if (subdomain) {
         config.headers['X-Subdomain'] = subdomain;
-        console.log('🌐 X-Subdomain header added:', subdomain);
+        console.log('🌐 X-Subdomain header added:', subdomain, 'for URL:', config.url);
       } else {
-        // Log warning if no subdomain found (might be super admin or base domain)
-        const hostname = window.location.hostname;
-        if (hostname && !hostname.includes('localhost') && !hostname.includes('compasse.net')) {
-          console.warn('⚠️ No subdomain detected for X-Subdomain header. Hostname:', hostname);
+        // CRITICAL: Try fallback detection if no subdomain found
+        // This handles cases where localStorage might not be initialized yet
+        if (hostname && hostname.includes('.') && !hostname.includes('localhost')) {
+          const fallbackSubdomain = getSubdomainFromHostname(hostname);
+          if (fallbackSubdomain) {
+            config.headers['X-Subdomain'] = fallbackSubdomain;
+            localStorage.setItem('subdomain', fallbackSubdomain);
+            console.log('✅ Fallback: X-Subdomain header added:', fallbackSubdomain, 'for URL:', config.url);
+          } else {
+            // Log detailed warning only if we truly couldn't detect subdomain
+            const BASE_DOMAIN = process.env.NEXT_PUBLIC_BASE_DOMAIN || 'compasse.net';
+            // Only warn if we're on a subdomain-like hostname but couldn't extract it
+            if (hostname.includes(`.${BASE_DOMAIN}`) || (hostname.split('.').length >= 3)) {
+              console.warn('⚠️ No subdomain detected for X-Subdomain header (this may cause 401 errors):', {
+                hostname,
+                url: config.url,
+                method: config.method,
+                hasLocalStorage: !!localStorage.getItem('subdomain'),
+                BASE_DOMAIN,
+                parts: hostname.split('.'),
+              });
+            }
+          }
         }
       }
     }
@@ -175,11 +212,27 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - token expired or invalid
     if (error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      console.warn('⚠️ 401 Unauthorized - Clearing token');
+      
+      // Log detailed 401 error information for debugging
+      const subdomain = typeof window !== 'undefined' ? localStorage.getItem('subdomain') : null;
+      const hostname = typeof window !== 'undefined' ? window.location.hostname : 'server';
+      
+      console.error('❌ 401 Unauthorized Error:', {
+        url: originalRequest.url,
+        method: originalRequest.method,
+        subdomain: subdomain || 'NOT SET',
+        hostname,
+        headers: {
+          'X-Subdomain': originalRequest.headers['X-Subdomain'] || 'MISSING',
+          'Authorization': originalRequest.headers['Authorization'] ? 'PRESENT' : 'MISSING',
+        },
+        errorData: error.response?.data,
+      });
       
       // Clear token on client-side only
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('token');
+        // Don't clear token automatically - let user see the error
+        // localStorage.removeItem('token');
         // Optionally redirect to login page
         // window.location.href = '/login';
       }

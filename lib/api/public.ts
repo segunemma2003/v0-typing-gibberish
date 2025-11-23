@@ -112,12 +112,19 @@ const publicApiClient = axios.create({
 // Request interceptor to add X-Subdomain header for public API calls
 publicApiClient.interceptors.request.use(
   (config) => {
-    // Add subdomain header for all subdomain API calls
+    // Add subdomain header for all subdomain API calls (critical for multi-tenancy)
+    // Always try to get subdomain, even if localStorage doesn't have it yet
     if (typeof window !== 'undefined') {
-      const subdomain = getCurrentSubdomain();
+      const subdomain = getSubdomainForHeader();
       if (subdomain) {
         config.headers['X-Subdomain'] = subdomain;
         console.log('🌐 X-Subdomain header added to public API:', subdomain);
+      } else {
+        // Log warning if no subdomain found (might be super admin or base domain)
+        const hostname = window.location.hostname;
+        if (hostname && !hostname.includes('localhost') && !hostname.includes('compasse.net')) {
+          console.warn('⚠️ No subdomain detected for X-Subdomain header. Hostname:', hostname);
+        }
       }
     }
     return config;
