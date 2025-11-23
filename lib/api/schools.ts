@@ -108,10 +108,16 @@ interface SchoolOrganogram {
 }
 
 export const schoolService = {
+  // List Schools
+  getSchools: async (): Promise<{ data: School[] }> => {
+    const response = await apiClient.get('/schools');
+    return response.data;
+  },
+
   getSchoolById: async (id: number): Promise<School> => {
     const response = await apiClient.get(`/schools/${id}`);
     // API returns { school: {...}, stats: {...} } but we want just the school object
-    return response.data.school || response.data;
+    return response.data.school || response.data.data || response.data;
   },
 
   updateSchool: async ({ id, data }: { id: number; data: UpdateSchoolRequest }): Promise<{ message: string; school: School }> => {
@@ -137,6 +143,13 @@ export const schoolService = {
 };
 
 // 2. TanStack Query Hooks
+
+export const useSchools = () => {
+  return useQuery({
+    queryKey: ['schools'],
+    queryFn: schoolService.getSchools,
+  });
+};
 
 export const useSchool = (id: number) => {
   return useQuery({

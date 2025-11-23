@@ -119,8 +119,26 @@ interface SubmitCBTAnswersResponse {
 }
 
 export const assessmentService = {
-  // Exams Management
-  getExams: async (): Promise<ExamListResponse> => {
+  // Assignments Management (using /assessments/assignments endpoint)
+  getAssignments: async (params?: { class_id?: number; subject_id?: number; teacher_id?: number; status?: string; search?: string; per_page?: number }): Promise<any> => {
+    const response = await apiClient.get('/assessments/assignments', { params });
+    return response.data;
+  },
+
+  // Exams Management (using /assessments/exams endpoint)
+  getExams: async (params?: { class_id?: number; subject_id?: number; type?: string; status?: string; search?: string; per_page?: number }): Promise<ExamListResponse> => {
+    const response = await apiClient.get('/assessments/exams', { params });
+    return response.data;
+  },
+
+  // Results Management (using /assessments/results endpoint)
+  getResults: async (params?: { student_id?: number; exam_id?: number; subject_id?: number; status?: string; per_page?: number }): Promise<any> => {
+    const response = await apiClient.get('/assessments/results', { params });
+    return response.data;
+  },
+
+  // Legacy endpoints (also supported)
+  getExamsLegacy: async (): Promise<ExamListResponse> => {
     const response = await apiClient.get('/exams');
     return response.data;
   },
@@ -149,11 +167,35 @@ export const assessmentService = {
 
 // 2. TanStack Query Hooks
 
-// Exams
-export const useExams = () => {
+// Assignments (using /assessments/assignments)
+export const useAssignmentsAssessment = (params?: { class_id?: number; subject_id?: number; teacher_id?: number; status?: string; search?: string; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['assessments', 'assignments', params],
+    queryFn: () => assessmentService.getAssignments(params),
+  });
+};
+
+// Exams (using /assessments/exams)
+export const useExams = (params?: { class_id?: number; subject_id?: number; type?: string; status?: string; search?: string; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['assessments', 'exams', params],
+    queryFn: () => assessmentService.getExams(params),
+  });
+};
+
+// Results (using /assessments/results)
+export const useResults = (params?: { student_id?: number; exam_id?: number; subject_id?: number; status?: string; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['assessments', 'results', params],
+    queryFn: () => assessmentService.getResults(params),
+  });
+};
+
+// Legacy Exams (backward compatibility)
+export const useExamsLegacy = () => {
   return useQuery({
     queryKey: ['exams'],
-    queryFn: assessmentService.getExams,
+    queryFn: assessmentService.getExamsLegacy,
   });
 };
 

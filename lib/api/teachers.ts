@@ -74,6 +74,11 @@ export const teacherService = {
     const response = await apiClient.put(`/teachers/${id}`, data);
     return response.data;
   },
+
+  deleteTeacher: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/teachers/${id}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -112,6 +117,17 @@ export const useUpdateTeacher = () => {
       console.log('Teacher updated successfully', data);
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
       queryClient.invalidateQueries({ queryKey: ['teacher', variables.id] });
+    },
+  });
+};
+
+export const useDeleteTeacher = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: teacherService.deleteTeacher,
+    onSuccess: () => {
+      console.log('Teacher deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['teachers'] });
     },
   });
 };

@@ -180,3 +180,19 @@ export const useDeleteSubject = () => {
     },
   });
 };
+
+// Academic Years
+export const useAcademicYears = () => {
+  return useQuery({
+    queryKey: ['academicYears'],
+    queryFn: academicService.getAcademicYears,
+  });
+};
+
+// Terms
+export const useTerms = () => {
+  return useQuery({
+    queryKey: ['terms'],
+    queryFn: academicService.getTerms,
+  });
+};
