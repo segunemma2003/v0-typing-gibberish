@@ -250,6 +250,48 @@ export const useCreateVehicle = () => {
   });
 };
 
+export const useUpdateVehicle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.updateVehicle,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      queryClient.invalidateQueries({ queryKey: ['vehicle', variables.id] });
+    },
+  });
+};
+
+export const useDeleteVehicle = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.deleteVehicle,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+    },
+  });
+};
+
+export const useUpdateTransportRoute = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.updateRoute,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['transportRoutes'] });
+      queryClient.invalidateQueries({ queryKey: ['transportRoute', variables.id] });
+    },
+  });
+};
+
+export const useDeleteTransportRoute = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.deleteRoute,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transportRoutes'] });
+    },
+  });
+};
+
 export const useDrivers = () => {
   return useQuery({
     queryKey: ['drivers'],
@@ -261,6 +303,27 @@ export const useCreateDriver = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: transportService.createDriver,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+    },
+  });
+};
+
+export const useUpdateDriver = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.updateDriver,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
+      queryClient.invalidateQueries({ queryKey: ['driver', variables.id] });
+    },
+  });
+};
+
+export const useDeleteDriver = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.deleteDriver,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['drivers'] });
     },

@@ -19,7 +19,7 @@ export default function TermsPage() {
   const [filterAcademicYear, setFilterAcademicYear] = useState<string>("")
 
   const { data: termsResponse, isLoading, error, refetch } = useTerms({
-    academic_year_id: filterAcademicYear ? parseInt(filterAcademicYear) : undefined,
+    academic_year_id: filterAcademicYear && filterAcademicYear !== "all" ? parseInt(filterAcademicYear) : undefined,
     per_page: 100,
   })
   const { data: academicYearsResponse } = useAcademicYears({ per_page: 100 })
@@ -193,7 +193,7 @@ export default function TermsPage() {
               <div className="space-y-2">
                 <Label>Academic Year *</Label>
                 <Select
-                  value={formData.academic_year_id}
+                  value={formData.academic_year_id || undefined}
                   onValueChange={(value) => {
                     setFormData({...formData, academic_year_id: value})
                     // Auto-fill dates from selected academic year
@@ -213,11 +213,17 @@ export default function TermsPage() {
                     <SelectValue placeholder="Select academic year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {academicYears.map((year: any) => (
-                      <SelectItem key={year.id} value={year.id.toString()}>
-                        {year.name}
+                    {academicYears && academicYears.length > 0 ? (
+                      academicYears.map((year: any) => (
+                        <SelectItem key={year.id} value={year.id.toString()}>
+                          {year.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <SelectItem value="no-years" disabled>
+                        No academic years available
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
                 {editingId && (
@@ -251,11 +257,11 @@ export default function TermsPage() {
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={formData.status}
+                  value={formData.status || "pending"}
                   onValueChange={(value: "pending" | "active" | "completed") => setFormData({...formData, status: value})}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="pending">Pending</SelectItem>
@@ -312,12 +318,12 @@ export default function TermsPage() {
           <div className="flex items-center space-x-4">
             <div className="flex-1">
               <Label>Filter by Academic Year</Label>
-              <Select value={filterAcademicYear} onValueChange={setFilterAcademicYear}>
+              <Select value={filterAcademicYear || "all"} onValueChange={(value) => setFilterAcademicYear(value === "all" ? "" : value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="All academic years" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All academic years</SelectItem>
+                  <SelectItem value="all">All academic years</SelectItem>
                   {academicYears.map((year: any) => (
                     <SelectItem key={year.id} value={year.id.toString()}>
                       {year.name}

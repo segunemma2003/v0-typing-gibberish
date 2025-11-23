@@ -1,5 +1,5 @@
 import { StatsCards } from "@/components/admin/stats-cards"
-import { RecentActivities } from "@/components/admin/recent-activities"
+import { LatestAnnouncements } from "@/components/admin/latest-announcements"
 import { QuickActions } from "@/components/admin/quick-actions"
 
 export default function AdminDashboard() {
@@ -22,7 +22,7 @@ export default function AdminDashboard() {
           <QuickActions />
         </div>
         <div className="space-y-6">
-          <RecentActivities />
+          <LatestAnnouncements />
         </div>
       </div>
     </div>
