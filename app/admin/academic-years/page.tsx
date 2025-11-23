@@ -38,24 +38,33 @@ export default function AcademicYearsPage() {
   })
 
   const handleAdd = async () => {
+    console.log("handleAdd called", formData)
+    
     if (!formData.name || !formData.start_date || !formData.end_date) {
       toast.error("Please fill in required fields (Name, Start Date, End Date)")
       return
     }
 
-    if (new Date(formData.end_date) <= new Date(formData.start_date)) {
+    const startDate = new Date(formData.start_date)
+    const endDate = new Date(formData.end_date)
+    
+    if (endDate <= startDate) {
       toast.error("End date must be after start date")
       return
     }
 
     try {
-      await createAcademicYear.mutateAsync({
+      const payload = {
         name: formData.name.trim(),
         start_date: formData.start_date,
         end_date: formData.end_date,
-        is_current: formData.is_current,
-        status: formData.status,
-      })
+        is_current: formData.is_current || false,
+        status: formData.status || "pending",
+      }
+      
+      console.log("Creating academic year with payload:", payload)
+      
+      await createAcademicYear.mutateAsync(payload)
       toast.success("Academic year created successfully")
       setFormData({ name: "", start_date: "", end_date: "", is_current: false, status: "pending" })
       setShowAddForm(false)
@@ -236,8 +245,23 @@ export default function AcademicYearsPage() {
             <div className="flex gap-2 mt-4">
               <Button
                 type="button"
-                onClick={editingId ? handleUpdate : handleAdd}
-                disabled={createAcademicYear.isPending || updateAcademicYear.isPending}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  console.log("Button clicked!", {
+                    editingId,
+                    formData,
+                    isCreatingPending: createAcademicYear.isPending,
+                    isUpdatingPending: updateAcademicYear.isPending
+                  })
+                  if (editingId) {
+                    handleUpdate()
+                  } else {
+                    handleAdd()
+                  }
+                }}
+                disabled={!!createAcademicYear.isPending || !!updateAcademicYear.isPending}
+                style={{ cursor: (createAcademicYear.isPending || updateAcademicYear.isPending) ? 'not-allowed' : 'pointer' }}
               >
                 {(createAcademicYear.isPending || updateAcademicYear.isPending) ? (
                   <>
