@@ -41,13 +41,38 @@ export default function StudentsPage() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
+    middle_name: "",
     email: "",
     class_id: "",
     arm_id: "",
     phone: "",
     date_of_birth: "",
     gender: "",
+    address: "",
+    blood_group: "",
+    emergency_contact: "",
   })
+  
+  const [medicalInfo, setMedicalInfo] = useState({
+    allergies: [] as string[],
+    conditions: [] as string[],
+    newAllergy: "",
+    newCondition: "",
+  })
+
+  const [guardians, setGuardians] = useState<Array<{
+    first_name: string
+    last_name: string
+    middle_name: string
+    email: string
+    phone: string
+    address: string
+    occupation: string
+    employer: string
+    relationship: string
+    is_primary: boolean
+    emergency_contact: boolean
+  }>>([])
 
   // Get selected class's arms for dropdown
   const selectedClass = classes.find((c: any) => c.id.toString() === formData.class_id)
@@ -98,10 +123,49 @@ export default function StudentsPage() {
         }
       }
 
-      await createStudent.mutateAsync(payload)
-      toast.success("Student created successfully")
-      setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
-      setShowAddForm(false)
+      // Add guardians if provided (max 2)
+      if (guardians.length > 0) {
+        payload.guardians = guardians.slice(0, 2).map(g => ({
+          first_name: g.first_name.trim(),
+          last_name: g.last_name.trim(),
+          middle_name: g.middle_name?.trim(),
+          email: g.email.trim(),
+          phone: g.phone?.trim(),
+          address: g.address?.trim(),
+          occupation: g.occupation?.trim(),
+          employer: g.employer?.trim(),
+          relationship: g.relationship,
+          is_primary: g.is_primary,
+          emergency_contact: g.emergency_contact,
+        }))
+      }
+
+      const response = await createStudent.mutateAsync(payload)
+      
+      // Display login credentials if available (with guardians credentials too)
+      if (response.login_credentials) {
+        let credentialsMessage = `Student Credentials:\nEmail: ${response.login_credentials.email}\nPassword: ${response.login_credentials.password}`
+        
+        // Add guardian credentials if they exist
+        if (response.student?.guardians && response.student.guardians.length > 0) {
+          credentialsMessage += `\n\nGuardian Credentials:`
+          response.student.guardians.forEach((guardian: any, index: number) => {
+            credentialsMessage += `\n${index + 1}. ${guardian.first_name} ${guardian.last_name} (${guardian.pivot?.relationship || 'Guardian'}):\n   Email: ${guardian.email}\n   Password: Password@123`
+          })
+        }
+        
+        toast.success("Student created successfully!", {
+          description: credentialsMessage,
+          duration: 20000, // Extended duration for longer message
+        })
+      } else {
+        toast.success("Student created successfully")
+      }
+      
+      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" })
+      setMedicalInfo({ allergies: [], conditions: [], newAllergy: "", newCondition: "" })
+      setGuardians([])
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error creating student:", error)
@@ -157,8 +221,8 @@ export default function StudentsPage() {
       })
       toast.success("Student updated successfully")
       setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
-      setEditingId(null)
-      setShowAddForm(false)
+    setEditingId(null)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error updating student:", error)
@@ -202,7 +266,7 @@ export default function StudentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
         </div>
-        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" }) }}>
+        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" }); setMedicalInfo({ allergies: [], conditions: [], newAllergy: "", newCondition: "" }); setGuardians([]) }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
@@ -214,7 +278,7 @@ export default function StudentsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>{editingId ? "Edit Student" : "Add New Student"}</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null); setGuardians([]) }}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
@@ -238,19 +302,36 @@ export default function StudentsPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label>Middle Name</Label>
+                <Input 
+                  value={formData.middle_name} 
+                  onChange={(e) => setFormData({...formData, middle_name: e.target.value})}
+                  placeholder="Enter middle name"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label>Email</Label>
                 <Input 
                   type="email"
                   value={formData.email} 
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  placeholder="student@school.edu"
+                  placeholder="Leave empty for auto-generation"
                 />
+                <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
                 <Input 
                   value={formData.phone} 
                   onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  placeholder="+1234567890"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Emergency Contact</Label>
+                <Input 
+                  value={formData.emergency_contact} 
+                  onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})}
                   placeholder="+1234567890"
                 />
               </div>
@@ -277,6 +358,35 @@ export default function StudentsPage() {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Blood Group</Label>
+                <Select 
+                  value={formData.blood_group} 
+                  onValueChange={(value) => setFormData({...formData, blood_group: value})}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select blood group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A-">A-</SelectItem>
+                    <SelectItem value="B+">B+</SelectItem>
+                    <SelectItem value="B-">B-</SelectItem>
+                    <SelectItem value="AB+">AB+</SelectItem>
+                    <SelectItem value="AB-">AB-</SelectItem>
+                    <SelectItem value="O+">O+</SelectItem>
+                    <SelectItem value="O-">O-</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Address</Label>
+                <Input 
+                  value={formData.address} 
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  placeholder="Full address"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Class *</Label>
@@ -316,6 +426,287 @@ export default function StudentsPage() {
                 </Select>
               </div>
             </div>
+
+            {/* Medical Information Section */}
+            {!editingId && (
+              <div className="mt-6 space-y-4">
+                <Label className="text-base font-semibold">Medical Information (Optional)</Label>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Allergies</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={medicalInfo.newAllergy}
+                        onChange={(e) => setMedicalInfo({...medicalInfo, newAllergy: e.target.value})}
+                        placeholder="Add allergy"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && medicalInfo.newAllergy.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              allergies: [...medicalInfo.allergies, medicalInfo.newAllergy.trim()],
+                              newAllergy: "",
+                            })
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (medicalInfo.newAllergy.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              allergies: [...medicalInfo.allergies, medicalInfo.newAllergy.trim()],
+                              newAllergy: "",
+                            })
+                          }
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {medicalInfo.allergies.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {medicalInfo.allergies.map((allergy, index) => (
+                          <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              allergies: medicalInfo.allergies.filter((_, i) => i !== index),
+                            })
+                          }}>
+                            {allergy} <X className="w-3 h-3 ml-1" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Medical Conditions</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={medicalInfo.newCondition}
+                        onChange={(e) => setMedicalInfo({...medicalInfo, newCondition: e.target.value})}
+                        placeholder="Add condition"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && medicalInfo.newCondition.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              conditions: [...medicalInfo.conditions, medicalInfo.newCondition.trim()],
+                              newCondition: "",
+                            })
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (medicalInfo.newCondition.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              conditions: [...medicalInfo.conditions, medicalInfo.newCondition.trim()],
+                              newCondition: "",
+                            })
+                          }
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {medicalInfo.conditions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {medicalInfo.conditions.map((condition, index) => (
+                          <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              conditions: medicalInfo.conditions.filter((_, i) => i !== index),
+                            })
+                          }}>
+                            {condition} <X className="w-3 h-3 ml-1" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Guardians Section */}
+            {!editingId && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Guardians (Optional, Max 2)</Label>
+                  {guardians.length < 2 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setGuardians([...guardians, {
+                          first_name: "",
+                          last_name: "",
+                          middle_name: "",
+                          email: "",
+                          phone: "",
+                          address: "",
+                          occupation: "",
+                          employer: "",
+                          relationship: "Father",
+                          is_primary: guardians.length === 0, // First guardian is primary by default
+                          emergency_contact: true,
+                        }])
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Guardian
+                    </Button>
+                  )}
+                </div>
+                {guardians.map((guardian, index) => (
+                  <Card key={index} className="p-4 space-y-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-medium">Guardian {index + 1}</Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`primary_${index}`}
+                            checked={guardian.is_primary}
+                            onChange={(e) => {
+                              const updated = [...guardians]
+                              updated.forEach((g, i) => {
+                                g.is_primary = i === index ? e.target.checked : !e.target.checked
+                              })
+                              setGuardians(updated)
+                            }}
+                            className="w-4 h-4 rounded border-gray-300"
+                          />
+                          <Label htmlFor={`primary_${index}`} className="text-xs cursor-pointer">
+                            Primary
+                          </Label>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setGuardians(guardians.filter((_, i) => i !== index))}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>First Name *</Label>
+                        <Input
+                          value={guardian.first_name}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].first_name = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="First name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Last Name *</Label>
+                        <Input
+                          value={guardian.last_name}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].last_name = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="Last name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email *</Label>
+                        <Input
+                          type="email"
+                          value={guardian.email}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].email = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="email@example.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input
+                          value={guardian.phone}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].phone = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="+1234567890"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Relationship *</Label>
+                        <Select
+                          value={guardian.relationship}
+                          onValueChange={(value) => {
+                            const updated = [...guardians]
+                            updated[index].relationship = value
+                            setGuardians(updated)
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Father">Father</SelectItem>
+                            <SelectItem value="Mother">Mother</SelectItem>
+                            <SelectItem value="Guardian">Guardian</SelectItem>
+                            <SelectItem value="Uncle">Uncle</SelectItem>
+                            <SelectItem value="Aunt">Aunt</SelectItem>
+                            <SelectItem value="Grandfather">Grandfather</SelectItem>
+                            <SelectItem value="Grandmother">Grandmother</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Occupation</Label>
+                        <Input
+                          value={guardian.occupation}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].occupation = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="Occupation"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`emergency_${index}`}
+                            checked={guardian.emergency_contact}
+                            onChange={(e) => {
+                              const updated = [...guardians]
+                              updated[index].emergency_contact = e.target.checked
+                              setGuardians(updated)
+                            }}
+                            className="w-4 h-4 rounded border-gray-300"
+                          />
+                          <Label htmlFor={`emergency_${index}`} className="text-sm cursor-pointer">
+                            Emergency Contact
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-2 mt-4">
               <Button 
                 onClick={editingId ? handleUpdate : handleAdd}
@@ -404,7 +795,7 @@ export default function StudentsPage() {
                       {student.admission_number && (
                         <p className="text-xs text-muted-foreground">Admission: {student.admission_number}</p>
                       )}
-                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <div className="text-right">

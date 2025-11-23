@@ -9,7 +9,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Search, Plus, Filter, Download, Mail, Phone, Edit, Trash2, X, Loader2 } from "lucide-react"
 import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "@/lib/api/staff"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+
+const staffRoles = [
+  { value: 'admin', label: 'Administrator' },
+  { value: 'staff', label: 'General Staff' },
+  { value: 'accountant', label: 'Accountant' },
+  { value: 'librarian', label: 'Librarian' },
+  { value: 'driver', label: 'Driver' },
+  { value: 'security', label: 'Security' },
+  { value: 'cleaner', label: 'Cleaner' },
+  { value: 'caterer', label: 'Caterer' },
+  { value: 'nurse', label: 'Nurse' },
+]
 
 export default function StaffPage() {
   const [showAddForm, setShowAddForm] = useState(false)
@@ -28,76 +41,132 @@ export default function StaffPage() {
   const staff = staffResponse?.data || []
 
   const [formData, setFormData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
+    middle_name: "",
     email: "",
     phone: "",
     role: "",
     department: "",
     position: "",
+    employment_date: "",
+    employee_id: "",
   })
 
   const handleAdd = async () => {
-    if (!formData.name || !formData.email || !formData.role) {
-      toast.error("Please fill in required fields")
+    if (!formData.first_name || !formData.last_name || !formData.role) {
+      toast.error("Please fill in required fields (First Name, Last Name, and Role)")
       return
     }
 
     try {
-      await createStaff.mutateAsync({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || undefined,
+      const payload: any = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
         role: formData.role,
-        department: formData.department || undefined,
-        position: formData.position || undefined,
-      })
-      toast.success("Staff member created successfully")
-      setFormData({ name: "", email: "", phone: "", role: "", department: "", position: "" })
+      }
+
+      if (formData.middle_name?.trim()) {
+        payload.middle_name = formData.middle_name.trim()
+      }
+      if (formData.email?.trim()) {
+        payload.email = formData.email.trim()
+      }
+      if (formData.phone?.trim()) {
+        payload.phone = formData.phone.trim()
+      }
+      if (formData.department?.trim()) {
+        payload.department = formData.department.trim()
+      }
+      if (formData.position?.trim()) {
+        payload.position = formData.position.trim()
+      }
+      if (formData.employment_date) {
+        payload.employment_date = formData.employment_date
+      }
+      if (formData.employee_id?.trim()) {
+        payload.employee_id = formData.employee_id.trim()
+      }
+
+      const response = await createStaff.mutateAsync(payload)
+      
+      // Display login credentials if available
+      if (response.login_credentials) {
+        toast.success("Staff member created successfully!", {
+          description: `Email: ${response.login_credentials.email}\nPassword: ${response.login_credentials.password}\nEmployee ID: ${response.staff.employee_id || 'Auto-generated'}`,
+          duration: 15000,
+        })
+      } else {
+        toast.success("Staff member created successfully")
+      }
+      
+      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", phone: "", role: "", department: "", position: "", employment_date: "", employee_id: "" })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create staff member")
+      console.error("Error creating staff:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create staff member"
+      toast.error(errorMessage)
     }
   }
 
   const handleEdit = (member: any) => {
+    // Parse name into first_name and last_name if needed
+    const nameParts = (member.name || "").split(" ")
     setFormData({
-      name: member.name || "",
+      first_name: member.first_name || nameParts[0] || "",
+      last_name: member.last_name || nameParts.slice(1).join(" ") || "",
+      middle_name: member.middle_name || "",
       email: member.email || "",
       phone: member.phone || "",
       role: member.role || "",
       department: member.department || "",
       position: member.position || "",
+      employment_date: member.employment_date || "",
+      employee_id: member.employee_id || "",
     })
     setEditingId(member.id)
     setShowAddForm(true)
   }
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.email || !formData.role) {
+    if (!editingId || !formData.first_name || !formData.last_name || !formData.role) {
       toast.error("Please fill in required fields")
       return
     }
 
     try {
+      const updateData: any = {
+        name: `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim(),
+        role: formData.role,
+      }
+
+      if (formData.email?.trim()) {
+        updateData.email = formData.email.trim()
+      }
+      if (formData.phone?.trim()) {
+        updateData.phone = formData.phone.trim()
+      }
+      if (formData.department?.trim()) {
+        updateData.department = formData.department.trim()
+      }
+      if (formData.position?.trim()) {
+        updateData.position = formData.position.trim()
+      }
+
       await updateStaff.mutateAsync({
         id: editingId,
-        data: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || undefined,
-          role: formData.role,
-          department: formData.department || undefined,
-          position: formData.position || undefined,
-        },
+        data: updateData,
       })
       toast.success("Staff member updated successfully")
-      setFormData({ name: "", email: "", phone: "", role: "", department: "", position: "" })
+      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", phone: "", role: "", department: "", position: "", employment_date: "", employee_id: "" })
       setEditingId(null)
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update staff member")
+      console.error("Error updating staff:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update staff member"
+      toast.error(errorMessage)
     }
   }
 
@@ -145,7 +214,7 @@ export default function StaffPage() {
           onClick={() => {
             setShowAddForm(true)
             setEditingId(null)
-            setFormData({ name: "", email: "", phone: "", role: "", department: "", position: "" })
+            setFormData({ first_name: "", last_name: "", middle_name: "", email: "", phone: "", role: "", department: "", position: "", employment_date: "", employee_id: "" })
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -174,44 +243,71 @@ export default function StaffPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Full Name *</Label>
+                <Label>First Name *</Label>
                 <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="Enter first name"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email *</Label>
+                <Label>Last Name *</Label>
+                <Input
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Enter last name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Middle Name</Label>
+                <Input
+                  value={formData.middle_name}
+                  onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
+                  placeholder="Enter middle name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
                 <Input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter email"
+                  placeholder="Leave empty for auto-generation"
                 />
+                <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+1 555-0000"
+                  placeholder="+1234567890"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Role *</Label>
-                <Input
+                <Select
                   value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  placeholder="e.g., Librarian, IT Support"
-                />
+                  onValueChange={(value) => setFormData({ ...formData, role: value })}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {staffRoles.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Department</Label>
                 <Input
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  placeholder="e.g., Administration, IT"
+                  placeholder="e.g., Library, Administration"
                 />
               </div>
               <div className="space-y-2">
@@ -221,6 +317,23 @@ export default function StaffPage() {
                   onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                   placeholder="e.g., Senior Librarian"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Employment Date</Label>
+                <Input
+                  type="date"
+                  value={formData.employment_date}
+                  onChange={(e) => setFormData({ ...formData, employment_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Employee ID</Label>
+                <Input
+                  value={formData.employee_id}
+                  onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+                  placeholder="Leave empty for auto-generation"
+                />
+                <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
               </div>
             </div>
             <div className="flex gap-2 mt-4">

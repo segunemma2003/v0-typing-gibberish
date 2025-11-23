@@ -63,22 +63,40 @@ interface GetStudentsParams {
   search?: string;
 }
 
+interface GuardianInput {
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  occupation?: string;
+  employer?: string;
+  relationship: string; // e.g., "Father", "Mother", "Guardian"
+  is_primary?: boolean; // Default: first guardian is primary
+  emergency_contact?: boolean;
+}
+
 interface CreateStudentRequest {
   school_id: number;
   first_name: string;
   last_name: string;
   middle_name?: string;
-  date_of_birth: string;
-  gender: string;
-  class_id: number;
-  arm_id: number;
-  parent_name?: string;
-  parent_phone?: string;
-  parent_email?: string;
+  date_of_birth?: string;
+  gender?: string;
+  class_id?: number;
+  arm_id?: number;
   address?: string;
   phone?: string;
   email?: string; // Optional - will be auto-generated if not provided
   username?: string; // Optional - will be auto-generated if not provided
+  blood_group?: string;
+  emergency_contact?: string;
+  medical_info?: {
+    allergies?: string[];
+    conditions?: string[];
+  };
+  guardians?: GuardianInput[]; // Max 2 guardians
 }
 
 interface UpdateStudentRequest {
@@ -165,6 +183,12 @@ interface GenerateStudentCredentialsResponse {
   };
 }
 
+interface LoginCredentials {
+  email: string;
+  password: string;
+  note?: string;
+}
+
 interface CreateStudentResponse {
   message: string;
   student: Student & {
@@ -177,7 +201,21 @@ interface CreateStudentResponse {
       email: string;
       role: string;
     };
+    guardians?: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone?: string;
+      user_id: number;
+      pivot: {
+        relationship: string;
+        is_primary: boolean;
+        emergency_contact: boolean;
+      };
+    }>;
   };
+  login_credentials?: LoginCredentials;
 }
 
 export const studentService = {

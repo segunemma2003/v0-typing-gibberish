@@ -42,13 +42,26 @@ interface GetStaffParams {
   search?: string;
 }
 
-interface CreateStaffRequest {
-  name: string;
+interface LoginCredentials {
   email: string;
+  password: string;
+  note?: string;
+}
+
+interface CreateStaffRequest {
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  email?: string; // Optional - auto-generated if not provided
   phone?: string;
-  role: string;
+  role: string; // admin, staff, accountant, librarian, driver, security, cleaner, caterer, nurse
   department?: string;
   position?: string;
+  employment_date?: string; // YYYY-MM-DD
+  employee_id?: string; // Optional - auto-generated if not provided
+  school_id?: number;
+  // Legacy support
+  name?: string;
 }
 
 interface UpdateStaffRequest {
@@ -72,7 +85,7 @@ export const staffService = {
     return response.data;
   },
 
-  createStaff: async (data: CreateStaffRequest): Promise<{ message: string; staff: Staff }> => {
+  createStaff: async (data: CreateStaffRequest): Promise<{ message: string; staff: Staff; login_credentials?: LoginCredentials }> => {
     const response = await apiClient.post('/staff', data);
     return response.data;
   },

@@ -5,18 +5,53 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface Guardian {
   id: number;
-  name: string;
+  school_id?: number;
+  user_id?: number;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
+  name?: string; // Full name (computed)
   email: string;
   phone: string;
   address?: string;
-  relationship: string;
-  students: Array<{
-    id: number;
-    name: string;
-    admission_number: string;
-  }>;
+  occupation?: string;
+  employer?: string;
+  relationship?: string;
+  status?: 'active' | 'inactive';
   created_at: string;
   updated_at?: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  students?: Array<{
+    id: number;
+    first_name: string;
+    last_name: string;
+    name?: string;
+    admission_number?: string;
+    email?: string;
+    class?: {
+      id: number;
+      name: string;
+    };
+    arm?: {
+      id: number;
+      name: string;
+    };
+    user?: {
+      id: number;
+      name: string;
+      email: string;
+    };
+    pivot?: {
+      relationship: string;
+      is_primary: boolean;
+      emergency_contact: boolean;
+    };
+  }>;
 }
 
 interface GuardianListResponse {
@@ -42,23 +77,54 @@ interface GetGuardiansParams {
   per_page?: number;
   search?: string;
   student_id?: number;
+  status?: string;
 }
 
 interface CreateGuardianRequest {
-  name: string;
+  first_name: string;
+  last_name: string;
+  middle_name?: string;
   email: string;
-  phone: string;
+  phone?: string;
   address?: string;
-  relationship: string;
+  occupation?: string;
+  employer?: string;
+  relationship_to_student?: string;
+  emergency_contact?: string;
+  // Legacy support
+  name?: string;
+  relationship?: string;
   student_ids?: number[];
 }
 
 interface UpdateGuardianRequest {
-  name?: string;
+  first_name?: string;
+  last_name?: string;
+  middle_name?: string;
   email?: string;
   phone?: string;
   address?: string;
+  occupation?: string;
+  employer?: string;
+  status?: 'active' | 'inactive';
+  // Legacy support
+  name?: string;
   relationship?: string;
+}
+
+interface AssignStudentRequest {
+  student_id: number;
+  relationship: string;
+  is_primary?: boolean;
+  emergency_contact?: boolean;
+}
+
+interface GuardianListResponseWrapper {
+  guardians?: GuardianListResponse;
+  data?: Guardian[];
+  current_page?: number;
+  per_page?: number;
+  total?: number;
 }
 
 export const guardianService = {
@@ -87,6 +153,39 @@ export const guardianService = {
     return response.data;
   },
 
+  assignStudent: async ({ guardian_id, data }: { guardian_id: number; data: AssignStudentRequest }): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/guardians/${guardian_id}/assign-student`, data);
+    return response.data;
+  },
+
+  removeStudent: async ({ guardian_id, student_id }: { guardian_id: number; student_id: number }): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/guardians/${guardian_id}/remove-student`, {
+      data: { student_id }
+    });
+    return response.data;
+  },
+
+  getGuardianStudents: async (guardian_id: number): Promise<{ students: any[] }> => {
+    const response = await apiClient.get(`/guardians/${guardian_id}/students`);
+    return response.data;
+  },
+
+  getGuardianNotifications: async (guardian_id: number, params?: { page?: number; per_page?: number }): Promise<any> => {
+    const response = await apiClient.get(`/guardians/${guardian_id}/notifications`, { params });
+    return response.data;
+  },
+
+  getGuardianMessages: async (guardian_id: number, params?: { page?: number; per_page?: number }): Promise<any> => {
+    const response = await apiClient.get(`/guardians/${guardian_id}/messages`, { params });
+    return response.data;
+  },
+
+  getGuardianPayments: async (guardian_id: number, params?: { page?: number; per_page?: number }): Promise<any> => {
+    const response = await apiClient.get(`/guardians/${guardian_id}/payments`, { params });
+    return response.data;
+  },
+
+  // Legacy methods for backward compatibility
   linkStudentToGuardian: async ({ guardian_id, student_id }: { guardian_id: number; student_id: number }): Promise<{ message: string }> => {
     const response = await apiClient.post(`/guardians/${guardian_id}/students/${student_id}`);
     return response.data;
@@ -103,7 +202,14 @@ export const guardianService = {
 export const useGuardians = (params?: GetGuardiansParams) => {
   return useQuery({
     queryKey: ['guardians', params],
-    queryFn: () => guardianService.getGuardians(params),
+    queryFn: async () => {
+      const response = await guardianService.getGuardians(params);
+      // Handle both response formats
+      if (response.guardians) {
+        return response.guardians;
+      }
+      return response;
+    },
   });
 };
 
@@ -168,6 +274,60 @@ export const useUnlinkStudentFromGuardian = () => {
       queryClient.invalidateQueries({ queryKey: ['guardians'] });
       queryClient.invalidateQueries({ queryKey: ['students'] });
     },
+  });
+};
+
+export const useAssignStudentToGuardian = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: guardianService.assignStudent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guardians'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
+  });
+};
+
+export const useRemoveStudentFromGuardian = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: guardianService.removeStudent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guardians'] });
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+    },
+  });
+};
+
+export const useGuardianStudents = (guardian_id: number) => {
+  return useQuery({
+    queryKey: ['guardianStudents', guardian_id],
+    queryFn: () => guardianService.getGuardianStudents(guardian_id),
+    enabled: !!guardian_id,
+  });
+};
+
+export const useGuardianNotifications = (guardian_id: number, params?: { page?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['guardianNotifications', guardian_id, params],
+    queryFn: () => guardianService.getGuardianNotifications(guardian_id, params),
+    enabled: !!guardian_id,
+  });
+};
+
+export const useGuardianMessages = (guardian_id: number, params?: { page?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['guardianMessages', guardian_id, params],
+    queryFn: () => guardianService.getGuardianMessages(guardian_id, params),
+    enabled: !!guardian_id,
+  });
+};
+
+export const useGuardianPayments = (guardian_id: number, params?: { page?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['guardianPayments', guardian_id, params],
+    queryFn: () => guardianService.getGuardianPayments(guardian_id, params),
+    enabled: !!guardian_id,
   });
 };
 
