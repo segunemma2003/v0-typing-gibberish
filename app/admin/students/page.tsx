@@ -25,17 +25,18 @@ export default function StudentsPage() {
   })
 
   const { data: classesResponse } = useClasses()
-  const classes = classesResponse?.data || []
+  const classes = Array.isArray(classesResponse?.data) ? classesResponse.data : []
 
   const { data: schoolsResponse } = useSchools()
-  const schools = schoolsResponse?.data || []
+  const schools = Array.isArray(schoolsResponse?.data) ? schoolsResponse.data : []
   const currentSchoolId = schools?.[0]?.id // Get first school ID (admin should only have access to one school)
 
   const createStudent = useCreateStudent()
   const updateStudent = useUpdateStudent()
   const deleteStudent = useDeleteStudent()
 
-  const students = studentsResponse?.data || []
+  // Safely extract students array from API response
+  const students = Array.isArray(studentsResponse?.data) ? studentsResponse.data : []
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -54,33 +55,58 @@ export default function StudentsPage() {
 
   const handleAdd = async () => {
     if (!formData.first_name || !formData.last_name) {
-      toast.error("Please fill in required fields")
+      toast.error("Please fill in required fields (First Name and Last Name)")
       return
     }
     
     if (!currentSchoolId) {
-      toast.error("School information not available")
+      toast.error("School information not available. Please refresh the page.")
       return
     }
 
     try {
-      await createStudent.mutateAsync({
+      // Build request payload with proper type checking
+      const payload: any = {
         school_id: currentSchoolId,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        email: formData.email || undefined,
-        class_id: formData.class_id ? parseInt(formData.class_id) : undefined,
-        arm_id: formData.arm_id ? parseInt(formData.arm_id) : undefined,
-        phone: formData.phone || undefined,
-        date_of_birth: formData.date_of_birth || undefined,
-        gender: formData.gender || undefined,
-      })
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+      }
+
+      // Add optional fields only if they have values
+      if (formData.email?.trim()) {
+        payload.email = formData.email.trim()
+      }
+      if (formData.phone?.trim()) {
+        payload.phone = formData.phone.trim()
+      }
+      if (formData.date_of_birth) {
+        payload.date_of_birth = formData.date_of_birth
+      }
+      if (formData.gender) {
+        payload.gender = formData.gender
+      }
+      if (formData.class_id) {
+        const classId = parseInt(formData.class_id)
+        if (!isNaN(classId)) {
+          payload.class_id = classId
+        }
+      }
+      if (formData.arm_id) {
+        const armId = parseInt(formData.arm_id)
+        if (!isNaN(armId)) {
+          payload.arm_id = armId
+        }
+      }
+
+      await createStudent.mutateAsync(payload)
       toast.success("Student created successfully")
       setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create student")
+      console.error("Error creating student:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create student"
+      toast.error(errorMessage)
     }
   }
 
@@ -101,26 +127,43 @@ export default function StudentsPage() {
 
   const handleUpdate = async () => {
     if (!editingId || !formData.first_name || !formData.last_name) {
-      toast.error("Please fill in required fields")
+      toast.error("Please fill in required fields (First Name and Last Name)")
       return
     }
     
     try {
+      // Build update payload with proper type checking
+      const updateData: any = {
+        name: `${formData.first_name.trim()} ${formData.last_name.trim()}`.trim(),
+      }
+
+      // Add optional fields only if they have values
+      if (formData.class_id) {
+        const classId = parseInt(formData.class_id)
+        if (!isNaN(classId)) {
+          updateData.class_id = classId
+        }
+      }
+      if (formData.arm_id) {
+        const armId = parseInt(formData.arm_id)
+        if (!isNaN(armId)) {
+          updateData.arm_id = armId
+        }
+      }
+
       await updateStudent.mutateAsync({
         id: editingId,
-        data: {
-          name: `${formData.first_name} ${formData.last_name}`,
-          class_id: formData.class_id ? parseInt(formData.class_id) : undefined,
-          arm_id: formData.arm_id ? parseInt(formData.arm_id) : undefined,
-        },
+        data: updateData,
       })
       toast.success("Student updated successfully")
       setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
-    setEditingId(null)
-    setShowAddForm(false)
+      setEditingId(null)
+      setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update student")
+      console.error("Error updating student:", error)
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update student"
+      toast.error(errorMessage)
     }
   }
 
