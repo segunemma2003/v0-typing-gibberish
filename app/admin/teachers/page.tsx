@@ -27,15 +27,18 @@ export default function TeachersPage() {
   const { data: teachersResponse, isLoading, error, refetch } = useTeachers()
   const { data: subjectsResponse } = useSubjects()
   const { data: classesResponse } = useClasses()
+  const { data: departmentsResponse } = useDepartments({ per_page: 100 })
 
   const subjects = subjectsResponse?.data || []
   const classes = classesResponse?.data || []
+  const departments = Array.isArray(departmentsResponse) ? departmentsResponse : (departmentsResponse?.data || [])
   // API returns { teachers: { data: [...], current_page: ..., ... } }
   const teachers = teachersResponse?.teachers?.data || teachersResponse?.data || []
 
   const createTeacher = useCreateTeacher()
   const updateTeacher = useUpdateTeacher()
   const deleteTeacher = useDeleteTeacher()
+  const bulkCreateTeachers = useBulkCreateTeachers()
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -214,16 +217,26 @@ export default function TeachersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Teachers</h1>
           <p className="text-muted-foreground">Manage teaching staff and assignments</p>
         </div>
-        <Button
-          onClick={() => {
-            setShowAddForm(true)
-            setEditingId(null)
-            setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Teacher
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => setActiveTab(activeTab === "list" ? "bulk" : "list")}
+          >
+            <UploadIcon className="w-4 h-4 mr-2" />
+            {activeTab === "list" ? "Bulk Upload" : "Back to List"}
+          </Button>
+          <Button
+            onClick={() => {
+              setShowAddForm(true)
+              setEditingId(null)
+              setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Teacher
+          </Button>
+        </div>
       </div>
 
       {/* Add/Edit Form */}
@@ -359,8 +372,54 @@ export default function TeachersPage() {
         </Card>
       )}
 
-      {/* Filters */}
-      <Card>
+      {/* Bulk Upload Section */}
+      {activeTab === "bulk" && (
+        <ExcelUpload
+          entityType="teachers"
+          templateColumns={[
+            "first_name", "last_name", "middle_name",
+            "department_id (or department_name)", 
+            "qualification", "experience_years",
+            "employment_date (or hire_date)", "date_of_birth", 
+            "gender", "phone", "address"
+          ]}
+          maxRows={500}
+          onFileProcessed={(data) => {
+            console.log("Excel data processed:", data)
+          }}
+          onUpload={async (excelData) => {
+            // Create maps for department lookup
+            const departmentMap = new Map<string, number>()
+            departments.forEach((dept: any) => {
+              departmentMap.set(dept.name?.toLowerCase() || "", dept.id)
+              departmentMap.set(String(dept.id), dept.id)
+            })
+
+            // Parse Excel rows to API format
+            const teachers = excelData.map((row: any) => {
+              try {
+                return parseTeacherRow(row, departmentMap)
+              } catch (error: any) {
+                console.error("Error parsing row:", row, error)
+                throw new Error(`Row ${row._rowIndex || 'unknown'}: ${error.message}`)
+              }
+            }).filter((t: any) => t.first_name && t.last_name)
+
+            if (teachers.length === 0) {
+              throw new Error("No valid teacher data found in Excel file")
+            }
+
+            const response = await bulkCreateTeachers.mutateAsync({ teachers })
+            await refetch()
+            return response
+          }}
+        />
+      )}
+
+      {/* Filters - Only show in list view */}
+      {activeTab === "list" && (
+        <>
+          <Card>
         <CardContent className="pt-6">
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
