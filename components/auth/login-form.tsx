@@ -10,11 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTenant } from "@/lib/tenant"
-import { getPortalRoute } from "@/lib/auth"
+import { getPortalRoute, type UserRole } from "@/lib/auth"
 import { Building2, School, Mail, Lock, GraduationCap, Users, BookOpen } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "@/hooks/use-auth"
-import type { UserRole } from "@/lib/auth"
 import { useSchoolBySubdomain } from "@/lib/api/public"
 
 export function LoginForm() {
@@ -86,7 +85,9 @@ export function LoginForm() {
         return
       }
       
-      const role = ([
+      // Handle role mapping - ensure accountant and finance roles redirect to finance
+      const userRoleLower = (user.role || "").toLowerCase()
+      const validRoles: UserRole[] = [
         "super_admin",
         "admin",
         "teacher",
@@ -99,12 +100,23 @@ export function LoginForm() {
         "house_master",
         "finance",
         "accountant",
-      ] as string[]).includes(user.role)
-        ? (user.role as UserRole)
-        : "admin"
+      ]
+      
+      // Map role - prioritize accountant/finance check
+      let role: UserRole = "admin" // default fallback
+      if (userRoleLower === "accountant") {
+        role = "accountant"
+      } else if (userRoleLower === "finance") {
+        role = "finance"
+      } else if (validRoles.includes(userRoleLower as UserRole)) {
+        role = userRoleLower as UserRole
+      }
 
       const portalRoute = getPortalRoute(role)
       console.log("=== REDIRECTING ===")
+      console.log("User Role from API:", user.role)
+      console.log("User Role (lowercase):", userRoleLower)
+      console.log("Mapped Role:", role)
       console.log("Portal Route:", portalRoute)
       console.log("Full URL:", typeof window !== 'undefined' ? `${window.location.origin}${portalRoute}` : 'N/A')
       
