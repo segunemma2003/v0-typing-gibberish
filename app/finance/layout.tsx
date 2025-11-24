@@ -4,7 +4,7 @@ import type React from "react"
 
 import { Sidebar } from "@/components/layout/sidebar"
 import { TenantGuard } from "@/components/tenant/tenant-guard"
-import { Home, DollarSign, CreditCard, FileText, BarChart3, Settings, Users } from "lucide-react"
+import { Home, DollarSign, CreditCard, FileText, BarChart3, Settings, Users, Wallet, ShoppingCart } from "lucide-react"
 
 export default function FinanceLayout({
   children,
@@ -17,6 +17,8 @@ export default function FinanceLayout({
     { title: "Payments", href: "/finance/payments", icon: CreditCard },
     { title: "Fee Structure", href: "/finance/structure", icon: FileText },
     { title: "Student Accounts", href: "/finance/accounts", icon: Users },
+    { title: "Salary Structure", href: "/finance/salary", icon: Wallet },
+    { title: "Inventory Payments", href: "/finance/inventory-payments", icon: ShoppingCart },
     { title: "Reports", href: "/finance/reports", icon: BarChart3 },
     { title: "Settings", href: "/finance/settings", icon: Settings },
   ]

@@ -7,17 +7,22 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2 } from "lucide-react"
+import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2, Upload as UploadIcon } from "lucide-react"
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/lib/api/students"
 import { useClasses } from "@/lib/api/academic"
 import { useSchools } from "@/lib/api/schools"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { ExcelUpload } from "@/components/common/excel-upload"
+import { useBulkCreateStudents } from "@/lib/api/bulk"
+import { parseStudentRow } from "@/lib/utils/excel-parser"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function StudentsPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [activeTab, setActiveTab] = useState<"list" | "bulk">("list")
   
   const { data: studentsResponse, isLoading, error, refetch } = useStudents({
     search: searchTerm || undefined,
@@ -35,6 +40,7 @@ export default function StudentsPage() {
   const createStudent = useCreateStudent()
   const updateStudent = useUpdateStudent()
   const deleteStudent = useDeleteStudent()
+  const bulkCreateStudents = useBulkCreateStudents()
 
   // Safely extract students array from API response
   const students = Array.isArray(studentsResponse?.data) ? studentsResponse.data : []
@@ -330,41 +336,51 @@ export default function StudentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
         </div>
-        <Button 
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            console.log("Add Student button clicked", { showAddForm })
-            setShowAddForm(true)
-            setEditingId(null)
-            setFormData({ 
-              first_name: "", 
-              last_name: "", 
-              middle_name: "", 
-              email: "", 
-              class_id: "", 
-              arm_id: "", 
-              phone: "", 
-              date_of_birth: "", 
-              gender: "", 
-              address: "", 
-              blood_group: "", 
-              emergency_contact: "" 
-            })
-            setMedicalInfo({ 
-              allergies: [], 
-              conditions: [], 
-              newAllergy: "", 
-              newCondition: "" 
-            })
-            setGuardians([])
-          }}
-          style={{ position: 'relative', zIndex: 100 }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Student
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={() => setActiveTab(activeTab === "list" ? "bulk" : "list")}
+          >
+            <UploadIcon className="w-4 h-4 mr-2" />
+            {activeTab === "list" ? "Bulk Upload" : "Back to List"}
+          </Button>
+          <Button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              console.log("Add Student button clicked", { showAddForm })
+              setShowAddForm(true)
+              setEditingId(null)
+              setFormData({ 
+                first_name: "", 
+                last_name: "", 
+                middle_name: "", 
+                email: "", 
+                class_id: "", 
+                arm_id: "", 
+                phone: "", 
+                date_of_birth: "", 
+                gender: "", 
+                address: "", 
+                blood_group: "", 
+                emergency_contact: "" 
+              })
+              setMedicalInfo({ 
+                allergies: [], 
+                conditions: [], 
+                newAllergy: "", 
+                newCondition: "" 
+              })
+              setGuardians([])
+            }}
+            style={{ position: 'relative', zIndex: 100 }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Student
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -376,6 +392,60 @@ export default function StudentsPage() {
             </Button>
           </CardContent>
         </Card>
+      )}
+
+      {/* Bulk Upload Section */}
+      {activeTab === "bulk" && (
+        <ExcelUpload
+          entityType="students"
+          templateColumns={[
+            "first_name", "last_name", "middle_name", 
+            "class_id (or class_name)", "arm_id (or arm_name)",
+            "date_of_birth", "gender", "phone", "address",
+            "blood_group", "parent_name", "parent_phone", "parent_email",
+            "emergency_contact", "allergies", "medications"
+          ]}
+          maxRows={1000}
+          onFileProcessed={(data) => {
+            console.log("Excel data processed:", data)
+          }}
+          onUpload={async (excelData) => {
+            // Create maps for class and arm lookup
+            const classMap = new Map<string, number>()
+            classes.forEach((c: any) => {
+              classMap.set(c.name?.toLowerCase() || "", c.id)
+              classMap.set(String(c.id), c.id)
+            })
+
+            const armMap = new Map<string, number>()
+            classes.forEach((c: any) => {
+              if (c.arms) {
+                c.arms.forEach((arm: any) => {
+                  armMap.set(arm.name?.toLowerCase() || "", arm.id)
+                  armMap.set(String(arm.id), arm.id)
+                })
+              }
+            })
+
+            // Parse Excel rows to API format
+            const students = excelData.map((row: any) => {
+              try {
+                return parseStudentRow(row, classMap, armMap)
+              } catch (error: any) {
+                console.error("Error parsing row:", row, error)
+                throw new Error(`Row ${row._rowIndex || 'unknown'}: ${error.message}`)
+              }
+            }).filter((s: any) => s.first_name && s.last_name)
+
+            if (students.length === 0) {
+              throw new Error("No valid student data found in Excel file")
+            }
+
+            const response = await bulkCreateStudents.mutateAsync({ students })
+            await refetch()
+            return response
+          }}
+        />
       )}
 
       {/* Add/Edit Form */}
@@ -845,32 +915,34 @@ export default function StudentsPage() {
         </Card>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input 
-                placeholder="Search students..." 
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Filters - Only show in list view */}
+      {activeTab === "list" && (
+        <>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <Input 
+                    placeholder="Search students..." 
+                    className="pl-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button variant="outline">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </Button>
+                <Button variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Students List */}
+          {/* Students List */}
       <Card>
         <CardHeader>
           <CardTitle>All Students</CardTitle>
@@ -943,8 +1015,10 @@ export default function StudentsPage() {
             ))}
           </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        </>
+      )}
     </div>
   )
 }

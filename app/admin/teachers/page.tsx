@@ -7,17 +7,22 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2 } from "lucide-react"
+import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2, Upload as UploadIcon } from "lucide-react"
 import { useTeachers, useCreateTeacher, useUpdateTeacher, useDeleteTeacher } from "@/lib/api/teachers"
 import { useSubjects } from "@/lib/api/academic"
 import { useClasses } from "@/lib/api/academic"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import { ExcelUpload } from "@/components/common/excel-upload"
+import { useBulkCreateTeachers } from "@/lib/api/bulk"
+import { parseTeacherRow } from "@/lib/utils/excel-parser"
+import { useDepartments } from "@/lib/api/departments"
 
 export default function TeachersPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [activeTab, setActiveTab] = useState<"list" | "bulk">("list")
 
   const { data: teachersResponse, isLoading, error, refetch } = useTeachers()
   const { data: subjectsResponse } = useSubjects()
