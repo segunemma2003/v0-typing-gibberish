@@ -50,7 +50,7 @@ export default function NewSchoolPage() {
         toast.success(`${schoolName} created successfully!`, {
           description: `Admin Email: ${adminCredentials.email}\nPassword: ${adminCredentials.password}`,
           duration: 12000,
-        })
+      })
       } else {
         toast.success(`${schoolName} created successfully!`)
       }
@@ -58,7 +58,7 @@ export default function NewSchoolPage() {
       // Redirect to schools list page after showing toast
       // Delay allows user to see and copy the admin credentials
       setTimeout(() => {
-        router.push("/super-admin/schools")
+      router.push("/super-admin/schools")
       }, 1500)
     } catch (error: any) {
       console.error("Error creating school:", error)

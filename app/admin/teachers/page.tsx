@@ -25,7 +25,8 @@ export default function TeachersPage() {
 
   const subjects = subjectsResponse?.data || []
   const classes = classesResponse?.data || []
-  const teachers = teachersResponse?.data || []
+  // API returns { teachers: { data: [...], current_page: ..., ... } }
+  const teachers = teachersResponse?.teachers?.data || teachersResponse?.data || []
 
   const createTeacher = useCreateTeacher()
   const updateTeacher = useUpdateTeacher()
@@ -126,8 +127,8 @@ export default function TeachersPage() {
       })
       toast.success("Teacher updated successfully")
       setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
-      setEditingId(null)
-      setShowAddForm(false)
+    setEditingId(null)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error updating teacher:", error)

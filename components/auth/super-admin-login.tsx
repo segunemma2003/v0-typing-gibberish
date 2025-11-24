@@ -72,9 +72,9 @@ export function SuperAdminLogin() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="w-16 h-16 bg-white/20 backdrop-blur-lg rounded-2xl flex items-center justify-center border border-white/30 shadow-2xl">
-                  <Shield className="w-8 h-8 text-white" />
-                </div>
-                <div>
+            <Shield className="w-8 h-8 text-white" />
+          </div>
+          <div>
                   <h1 className="text-4xl font-bold">Compasse</h1>
                   <p className="text-blue-100 text-sm">Education Management System</p>
                 </div>
@@ -118,54 +118,54 @@ export function SuperAdminLogin() {
                 <CardDescription className="text-base text-gray-600">
                   Sign in to access the Super Admin Portal
                 </CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent>
+          </div>
+        </CardHeader>
+        <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
+            <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email Address
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      id="email"
-                      type="email"
+              <Input
+                id="email"
+                type="email"
                       placeholder="admin@compasse.net"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                       className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
+                required
+              />
                   </div>
-                </div>
-                <div className="space-y-2">
+            </div>
+            <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Password
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
+                required
+              />
                   </div>
-                </div>
-                {error && (
+            </div>
+            {error && (
                   <Alert variant="destructive" className="border-red-200 bg-red-50">
                     <AlertDescription className="text-sm">{error}</AlertDescription>
-                  </Alert>
-                )}
-                <Button
-                  type="submit"
+              </Alert>
+            )}
+            <Button
+              type="submit"
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                  disabled={isLoading}
-                >
+              disabled={isLoading}
+            >
                   {isLoading ? (
                     <span className="flex items-center justify-center">
                       <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -177,10 +177,10 @@ export function SuperAdminLogin() {
                   ) : (
                     "Access Super Admin Portal"
                   )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
         </div>
       </div>
     </div>

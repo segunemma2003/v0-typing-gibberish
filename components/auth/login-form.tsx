@@ -216,61 +216,61 @@ export function LoginForm() {
                     }}
                   />
                   <School className="w-10 h-10 text-white hidden" />
-                </div>
-              ) : (
+          </div>
+        ) : (
                 <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
                   <School className="w-10 h-10 text-white" />
-                </div>
-              )}
+          </div>
+        )}
               
               <div className="space-y-2">
                 <CardTitle className="text-3xl font-bold text-gray-900">Welcome Back</CardTitle>
                 <CardDescription className="text-base text-gray-600">
                   Sign in to {schoolName}
-                </CardDescription>
+        </CardDescription>
               </div>
-            </CardHeader>
-            <CardContent>
+      </CardHeader>
+      <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
+          <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                     Email Address
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      id="email"
-                      type="email"
+            <Input
+              id="email"
+              type="email"
                       placeholder="your.email@school.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
                       className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
+              required
+            />
                   </div>
-                </div>
-                <div className="space-y-2">
+          </div>
+          <div className="space-y-2">
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Password
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+            <Input
+              id="password"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
+              required
+            />
                   </div>
-                </div>
-                {error && (
+          </div>
+      {error && (
                   <Alert variant="destructive" className="border-red-200 bg-red-50">
                     <AlertDescription className="text-sm">{error}</AlertDescription>
-                  </Alert>
-                )}
+            </Alert>
+          )}
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
@@ -287,8 +287,8 @@ export function LoginForm() {
                   ) : (
                     "Sign In to Portal"
                   )}
-                </Button>
-              </form>
+          </Button>
+        </form>
               
               {/* Demo credentials hint */}
               {currentTenant && (subdomain === 'demo' || subdomain === 'test') && (
@@ -298,10 +298,10 @@ export function LoginForm() {
                     Email: admin@{subdomain}.edu<br />
                     Password: password123
                   </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          </div>
+        )}
+      </CardContent>
+    </Card>
         </div>
       </div>
     </div>

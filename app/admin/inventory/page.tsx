@@ -214,9 +214,9 @@ export default function InventoryPage() {
               setFormData({ name: "", description: "", category_id: "", quantity: "", unit: "", min_stock_level: "", location: "" })
             }}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Item
-          </Button>
+          <Plus className="w-4 h-4 mr-2" />
+          Add Item
+        </Button>
         </div>
       </div>
 
@@ -418,7 +418,7 @@ export default function InventoryPage() {
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
                 placeholder="Search inventory..."
                 className="pl-10"
@@ -458,38 +458,38 @@ export default function InventoryPage() {
               <p className="text-center text-muted-foreground py-8">No inventory items found</p>
             ) : (
               items.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-purple-100 rounded-lg">
-                      <Package className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">{item.name}</h3>
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors"
+              >
+                <div className="flex items-center space-x-4">
+                  <div className="p-3 bg-purple-100 rounded-lg">
+                    <Package className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">{item.name}</h3>
                       <p className="text-sm text-muted-foreground">{item.category?.name || "Uncategorized"}</p>
                       {item.description && <p className="text-sm text-muted-foreground mt-1">{item.description}</p>}
-                      <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-4 mt-2">
                         {item.location && <span className="text-xs text-muted-foreground">Location: {item.location}</span>}
                         <span className="text-xs text-muted-foreground">Unit: {item.unit}</span>
-                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm font-medium">Quantity</p>
-                      <p
-                        className={`text-lg font-bold ${
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <p className="text-sm font-medium">Quantity</p>
+                    <p
+                      className={`text-lg font-bold ${
                           item.quantity < item.min_stock_level
                             ? item.quantity <= 0
-                              ? "text-red-600"
-                              : "text-yellow-600"
-                            : "text-green-600"
-                        }`}
-                      >
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                          : "text-green-600"
+                      }`}
+                    >
                         {item.quantity} / {item.min_stock_level}
-                      </p>
+                    </p>
                     </div>
                     {getStatusBadge(item)}
                     <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>

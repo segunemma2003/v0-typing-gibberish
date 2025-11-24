@@ -28,14 +28,33 @@ interface Teacher {
 }
 
 interface TeacherListResponse {
-  data: Teacher[];
-  links: {
+  data?: Teacher[]; // For direct array or { data: [...] } format
+  teachers?: { // For wrapped format { teachers: { data: [...] } }
+    data: Teacher[];
+    current_page: number;
+    first_page_url: string;
+    from: number;
+    last_page: number;
+    last_page_url: string;
+    links: Array<{
+      url: string | null;
+      label: string;
+      active: boolean;
+    }>;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
+    to: number;
+    total: number;
+  };
+  links?: {
     first: string;
     last: string;
     prev: string | null;
     next: string | null;
   };
-  meta: {
+  meta?: {
     current_page: number;
     from: number;
     last_page: number;
