@@ -24,7 +24,8 @@ export default function TermsPage() {
   })
   const { data: academicYearsResponse } = useAcademicYears({ per_page: 100 })
 
-  const terms = Array.isArray(termsResponse?.data) ? termsResponse.data : []
+  // API returns direct array for terms
+  const terms = Array.isArray(termsResponse) ? termsResponse : (termsResponse?.data || [])
   // API returns direct array for academic years
   const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
 

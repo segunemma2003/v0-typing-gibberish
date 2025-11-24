@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Search, Plus, Filter, Users, BookOpen, Clock, Edit, Trash2, X, Loader2 } from "lucide-react"
-import { useClasses, useCreateClass, useUpdateClass, useDeleteClass } from "@/lib/api/academic"
+import { useClasses, useCreateClass, useUpdateClass, useDeleteClass, useAcademicYears, useTerms } from "@/lib/api/academic"
 import { useTeachers } from "@/lib/api/teachers"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
 export default function ClassesPage() {
@@ -18,9 +19,14 @@ export default function ClassesPage() {
 
   const { data: classesResponse, isLoading, error, refetch } = useClasses()
   const { data: teachersResponse } = useTeachers()
+  const { data: academicYearsResponse } = useAcademicYears({ per_page: 100 })
+  const { data: termsResponse } = useTerms({ per_page: 100 })
 
   const classes = classesResponse?.data || []
   const teachers = teachersResponse?.data || []
+  // API returns direct array for academic years and terms
+  const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
+  const terms = Array.isArray(termsResponse) ? termsResponse : (termsResponse?.data || [])
 
   const createClass = useCreateClass()
   const updateClass = useUpdateClass()
@@ -31,6 +37,8 @@ export default function ClassesPage() {
     level: "",
     arms: [] as string[],
     newArm: "",
+    academic_year_id: "",
+    term_id: "",
   })
 
   const handleAddArm = () => {
@@ -51,8 +59,8 @@ export default function ClassesPage() {
   }
 
   const handleAdd = async () => {
-    if (!formData.name || !formData.level) {
-      toast.error("Please fill in required fields")
+    if (!formData.name || !formData.level || !formData.academic_year_id || !formData.term_id) {
+      toast.error("Please fill in all required fields (Name, Level, Academic Year, Term)")
       return
     }
 
@@ -66,13 +74,32 @@ export default function ClassesPage() {
         name: formData.name,
         level: formData.level,
         arms: formData.arms,
+        academic_year_id: parseInt(formData.academic_year_id),
+        term_id: parseInt(formData.term_id),
       })
       toast.success("Class created successfully")
-      setFormData({ name: "", level: "", arms: [], newArm: "" })
+      setFormData({ name: "", level: "", arms: [], newArm: "", academic_year_id: "", term_id: "" })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create class")
+      console.error("Error creating class:", error)
+      let errorMessage = "Failed to create class"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -82,14 +109,16 @@ export default function ClassesPage() {
       level: classItem.level || "",
       arms: classItem.arms?.map((a: any) => a.name) || [],
       newArm: "",
+      academic_year_id: classItem.academic_year_id?.toString() || "",
+      term_id: classItem.term_id?.toString() || "",
     })
     setEditingId(classItem.id)
     setShowAddForm(true)
   }
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.level) {
-      toast.error("Please fill in required fields")
+    if (!editingId || !formData.name || !formData.level || !formData.academic_year_id || !formData.term_id) {
+      toast.error("Please fill in all required fields (Name, Level, Academic Year, Term)")
       return
     }
 
@@ -105,15 +134,34 @@ export default function ClassesPage() {
           name: formData.name,
           level: formData.level,
           arms: formData.arms,
+          academic_year_id: parseInt(formData.academic_year_id),
+          term_id: parseInt(formData.term_id),
         },
       })
       toast.success("Class updated successfully")
-      setFormData({ name: "", level: "", arms: [], newArm: "" })
+      setFormData({ name: "", level: "", arms: [], newArm: "", academic_year_id: "", term_id: "" })
       setEditingId(null)
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update class")
+      console.error("Error updating class:", error)
+      let errorMessage = "Failed to update class"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -161,7 +209,7 @@ export default function ClassesPage() {
           onClick={() => {
             setShowAddForm(true)
             setEditingId(null)
-            setFormData({ name: "", level: "", arms: [], newArm: "" })
+            setFormData({ name: "", level: "", arms: [], newArm: "", academic_year_id: "", term_id: "" })
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -205,13 +253,49 @@ export default function ClassesPage() {
                   placeholder="e.g., Grade 9, JSS 1"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Academic Year *</Label>
+                <Select 
+                  value={formData.academic_year_id || undefined} 
+                  onValueChange={(value) => setFormData({ ...formData, academic_year_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select academic year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {academicYears.map((year: any) => (
+                      <SelectItem key={year.id} value={year.id.toString()}>
+                        {year.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Term *</Label>
+                <Select 
+                  value={formData.term_id || undefined} 
+                  onValueChange={(value) => setFormData({ ...formData, term_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select term" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {terms.map((term: any) => (
+                      <SelectItem key={term.id} value={term.id.toString()}>
+                        {term.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Arms/Sections *</Label>
                 <div className="flex gap-2">
-                  <Input
+                <Input 
                     value={formData.newArm}
                     onChange={(e) => setFormData({ ...formData, newArm: e.target.value })}
-                    placeholder="e.g., A, B, C"
+                  placeholder="e.g., A, B, C"
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault()
@@ -222,7 +306,7 @@ export default function ClassesPage() {
                   <Button type="button" onClick={handleAddArm}>
                     Add Arm
                   </Button>
-                </div>
+              </div>
                 {formData.arms.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {formData.arms.map((arm) => (
@@ -234,7 +318,7 @@ export default function ClassesPage() {
                         />
                       </Badge>
                     ))}
-                  </div>
+              </div>
                 )}
               </div>
             </div>
@@ -303,25 +387,25 @@ export default function ClassesPage() {
               )
             })
             .map((classItem: any) => (
-              <Card key={classItem.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
+          <Card key={classItem.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle>{classItem.name}</CardTitle>
+                <CardTitle>{classItem.name}</CardTitle>
                       <CardDescription className="mt-1">{classItem.level}</CardDescription>
                     </div>
                     <Badge variant="default">{classItem.arms?.length || 0} Arms</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center text-muted-foreground">
+                    <Users className="w-4 h-4 mr-1" />
+                    Students
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-muted-foreground">
-                        <Users className="w-4 h-4 mr-1" />
-                        Students
-                      </div>
                       <span className="font-medium">{classItem.student_count || 0}</span>
-                    </div>
+                </div>
                     <div className="space-y-1">
                       <p className="text-sm font-medium">Arms/Sections:</p>
                       <div className="flex flex-wrap gap-1">
@@ -335,8 +419,8 @@ export default function ClassesPage() {
                         ) : (
                           <span className="text-xs text-muted-foreground">No arms</span>
                         )}
-                      </div>
-                    </div>
+                  </div>
+                </div>
                   </div>
                   <div className="flex gap-2 pt-2 border-t">
                     <Button
@@ -345,9 +429,9 @@ export default function ClassesPage() {
                       className="flex-1"
                       onClick={() => handleEdit(classItem)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -355,12 +439,12 @@ export default function ClassesPage() {
                       onClick={() => handleDelete(classItem.id)}
                       disabled={deleteClass.isPending}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
             ))
         )}
       </div>

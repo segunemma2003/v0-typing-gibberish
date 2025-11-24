@@ -310,16 +310,16 @@ export default function TransportPage() {
           </div>
 
           {showVehicleForm && (
-            <Card>
-              <CardHeader>
+      <Card>
+        <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{editingId ? "Edit Vehicle" : "Add New Vehicle"}</CardTitle>
                   <Button variant="ghost" size="sm" onClick={() => setShowVehicleForm(false)}>
                     <X className="w-4 h-4" />
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
+        </CardHeader>
+        <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label>Registration Number *</Label>
@@ -365,12 +365,15 @@ export default function TransportPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Driver</Label>
-                    <Select value={vehicleFormData.driver_id} onValueChange={(value) => setVehicleFormData({ ...vehicleFormData, driver_id: value })}>
+                    <Select 
+                      value={vehicleFormData.driver_id || undefined} 
+                      onValueChange={(value) => setVehicleFormData({ ...vehicleFormData, driver_id: value === "none" ? "" : value })}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a driver" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {drivers.map((driver: any) => (
                           <SelectItem key={driver.id} value={driver.id.toString()}>
                             {driver.name}
@@ -381,12 +384,15 @@ export default function TransportPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Route</Label>
-                    <Select value={vehicleFormData.route_id} onValueChange={(value) => setVehicleFormData({ ...vehicleFormData, route_id: value })}>
+                    <Select 
+                      value={vehicleFormData.route_id || undefined} 
+                      onValueChange={(value) => setVehicleFormData({ ...vehicleFormData, route_id: value === "none" ? "" : value })}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a route" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {routes.map((route: any) => (
                           <SelectItem key={route.id} value={route.id.toString()}>
                             {route.name}
@@ -429,10 +435,10 @@ export default function TransportPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                          <Bus className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <Bus className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
                           <CardTitle>{vehicle.registration_number}</CardTitle>
                           <CardDescription>{vehicle.make} {vehicle.model} {vehicle.year ? `(${vehicle.year})` : ""}</CardDescription>
                         </div>
@@ -741,15 +747,15 @@ export default function TransportPage() {
                           <span className="font-medium">{driver.email}</span>
                         </div>
                       )}
-                    </div>
+              </div>
                     <div className="flex gap-2 mt-4">
                       <Button variant="outline" size="sm" onClick={() => handleDeleteDriver(driver.id)} disabled={deleteDriver.isPending}>
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+          </div>
+        </CardContent>
+      </Card>
               ))
             )}
           </div>

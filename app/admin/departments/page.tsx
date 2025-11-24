@@ -210,17 +210,17 @@ export default function DepartmentsPage() {
               <div className="space-y-2">
                 <Label>Head of Department</Label>
                 <Select
-                  value={formData.head_of_department_id}
-                  onValueChange={(value) => setFormData({...formData, head_of_department_id: value})}
+                  value={formData.head_of_department_id || undefined}
+                  onValueChange={(value) => setFormData({...formData, head_of_department_id: value === "none" ? "" : value})}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select head of department" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {teachers.map((teacher: any) => (
                       <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                        {teacher.name}
+                        {teacher.name || `${teacher.first_name || ""} ${teacher.last_name || ""}`.trim() || `Teacher ${teacher.id}`}
                       </SelectItem>
                     ))}
                   </SelectContent>

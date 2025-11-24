@@ -29,7 +29,8 @@ export default function ReportsPage() {
   const { data: academicYearsResponse } = useAcademicYears()
 
   const classes = classesResponse?.data || []
-  const terms = termsResponse?.data || []
+  // API returns direct array for terms
+  const terms = Array.isArray(termsResponse) ? termsResponse : (termsResponse?.data || [])
   // API returns direct array for academic years
   const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
 
@@ -231,8 +232,8 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
       {/* Filters */}
       <Card>
@@ -275,7 +276,7 @@ export default function ReportsPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+                  </div>
             <div className="space-y-2">
               <Label>Term (Optional)</Label>
               <Select
@@ -294,7 +295,7 @@ export default function ReportsPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+                    </div>
             <div className="space-y-2">
               <Label>Academic Year (Optional)</Label>
               <Select
@@ -315,7 +316,7 @@ export default function ReportsPage() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+              </div>
           </div>
         </CardContent>
       </Card>

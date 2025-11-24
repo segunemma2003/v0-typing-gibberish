@@ -42,6 +42,8 @@ interface CreateClassRequest {
   name: string;
   level: string;
   arms: string[];
+  academic_year_id: number;
+  term_id: number;
 }
 
 interface CreateSubjectRequest {
@@ -171,8 +173,9 @@ export const academicService = {
   },
 
   // Terms
-  getTerms: async (params?: { per_page?: number; page?: number; academic_year_id?: number; status?: string; is_current?: boolean }): Promise<{ data: Term[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
+  getTerms: async (params?: { per_page?: number; page?: number; academic_year_id?: number; status?: string; is_current?: boolean }): Promise<Term[] | { data: Term[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
     const response = await apiClient.get('/terms', { params });
+    // API returns direct array, so return it directly
     return response.data;
   },
 
