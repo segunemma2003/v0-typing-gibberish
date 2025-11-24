@@ -267,7 +267,37 @@ export default function StudentsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
         </div>
-        <Button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" }); setMedicalInfo({ allergies: [], conditions: [], newAllergy: "", newCondition: "" }); setGuardians([]) }}>
+        <Button 
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            console.log("Add Student button clicked")
+            setShowAddForm(true)
+            setEditingId(null)
+            setFormData({ 
+              first_name: "", 
+              last_name: "", 
+              middle_name: "", 
+              email: "", 
+              class_id: "", 
+              arm_id: "", 
+              phone: "", 
+              date_of_birth: "", 
+              gender: "", 
+              address: "", 
+              blood_group: "", 
+              emergency_contact: "" 
+            })
+            setMedicalInfo({ 
+              allergies: [], 
+              conditions: [], 
+              newAllergy: "", 
+              newCondition: "" 
+            })
+            setGuardians([])
+          }}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
@@ -717,6 +747,7 @@ export default function StudentsPage() {
 
             <div className="flex gap-2 mt-4">
               <Button 
+                type="button"
                 onClick={editingId ? handleUpdate : handleAdd}
                 disabled={createStudent.isPending || updateStudent.isPending}
               >

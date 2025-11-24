@@ -65,7 +65,7 @@ export default function SubjectsPage() {
       })
       toast.success("Subject created successfully")
       setFormData({ name: "", code: "", description: "", department_id: "", teacher_ids: [] })
-      setShowAddForm(false)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error creating subject:", error)
@@ -90,15 +90,15 @@ export default function SubjectsPage() {
   }
 
   const handleEdit = (subject: any) => {
-    setFormData({
+      setFormData({
       name: subject.name || "",
       code: subject.code || "",
       description: subject.description || "",
       department_id: subject.department_id?.toString() || "",
       teacher_ids: subject.teachers?.map((t: any) => t.id) || [],
-    })
+      })
     setEditingId(subject.id)
-    setShowAddForm(true)
+      setShowAddForm(true)
   }
 
   const handleUpdate = async () => {
@@ -120,8 +120,8 @@ export default function SubjectsPage() {
       })
       toast.success("Subject updated successfully")
       setFormData({ name: "", code: "", description: "", department_id: "", teacher_ids: [] })
-      setEditingId(null)
-      setShowAddForm(false)
+    setEditingId(null)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error updating subject:", error)
