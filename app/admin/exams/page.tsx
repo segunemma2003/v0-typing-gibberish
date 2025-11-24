@@ -632,7 +632,7 @@ export default function ExamsPage() {
 
                   <div className="space-y-2">
                     <Label>Subject *</Label>
-                    <Select value={formData.subject_id} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
+                    <Select value={formData.subject_id || undefined} onValueChange={(value) => setFormData({ ...formData, subject_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select subject" />
                       </SelectTrigger>
@@ -648,7 +648,7 @@ export default function ExamsPage() {
 
                   <div className="space-y-2">
                     <Label>Class *</Label>
-                    <Select value={formData.class_id} onValueChange={(value) => setFormData({ ...formData, class_id: value })}>
+                    <Select value={formData.class_id || undefined} onValueChange={(value) => setFormData({ ...formData, class_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select class" />
                       </SelectTrigger>
@@ -664,12 +664,15 @@ export default function ExamsPage() {
 
                   <div className="space-y-2">
                     <Label>Teacher</Label>
-                    <Select value={formData.teacher_id} onValueChange={(value) => setFormData({ ...formData, teacher_id: value })}>
+                    <Select 
+                      value={formData.teacher_id || undefined} 
+                      onValueChange={(value) => setFormData({ ...formData, teacher_id: value === "none" ? "" : value })}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select teacher" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
                         {teachers.map((teacher: any) => (
                           <SelectItem key={teacher.id} value={teacher.id.toString()}>
                             {teacher.name}
@@ -681,7 +684,7 @@ export default function ExamsPage() {
 
                   <div className="space-y-2">
                     <Label>Term *</Label>
-                    <Select value={formData.term_id} onValueChange={(value) => setFormData({ ...formData, term_id: value })}>
+                    <Select value={formData.term_id || undefined} onValueChange={(value) => setFormData({ ...formData, term_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select term" />
                       </SelectTrigger>
@@ -697,7 +700,7 @@ export default function ExamsPage() {
 
                   <div className="space-y-2">
                     <Label>Academic Year *</Label>
-                    <Select value={formData.academic_year_id} onValueChange={(value) => setFormData({ ...formData, academic_year_id: value })}>
+                    <Select value={formData.academic_year_id || undefined} onValueChange={(value) => setFormData({ ...formData, academic_year_id: value })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select academic year" />
                       </SelectTrigger>
