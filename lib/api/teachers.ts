@@ -46,12 +46,15 @@ interface TeacherListResponse {
 }
 
 interface CreateTeacherRequest {
-  name: string;
-  subjects: number[]; // Array of subject IDs
-  classes: number[]; // Array of class IDs
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  employment_date: string;
+  subjects?: number[]; // Array of subject IDs
+  classes?: number[]; // Array of class IDs
   qualification?: string;
   experience_years?: number;
-  phone?: string;
 }
 
 export const teacherService = {

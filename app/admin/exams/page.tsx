@@ -106,7 +106,8 @@ export default function ExamsPage() {
   const subjects = subjectsResponse?.data || []
   const teachers = teachersResponse?.data || []
   const terms = termsResponse?.data || []
-  const academicYears = academicYearsResponse?.data || []
+  // API returns direct array for academic years
+  const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
 
   const { data: examsResponse, isLoading, error, refetch } = useExams({
     search: searchTerm || undefined,

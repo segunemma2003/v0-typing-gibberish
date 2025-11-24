@@ -144,8 +144,9 @@ export const academicService = {
   },
 
   // Academic Years
-  getAcademicYears: async (params?: { per_page?: number; page?: number; status?: string; is_current?: boolean }): Promise<{ data: AcademicYear[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
+  getAcademicYears: async (params?: { per_page?: number; page?: number; status?: string; is_current?: boolean }): Promise<AcademicYear[] | { data: AcademicYear[]; current_page?: number; per_page?: number; total?: number; last_page?: number }> => {
     const response = await apiClient.get('/academic-years', { params });
+    // API returns direct array, so return it directly
     return response.data;
   },
 

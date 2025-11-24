@@ -3,7 +3,7 @@
 /// <reference types="react" />
 /// <reference types="react-dom" />
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,23 @@ export default function AcademicYearsPage() {
     per_page: 100,
   })
 
-  const academicYears = Array.isArray(academicYearsResponse?.data) ? academicYearsResponse.data : []
+  // Handle different response structures - API returns direct array
+  const academicYears = useMemo(() => {
+    if (!academicYearsResponse) return []
+    
+    // API returns direct array: [{...}, {...}]
+    if (Array.isArray(academicYearsResponse)) {
+      return academicYearsResponse
+    }
+    
+    // Also handle nested data structure (backwards compatibility)
+    if (academicYearsResponse?.data && Array.isArray(academicYearsResponse.data)) {
+      return academicYearsResponse.data
+    }
+    
+    console.warn("Unexpected academic years response structure:", academicYearsResponse)
+    return []
+  }, [academicYearsResponse])
 
   const createAcademicYear = useCreateAcademicYear()
   const updateAcademicYear = useUpdateAcademicYear()

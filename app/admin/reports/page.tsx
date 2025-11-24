@@ -30,7 +30,8 @@ export default function ReportsPage() {
 
   const classes = classesResponse?.data || []
   const terms = termsResponse?.data || []
-  const academicYears = academicYearsResponse?.data || []
+  // API returns direct array for academic years
+  const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
 
   // Fetch reports based on type
   const { data: attendanceReport, isLoading: attendanceLoading } = useAttendanceReport(

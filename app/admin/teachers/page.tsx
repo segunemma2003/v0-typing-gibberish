@@ -32,9 +32,11 @@ export default function TeachersPage() {
   const deleteTeacher = useDeleteTeacher()
 
   const [formData, setFormData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
+    employment_date: "",
     subjects: [] as number[],
     classes: [] as number[],
     qualification: "",
@@ -42,46 +44,72 @@ export default function TeachersPage() {
   })
 
   const handleAdd = async () => {
-    if (!formData.name) {
-      toast.error("Please fill in required fields")
+    if (!formData.first_name || !formData.last_name || !formData.employment_date) {
+      toast.error("Please fill in all required fields (First Name, Last Name, Employment Date)")
       return
     }
 
     try {
       await createTeacher.mutateAsync({
-      name: formData.name,
-        subjects: formData.subjects,
-        classes: formData.classes,
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        employment_date: formData.employment_date,
+        subjects: formData.subjects.length > 0 ? formData.subjects : undefined,
+        classes: formData.classes.length > 0 ? formData.classes : undefined,
         qualification: formData.qualification || undefined,
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
-        phone: formData.phone || undefined,
       })
       toast.success("Teacher created successfully")
-      setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+      setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create teacher")
+      console.error("Error creating teacher:", error)
+      let errorMessage = "Failed to create teacher"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.messages) {
+          const errorMessages = Object.entries(data.messages).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
   const handleEdit = (teacher: any) => {
-      setFormData({
-      name: teacher.name || "",
+    // Split name into first_name and last_name if only name is provided
+    const nameParts = teacher.name ? teacher.name.split(" ") : ["", ""]
+    const first_name = teacher.first_name || nameParts[0] || ""
+    const last_name = teacher.last_name || nameParts.slice(1).join(" ") || ""
+    
+    setFormData({
+      first_name,
+      last_name,
       email: teacher.email || "",
       phone: teacher.phone || "",
+      employment_date: teacher.employment_date ? new Date(teacher.employment_date).toISOString().split("T")[0] : "",
       subjects: teacher.subjects?.map((s: any) => s.id) || [],
       classes: teacher.classes?.map((c: any) => c.id) || [],
       qualification: teacher.qualification || "",
       experience_years: teacher.experience_years?.toString() || "",
     })
     setEditingId(teacher.id)
-      setShowAddForm(true)
-    }
+    setShowAddForm(true)
+  }
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name) {
-      toast.error("Please fill in required fields")
+    if (!editingId || !formData.first_name || !formData.last_name || !formData.employment_date) {
+      toast.error("Please fill in all required fields (First Name, Last Name, Employment Date)")
       return
     }
 
@@ -89,21 +117,40 @@ export default function TeachersPage() {
       await updateTeacher.mutateAsync({
         id: editingId,
         data: {
-          name: formData.name,
-          subjects: formData.subjects,
-          classes: formData.classes,
+          first_name: formData.first_name.trim(),
+          last_name: formData.last_name.trim(),
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
+          employment_date: formData.employment_date,
+          subjects: formData.subjects.length > 0 ? formData.subjects : undefined,
+          classes: formData.classes.length > 0 ? formData.classes : undefined,
           qualification: formData.qualification || undefined,
           experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
-          phone: formData.phone || undefined,
         },
       })
       toast.success("Teacher updated successfully")
-      setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
-    setEditingId(null)
-    setShowAddForm(false)
+      setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+      setEditingId(null)
+      setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update teacher")
+      console.error("Error updating teacher:", error)
+      let errorMessage = "Failed to update teacher"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.messages) {
+          const errorMessages = Object.entries(data.messages).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -169,7 +216,7 @@ export default function TeachersPage() {
           onClick={() => {
             setShowAddForm(true)
             setEditingId(null)
-            setFormData({ name: "", email: "", phone: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+            setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -198,11 +245,28 @@ export default function TeachersPage() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Full Name *</Label>
+                <Label>First Name *</Label>
                 <Input 
-                  value={formData.name} 
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
+                  value={formData.first_name} 
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  placeholder="Enter first name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Last Name *</Label>
+                <Input 
+                  value={formData.last_name} 
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  placeholder="Enter last name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input 
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="teacher@school.com"
                 />
               </div>
               <div className="space-y-2">
@@ -211,6 +275,14 @@ export default function TeachersPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+1234567890"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Employment Date *</Label>
+                <Input 
+                  type="date"
+                  value={formData.employment_date}
+                  onChange={(e) => setFormData({ ...formData, employment_date: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -334,25 +406,25 @@ export default function TeachersPage() {
                 .filter((teacher: any) => {
                   if (!searchTerm) return true
                   const search = searchTerm.toLowerCase()
+                  const fullName = `${teacher.first_name || ""} ${teacher.last_name || ""}`.trim() || teacher.name || ""
                   return (
-                    teacher.name?.toLowerCase().includes(search) ||
+                    fullName.toLowerCase().includes(search) ||
                     teacher.email?.toLowerCase().includes(search) ||
                     teacher.phone?.toLowerCase().includes(search)
                   )
                 })
-                .map((teacher: any) => (
+                .map((teacher: any) => {
+                  const fullName = `${teacher.first_name || ""} ${teacher.last_name || ""}`.trim() || teacher.name || "Unknown"
+                  const initials = fullName.split(" ").map((n: string) => n[0]).join("") || "T"
+                  
+                  return (
               <div key={teacher.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <Avatar>
-                    <AvatarFallback>
-                      {teacher.name
-                            ?.split(" ")
-                            .map((n: string) => n[0])
-                            .join("") || "T"}
-                    </AvatarFallback>
+                    <AvatarFallback>{initials}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <h3 className="font-medium">{teacher.name}</h3>
+                    <h3 className="font-medium">{fullName}</h3>
                     <p className="text-sm text-muted-foreground">{teacher.email}</p>
                     <div className="flex items-center space-x-2 mt-1">
                           {teacher.subjects && teacher.subjects.length > 0 ? (
@@ -388,7 +460,8 @@ export default function TeachersPage() {
                   </Button>
                 </div>
               </div>
-                ))
+                  )
+                })
             )}
           </div>
         </CardContent>
