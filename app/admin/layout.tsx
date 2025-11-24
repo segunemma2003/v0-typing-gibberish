@@ -21,6 +21,8 @@ import {
   Package,
   FileText,
   Bell,
+  Image as ImageIcon,
+  BookCheck,
 } from "lucide-react"
 
 export default function AdminLayout({
@@ -42,6 +44,8 @@ export default function AdminLayout({
     { title: "Timetable", href: "/admin/timetable", icon: Calendar },
     { title: "Reports", href: "/admin/reports", icon: BarChart3 },
     { title: "Announcements", href: "/admin/announcements", icon: Bell },
+    { title: "Stories", href: "/admin/stories", icon: ImageIcon },
+    { title: "Exams & CBT", href: "/admin/exams", icon: BookCheck },
     { title: "Transport", href: "/admin/transport", icon: Bus },
     { title: "Houses", href: "/admin/houses", icon: Building },
     { title: "Sports", href: "/admin/sports", icon: Trophy },
