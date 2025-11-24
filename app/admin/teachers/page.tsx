@@ -34,7 +34,6 @@ export default function TeachersPage() {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
-    email: "",
     phone: "",
     employment_date: "",
     subjects: [] as number[],
@@ -61,7 +60,7 @@ export default function TeachersPage() {
         experience_years: formData.experience_years ? parseInt(formData.experience_years) : undefined,
       })
       toast.success("Teacher created successfully")
-      setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+      setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
@@ -94,7 +93,6 @@ export default function TeachersPage() {
     setFormData({
       first_name,
       last_name,
-      email: teacher.email || "",
       phone: teacher.phone || "",
       employment_date: teacher.employment_date ? new Date(teacher.employment_date).toISOString().split("T")[0] : "",
       subjects: teacher.subjects?.map((s: any) => s.id) || [],
@@ -127,7 +125,7 @@ export default function TeachersPage() {
         },
       })
       toast.success("Teacher updated successfully")
-      setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+      setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
       setEditingId(null)
       setShowAddForm(false)
       refetch()
@@ -214,7 +212,7 @@ export default function TeachersPage() {
           onClick={() => {
             setShowAddForm(true)
             setEditingId(null)
-            setFormData({ first_name: "", last_name: "", email: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
+            setFormData({ first_name: "", last_name: "", phone: "", employment_date: "", subjects: [], classes: [], qualification: "", experience_years: "" })
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -256,15 +254,6 @@ export default function TeachersPage() {
                   value={formData.last_name} 
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   placeholder="Enter last name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <Input 
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="teacher@school.com"
                 />
               </div>
               <div className="space-y-2">
