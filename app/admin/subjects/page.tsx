@@ -20,7 +20,8 @@ export default function SubjectsPage() {
   const { data: subjectsResponse, isLoading, error, refetch } = useSubjects()
   const { data: teachersResponse } = useTeachers()
 
-  const subjects = subjectsResponse?.data || []
+  // API may return direct array or wrapped in { data: [...] }
+  const subjects = Array.isArray(subjectsResponse) ? subjectsResponse : (subjectsResponse?.data || [])
   const teachers = teachersResponse?.data || []
 
   const createSubject = useCreateSubject()

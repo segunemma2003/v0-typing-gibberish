@@ -104,8 +104,9 @@ interface CreateTermRequest {
 
 export const academicService = {
   // Classes
-  getClasses: async (): Promise<ClassListResponse> => {
+  getClasses: async (): Promise<Class[] | ClassListResponse> => {
     const response = await apiClient.get('/classes');
+    // API may return direct array or wrapped in { data: [...] }
     return response.data;
   },
 
@@ -115,8 +116,9 @@ export const academicService = {
   },
 
   // Subjects
-  getSubjects: async (): Promise<SubjectListResponse> => {
+  getSubjects: async (): Promise<Subject[] | SubjectListResponse> => {
     const response = await apiClient.get('/subjects');
+    // API may return direct array or wrapped in { data: [...] }
     return response.data;
   },
 

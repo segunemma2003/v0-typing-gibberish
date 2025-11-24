@@ -22,7 +22,8 @@ export default function ClassesPage() {
   const { data: academicYearsResponse } = useAcademicYears({ per_page: 100 })
   const { data: termsResponse } = useTerms({ per_page: 100 })
 
-  const classes = classesResponse?.data || []
+  // API may return direct array or wrapped in { data: [...] }
+  const classes = Array.isArray(classesResponse) ? classesResponse : (classesResponse?.data || [])
   const teachers = teachersResponse?.data || []
   // API returns direct array for academic years and terms
   const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])

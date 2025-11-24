@@ -27,8 +27,9 @@ export default function TimetablePage() {
   const { data: subjectsResponse } = useSubjects()
   const { data: teachersResponse } = useTeachers()
 
-  const classes = classesResponse?.data || []
-  const subjects = subjectsResponse?.data || []
+  // API may return direct array or wrapped in { data: [...] }
+  const classes = Array.isArray(classesResponse) ? classesResponse : (classesResponse?.data || [])
+  const subjects = Array.isArray(subjectsResponse) ? subjectsResponse : (subjectsResponse?.data || [])
   const teachers = teachersResponse?.data || []
 
   // Fetch timetable based on filters
@@ -370,7 +371,7 @@ export default function TimetablePage() {
             {(selectedClass || selectedTeacher || selectedDay) && (
               <Button variant="outline" onClick={() => { setSelectedClass(null); setSelectedTeacher(null); setSelectedDay("") }}>
                 Clear Filters
-              </Button>
+                </Button>
             )}
           </div>
         </CardContent>
@@ -386,11 +387,11 @@ export default function TimetablePage() {
           {timetable.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">No timetable entries found</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
               {DAYS_OF_WEEK.map((day) => (
-                <div key={day} className="space-y-3">
-                  <h3 className="font-semibold text-lg pb-2 border-b">{day}</h3>
-                  <div className="space-y-2">
+              <div key={day} className="space-y-3">
+                <h3 className="font-semibold text-lg pb-2 border-b">{day}</h3>
+                <div className="space-y-2">
                     {groupedTimetable[day] && groupedTimetable[day].length > 0 ? (
                       groupedTimetable[day]
                         .sort((a: any, b: any) => a.start_time.localeCompare(b.start_time))
@@ -429,10 +430,10 @@ export default function TimetablePage() {
                     ) : (
                       <p className="text-xs text-muted-foreground text-center py-4">No classes scheduled</p>
                     )}
-                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+          </div>
           )}
         </CardContent>
       </Card>
