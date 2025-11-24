@@ -518,6 +518,8 @@ export default function TeachersPage() {
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   )
 }
