@@ -48,7 +48,6 @@ interface TeacherListResponse {
 interface CreateTeacherRequest {
   first_name: string;
   last_name: string;
-  email?: string;
   phone?: string;
   employment_date: string;
   subjects?: number[]; // Array of subject IDs

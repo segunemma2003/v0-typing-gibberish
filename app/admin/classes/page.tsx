@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,8 +22,43 @@ export default function ClassesPage() {
   const { data: academicYearsResponse } = useAcademicYears({ per_page: 100 })
   const { data: termsResponse } = useTerms({ per_page: 100 })
 
-  // API may return direct array or wrapped in { data: [...] }
-  const classes = Array.isArray(classesResponse) ? classesResponse : (classesResponse?.data || [])
+  // Debug logging - remove after confirming it works
+  if (typeof window !== 'undefined') {
+    useEffect(() => {
+      if (classesResponse) {
+        console.log('[Classes Debug] Raw Response:', classesResponse)
+        console.log('[Classes Debug] Type:', typeof classesResponse)
+        console.log('[Classes Debug] Is Array?', Array.isArray(classesResponse))
+        console.log('[Classes Debug] Has data?', classesResponse?.data)
+        if (classesResponse && typeof classesResponse === 'object' && !Array.isArray(classesResponse)) {
+          console.log('[Classes Debug] Keys:', Object.keys(classesResponse))
+        }
+      }
+    }, [classesResponse])
+  }
+
+  // API may return direct array, wrapped in { data: [...] }, or { classes: [...] }
+  let classes: any[] = []
+  if (Array.isArray(classesResponse)) {
+    classes = classesResponse
+  } else if (classesResponse?.data) {
+    classes = Array.isArray(classesResponse.data) ? classesResponse.data : []
+  } else if (classesResponse?.classes) {
+    classes = Array.isArray(classesResponse.classes) ? classesResponse.classes : []
+  } else if (classesResponse && typeof classesResponse === 'object' && !Array.isArray(classesResponse)) {
+    // Check if it's a single class object (has id, name, level properties)
+    if (classesResponse.id && classesResponse.name && classesResponse.level) {
+      // It's a single class object, wrap it in an array
+      classes = [classesResponse]
+    } else if (classesResponse.results) {
+      // Laravel pagination format
+      classes = Array.isArray(classesResponse.results) ? classesResponse.results : []
+    } else {
+      // Empty or unrecognized format
+      classes = []
+    }
+  }
+
   const teachers = teachersResponse?.data || []
   // API returns direct array for academic years and terms
   const academicYears = Array.isArray(academicYearsResponse) ? academicYearsResponse : (academicYearsResponse?.data || [])
@@ -141,8 +176,8 @@ export default function ClassesPage() {
       })
       toast.success("Class updated successfully")
       setFormData({ name: "", level: "", arms: [], newArm: "", academic_year_id: "", term_id: "" })
-      setEditingId(null)
-      setShowAddForm(false)
+    setEditingId(null)
+    setShowAddForm(false)
       refetch()
     } catch (error: any) {
       console.error("Error updating class:", error)
@@ -240,16 +275,16 @@ export default function ClassesPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Class Name *</Label>
-                <Input
-                  value={formData.name}
+                <Input 
+                  value={formData.name} 
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Grade 9"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Level *</Label>
-                <Input
-                  value={formData.level}
+                <Input 
+                  value={formData.level} 
                   onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                   placeholder="e.g., Grade 9, JSS 1"
                 />

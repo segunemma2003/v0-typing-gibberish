@@ -53,7 +53,6 @@ export default function TeachersPage() {
       await createTeacher.mutateAsync({
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
-        email: formData.email || undefined,
         phone: formData.phone || undefined,
         employment_date: formData.employment_date,
         subjects: formData.subjects.length > 0 ? formData.subjects : undefined,
@@ -119,7 +118,6 @@ export default function TeachersPage() {
         data: {
           first_name: formData.first_name.trim(),
           last_name: formData.last_name.trim(),
-          email: formData.email || undefined,
           phone: formData.phone || undefined,
           employment_date: formData.employment_date,
           subjects: formData.subjects.length > 0 ? formData.subjects : undefined,
