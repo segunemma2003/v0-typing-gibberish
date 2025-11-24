@@ -22,7 +22,7 @@ export default function FinanceLayout({
   ]
 
   return (
-    <TenantGuard requireSchool={true} allowedRoles={["admin", "finance_manager", "accountant"]}>
+    <TenantGuard requireSchool={true} allowedRoles={["admin", "finance_manager", "accountant", "finance"]}>
       <div className="flex h-screen bg-background">
         <Sidebar items={sidebarItems} />
         <main className="flex-1 overflow-auto">{children}</main>

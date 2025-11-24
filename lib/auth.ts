@@ -9,6 +9,8 @@ export type UserRole =
   | "parent"
   | "librarian"
   | "house_master"
+  | "finance"
+  | "accountant" // Keep for backward compatibility
 
 export interface User {
   id: string | number
@@ -46,8 +48,10 @@ export const getRoleDisplayName = (role: UserRole): string => {
     parent: "Parent",
     librarian: "Librarian",
     house_master: "House Master",
+    finance: "Finance",
+    accountant: "Accountant",
   }
-  return roleNames[role]
+  return roleNames[role] || role
 }
 
 export const getPortalRoute = (role: UserRole): string => {
@@ -62,8 +66,10 @@ export const getPortalRoute = (role: UserRole): string => {
     parent: "/parent",
     librarian: "/library",
     house_master: "/house",
+    finance: "/finance",
+    accountant: "/finance", // Accountant redirects to finance dashboard
   }
-  return routes[role]
+  return routes[role] || "/admin" // Default fallback
 }
 
 // School interface for multi-tenancy

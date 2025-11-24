@@ -9,13 +9,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Search, Plus, Filter, Download, Mail, Phone, Edit, Trash2, X, Loader2 } from "lucide-react"
 import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from "@/lib/api/staff"
+import { useDepartments } from "@/lib/api/departments"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 
 const staffRoles = [
   { value: 'admin', label: 'Administrator' },
   { value: 'staff', label: 'General Staff' },
-  { value: 'accountant', label: 'Accountant' },
+  { value: 'finance', label: 'Finance' },
   { value: 'librarian', label: 'Librarian' },
   { value: 'driver', label: 'Driver' },
   { value: 'security', label: 'Security' },
@@ -33,12 +34,15 @@ export default function StaffPage() {
     search: searchTerm || undefined,
     per_page: 100,
   })
+  const { data: departmentsResponse } = useDepartments({ per_page: 100 })
 
   const createStaff = useCreateStaff()
   const updateStaff = useUpdateStaff()
   const deleteStaff = useDeleteStaff()
 
   const staff = staffResponse?.data || []
+  // API may return direct array or wrapped in { data: [...] }
+  const departments = Array.isArray(departmentsResponse) ? departmentsResponse : (departmentsResponse?.data || [])
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -75,7 +79,7 @@ export default function StaffPage() {
       if (formData.phone?.trim()) {
         payload.phone = formData.phone.trim()
       }
-      if (formData.department?.trim()) {
+      if (formData.department?.trim() && formData.department !== "none") {
         payload.department = formData.department.trim()
       }
       if (formData.position?.trim()) {
@@ -304,11 +308,22 @@ export default function StaffPage() {
               </div>
               <div className="space-y-2">
                 <Label>Department</Label>
-                <Input
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  placeholder="e.g., Library, Administration"
-                />
+                <Select 
+                  value={formData.department || undefined} 
+                  onValueChange={(value) => setFormData({ ...formData, department: value === "none" ? "" : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {departments.map((dept: any) => (
+                      <SelectItem key={dept.id} value={dept.name}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Position</Label>

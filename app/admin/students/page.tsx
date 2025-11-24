@@ -170,7 +170,34 @@ export default function StudentsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error creating student:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create student"
+      let errorMessage = "Failed to create student"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } 
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -227,7 +254,34 @@ export default function StudentsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error updating student:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update student"
+      let errorMessage = "Failed to update student"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } 
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -240,29 +294,38 @@ export default function StudentsPage() {
       toast.success("Student deleted successfully")
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to delete student")
+      console.error("Error deleting student:", error)
+      let errorMessage = "Failed to delete student"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-red-500">Error loading students: {error instanceof Error ? error.message : 'Unknown error'}</p>
-            <Button onClick={() => refetch()} className="mt-4">
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="p-6 space-y-6" style={{ position: 'relative' }}>
+      {/* Header - Always visible */}
+      <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 10 }}>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
@@ -272,7 +335,7 @@ export default function StudentsPage() {
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            console.log("Add Student button clicked")
+            console.log("Add Student button clicked", { showAddForm })
             setShowAddForm(true)
             setEditingId(null)
             setFormData({ 
@@ -297,11 +360,23 @@ export default function StudentsPage() {
             })
             setGuardians([])
           }}
+          style={{ position: 'relative', zIndex: 100 }}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Student
         </Button>
       </div>
+
+      {error && (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-red-500">Error loading students: {error instanceof Error ? error.message : 'Unknown error'}</p>
+            <Button onClick={() => refetch()} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Add/Edit Form */}
       {showAddForm && (

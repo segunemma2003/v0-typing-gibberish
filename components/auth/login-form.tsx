@@ -97,6 +97,8 @@ export function LoginForm() {
         "parent",
         "librarian",
         "house_master",
+        "finance",
+        "accountant",
       ] as string[]).includes(user.role)
         ? (user.role as UserRole)
         : "admin"
