@@ -73,8 +73,9 @@ interface DepartmentDetailsResponse {
 }
 
 export const departmentService = {
-  getDepartments: async (params?: GetDepartmentsParams): Promise<DepartmentListResponse> => {
+  getDepartments: async (params?: GetDepartmentsParams): Promise<Department[] | DepartmentListResponse> => {
     const response = await apiClient.get('/departments', { params });
+    // API may return direct array or wrapped in { data: [...] }
     return response.data;
   },
 

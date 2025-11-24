@@ -50,6 +50,7 @@ interface CreateSubjectRequest {
   name: string;
   code: string;
   description: string;
+  department_id: number;
   teacher_ids: number[];
 }
 

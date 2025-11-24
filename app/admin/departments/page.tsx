@@ -24,8 +24,9 @@ export default function DepartmentsPage() {
   })
   const { data: teachersResponse } = useTeachers()
 
-  const departments = Array.isArray(departmentsResponse?.data) ? departmentsResponse.data : []
-  const teachers = Array.isArray(teachersResponse?.data) ? teachersResponse.data : []
+  // API may return direct array or wrapped in { data: [...] }
+  const departments = Array.isArray(departmentsResponse) ? departmentsResponse : (departmentsResponse?.data || [])
+  const teachers = teachersResponse?.teachers?.data || teachersResponse?.data || []
 
   const createDepartment = useCreateDepartment()
   const updateDepartment = useUpdateDepartment()

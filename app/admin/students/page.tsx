@@ -25,7 +25,8 @@ export default function StudentsPage() {
   })
 
   const { data: classesResponse } = useClasses()
-  const classes = Array.isArray(classesResponse?.data) ? classesResponse.data : []
+  // API may return direct array or wrapped in { data: [...] }
+  const classes = Array.isArray(classesResponse) ? classesResponse : (classesResponse?.data || [])
 
   const { data: schoolsResponse } = useSchools()
   const schools = Array.isArray(schoolsResponse?.data) ? schoolsResponse.data : []
@@ -389,22 +390,29 @@ export default function StudentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Class *</Label>
+                <Label>Present Class *</Label>
                 <Select 
-                  value={formData.class_id} 
+                  value={formData.class_id || undefined} 
                   onValueChange={(value) => setFormData({...formData, class_id: value, arm_id: ""})}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a class" />
+                    <SelectValue placeholder={classes.length === 0 ? "No classes available" : "Select a class"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map((classItem: any) => (
-                      <SelectItem key={classItem.id} value={classItem.id.toString()}>
-                        {classItem.name} ({classItem.level})
-                      </SelectItem>
-                    ))}
+                    {classes.length === 0 ? (
+                      <SelectItem value="none" disabled>No classes available. Please create a class first.</SelectItem>
+                    ) : (
+                      classes.map((classItem: any) => (
+                        <SelectItem key={classItem.id} value={classItem.id.toString()}>
+                          {classItem.name} {classItem.level ? `(${classItem.level})` : ""}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
+                {classes.length === 0 && (
+                  <p className="text-xs text-muted-foreground">No classes found. Please create classes in the Classes page first.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Arm/Section</Label>

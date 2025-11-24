@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Search, Plus, Filter, BookOpen, Users, Clock, Edit, Trash2, X, Loader2 } from "lucide-react"
 import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/lib/api/academic"
 import { useTeachers } from "@/lib/api/teachers"
+import { useDepartments } from "@/lib/api/departments"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
@@ -19,10 +21,12 @@ export default function SubjectsPage() {
 
   const { data: subjectsResponse, isLoading, error, refetch } = useSubjects()
   const { data: teachersResponse } = useTeachers()
+  const { data: departmentsResponse } = useDepartments({ per_page: 100 })
 
   // API may return direct array or wrapped in { data: [...] }
   const subjects = Array.isArray(subjectsResponse) ? subjectsResponse : (subjectsResponse?.data || [])
-  const teachers = teachersResponse?.data || []
+  const teachers = teachersResponse?.teachers?.data || teachersResponse?.data || []
+  const departments = Array.isArray(departmentsResponse) ? departmentsResponse : (departmentsResponse?.data || [])
 
   const createSubject = useCreateSubject()
   const updateSubject = useUpdateSubject()
@@ -32,6 +36,7 @@ export default function SubjectsPage() {
     name: "",
     code: "",
     description: "",
+    department_id: "",
     teacher_ids: [] as number[],
   })
 
@@ -45,8 +50,8 @@ export default function SubjectsPage() {
   }
 
   const handleAdd = async () => {
-    if (!formData.name || !formData.code) {
-      toast.error("Please fill in required fields")
+    if (!formData.name || !formData.code || !formData.department_id) {
+      toast.error("Please fill in required fields (Name, Code, and Department)")
       return
     }
 
@@ -55,14 +60,32 @@ export default function SubjectsPage() {
         name: formData.name,
         code: formData.code,
         description: formData.description || "",
+        department_id: parseInt(formData.department_id),
         teacher_ids: formData.teacher_ids,
       })
       toast.success("Subject created successfully")
-      setFormData({ name: "", code: "", description: "", teacher_ids: [] })
+      setFormData({ name: "", code: "", description: "", department_id: "", teacher_ids: [] })
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to create subject")
+      console.error("Error creating subject:", error)
+      let errorMessage = "Failed to create subject"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -71,6 +94,7 @@ export default function SubjectsPage() {
       name: subject.name || "",
       code: subject.code || "",
       description: subject.description || "",
+      department_id: subject.department_id?.toString() || "",
       teacher_ids: subject.teachers?.map((t: any) => t.id) || [],
     })
     setEditingId(subject.id)
@@ -78,8 +102,8 @@ export default function SubjectsPage() {
   }
 
   const handleUpdate = async () => {
-    if (!editingId || !formData.name || !formData.code) {
-      toast.error("Please fill in required fields")
+    if (!editingId || !formData.name || !formData.code || !formData.department_id) {
+      toast.error("Please fill in required fields (Name, Code, and Department)")
       return
     }
 
@@ -90,16 +114,34 @@ export default function SubjectsPage() {
           name: formData.name,
           code: formData.code,
           description: formData.description || "",
+          department_id: parseInt(formData.department_id),
           teacher_ids: formData.teacher_ids,
         },
       })
       toast.success("Subject updated successfully")
-      setFormData({ name: "", code: "", description: "", teacher_ids: [] })
+      setFormData({ name: "", code: "", description: "", department_id: "", teacher_ids: [] })
       setEditingId(null)
       setShowAddForm(false)
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to update subject")
+      console.error("Error updating subject:", error)
+      let errorMessage = "Failed to update subject"
+      if (error?.response?.data) {
+        const data = error.response.data
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        } else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -177,19 +219,37 @@ export default function SubjectsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Subject Name *</Label>
-                <Input
-                  value={formData.name}
+                <Input 
+                  value={formData.name} 
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g., Mathematics"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Subject Code *</Label>
-                <Input
-                  value={formData.code}
+                <Input 
+                  value={formData.code} 
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="e.g., MATH101"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Department *</Label>
+                <Select 
+                  value={formData.department_id || undefined} 
+                  onValueChange={(value) => setFormData({ ...formData, department_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept: any) => (
+                      <SelectItem key={dept.id} value={dept.id.toString()}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>Description</Label>
@@ -217,7 +277,7 @@ export default function SubjectsPage() {
                       </Badge>
                     ))
                   )}
-                </div>
+              </div>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -286,18 +346,18 @@ export default function SubjectsPage() {
               )
             })
             .map((subject: any) => (
-              <Card key={subject.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>{subject.name}</CardTitle>
-                      <CardDescription className="mt-1">{subject.code}</CardDescription>
-                    </div>
+          <Card key={subject.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>{subject.name}</CardTitle>
+                  <CardDescription className="mt-1">{subject.code}</CardDescription>
+                </div>
                     <Badge variant="default">Active</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
                     {subject.description && (
                       <p className="text-sm text-muted-foreground">{subject.description}</p>
                     )}
@@ -313,8 +373,8 @@ export default function SubjectsPage() {
                         ) : (
                           <span className="text-xs text-muted-foreground">No teachers assigned</span>
                         )}
-                      </div>
-                    </div>
+                </div>
+                </div>
                   </div>
                   <div className="flex gap-2 pt-2 border-t">
                     <Button
@@ -323,9 +383,9 @@ export default function SubjectsPage() {
                       className="flex-1"
                       onClick={() => handleEdit(subject)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -333,12 +393,12 @@ export default function SubjectsPage() {
                       onClick={() => handleDelete(subject.id)}
                       disabled={deleteSubject.isPending}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
             ))
         )}
       </div>
