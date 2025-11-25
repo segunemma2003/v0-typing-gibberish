@@ -93,6 +93,48 @@ interface SuperAdminDashboard {
   };
 }
 
+interface StaffDashboard {
+  dashboard: {
+    total_tasks?: number;
+    completed_tasks?: number;
+    pending_tasks?: number;
+    recent_activities?: Array<{
+      id: number;
+      type: string;
+      description: string;
+      timestamp: string;
+    }>;
+  };
+}
+
+interface FinanceDashboard {
+  dashboard: {
+    total_revenue?: number;
+    pending_payments?: number;
+    total_students_paid?: number;
+    upcoming_due_dates?: Array<{
+      id: number;
+      student_name: string;
+      amount: number;
+      due_date: string;
+    }>;
+  };
+}
+
+interface LibrarianDashboard {
+  dashboard: {
+    total_books?: number;
+    borrowed_books?: number;
+    overdue_books?: number;
+    recent_borrows?: Array<{
+      id: number;
+      student_name: string;
+      book_title: string;
+      due_date: string;
+    }>;
+  };
+}
+
 export const dashboardService = {
   getAdminDashboard: async (): Promise<AdminDashboard> => {
     const response = await apiClient.get('/dashboard/admin');
@@ -121,6 +163,22 @@ export const dashboardService = {
   getSuperAdminDashboard: async (): Promise<SuperAdminDashboard> => {
     const response = await apiClient.get('/dashboard/super-admin');
     // API returns { dashboard: {...} } or { analytics: {...} }
+    return response.data;
+  },
+
+  getStaffDashboard: async (role?: string): Promise<StaffDashboard> => {
+    const endpoint = role ? `/dashboard/staff/${role}` : '/dashboard/staff';
+    const response = await apiClient.get(endpoint);
+    return response.data;
+  },
+
+  getFinanceDashboard: async (): Promise<FinanceDashboard> => {
+    const response = await apiClient.get('/dashboard/finance');
+    return response.data;
+  },
+
+  getLibrarianDashboard: async (): Promise<LibrarianDashboard> => {
+    const response = await apiClient.get('/dashboard/librarian');
     return response.data;
   },
 };
@@ -163,6 +221,30 @@ export const useSuperAdminDashboard = () => {
   return useQuery({
     queryKey: ['superAdminDashboard'],
     queryFn: dashboardService.getSuperAdminDashboard,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useStaffDashboard = (role?: string) => {
+  return useQuery({
+    queryKey: ['staffDashboard', role],
+    queryFn: () => dashboardService.getStaffDashboard(role),
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useFinanceDashboard = () => {
+  return useQuery({
+    queryKey: ['financeDashboard'],
+    queryFn: dashboardService.getFinanceDashboard,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useLibrarianDashboard = () => {
+  return useQuery({
+    queryKey: ['librarianDashboard'],
+    queryFn: dashboardService.getLibrarianDashboard,
     staleTime: 1000 * 60 * 5,
   });
 };

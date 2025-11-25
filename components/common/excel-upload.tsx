@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Upload, FileSpreadsheet, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Upload, FileSpreadsheet, X, Loader2, CheckCircle2, AlertCircle, Download } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import * as XLSX from "xlsx"
@@ -175,6 +175,103 @@ export function ExcelUpload({
     return mapping
   }
 
+  const downloadTemplate = () => {
+    if (templateColumns.length === 0) {
+      toast.error("No template columns defined")
+      return
+    }
+
+    try {
+      // Create headers row - clean up column names for display
+      const headers = templateColumns.map(col => {
+        // Remove explanations in parentheses for cleaner headers, but keep the key info
+        const cleanCol = col.split('(')[0].trim()
+        return cleanCol
+      })
+
+      // Create example/hint rows for guidance
+      const exampleRow = templateColumns.map(col => {
+        const colLower = col.toLowerCase()
+        // Add helpful examples based on column type
+        if (colLower.includes('date_of_birth') || colLower.includes('dob') || colLower.includes('date')) {
+          return '2020-01-15'
+        }
+        if (colLower.includes('email')) {
+          return 'student@example.com'
+        }
+        if (colLower.includes('phone')) {
+          return '+1234567890'
+        }
+        if (colLower.includes('gender')) {
+          return 'male'
+        }
+        if (colLower.includes('class_id') || colLower.includes('class_name')) {
+          return 'JSS1'
+        }
+        if (colLower.includes('arm_id') || colLower.includes('arm_name')) {
+          return 'A'
+        }
+        if (colLower.includes('blood_group')) {
+          return 'O+'
+        }
+        if (colLower.includes('first_name')) {
+          return 'John'
+        }
+        if (colLower.includes('last_name')) {
+          return 'Doe'
+        }
+        return ''
+      })
+
+      // Create instruction row
+      const instructionRow = templateColumns.map((col, index) => {
+        const colLower = col.toLowerCase()
+        if (index === 0) {
+          return 'Fill in your data below. Remove this row before uploading.'
+        }
+        if (col.includes('(')) {
+          // Extract the hint from parentheses
+          return col.match(/\(([^)]+)\)/)?.[1] || ''
+        }
+        return ''
+      })
+
+      // Create worksheet data: headers, instructions, example
+      const worksheetData = [
+        headers,
+        instructionRow,
+        exampleRow
+      ]
+
+      // Create workbook
+      const workbook = XLSX.utils.book_new()
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+
+      // Set column widths for better readability
+      const colWidths = headers.map((header) => ({
+        wch: Math.max(header.length + 5, 18)
+      }))
+      worksheet['!cols'] = colWidths
+
+      // Add worksheet to workbook
+      const sheetName = `${entityType.charAt(0).toUpperCase() + entityType.slice(1)} Template`
+      XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.substring(0, 31)) // Excel sheet name limit
+
+      // Generate filename
+      const filename = `${entityType}_bulk_upload_template.xlsx`
+
+      // Write file and trigger download
+      XLSX.writeFile(workbook, filename)
+      
+      toast.success(`Template downloaded: ${filename}`, {
+        description: 'Fill in your data and upload it back here'
+      })
+    } catch (error: any) {
+      console.error("Error generating template:", error)
+      toast.error(`Failed to generate template: ${error.message}`)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -208,14 +305,34 @@ export function ExcelUpload({
             </div>
 
             {templateColumns.length > 0 && (
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Expected Columns:</p>
-                <div className="flex flex-wrap gap-2">
-                  {templateColumns.map((col) => (
-                    <Badge key={col} variant="secondary">
-                      {col}
-                    </Badge>
-                  ))}
+              <div className="space-y-3">
+                <div className="bg-muted p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium">Expected Columns:</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadTemplate}
+                      className="gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Template
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {templateColumns.map((col) => (
+                      <Badge key={col} variant="secondary">
+                        {col}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-xs text-blue-800 dark:text-blue-200">
+                    💡 <strong>Tip:</strong> Download the template above to get an Excel file with the correct column structure. 
+                    Fill it with your data and upload it here.
+                  </p>
                 </div>
               </div>
             )}

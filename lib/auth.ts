@@ -2,15 +2,24 @@ export type UserRole =
   | "super_admin" // Added super admin role
   | "admin"
   | "teacher"
-  | "head_teacher"
-  | "head_tutor"
+  | "head_teacher" // HOD (Head of Department)
+  | "head_tutor" // Year Tutor
   | "class_teacher"
+  | "subject_teacher"
+  | "principal"
+  | "vice_principal"
   | "student"
   | "parent"
   | "librarian"
   | "house_master"
   | "finance"
   | "accountant" // Keep for backward compatibility
+  | "staff" // General staff
+  | "driver"
+  | "security"
+  | "cleaner"
+  | "caterer"
+  | "nurse"
 
 export interface User {
   id: string | number
@@ -38,36 +47,54 @@ export interface AuthState {
 
 export const getRoleDisplayName = (role: UserRole): string => {
   const roleNames: Record<UserRole, string> = {
-    super_admin: "Super Administrator", // Added super admin display name
+    super_admin: "Super Administrator",
     admin: "Administrator",
     teacher: "Teacher",
-    head_teacher: "Head Teacher",
-    head_tutor: "Head Tutor",
+    head_teacher: "Head of Department (HOD)",
+    head_tutor: "Year Tutor",
     class_teacher: "Class Teacher",
+    subject_teacher: "Subject Teacher",
+    principal: "Principal",
+    vice_principal: "Vice Principal",
     student: "Student",
     parent: "Parent",
     librarian: "Librarian",
     house_master: "House Master",
     finance: "Finance",
     accountant: "Accountant",
+    staff: "General Staff",
+    driver: "Driver",
+    security: "Security",
+    cleaner: "Cleaner",
+    caterer: "Caterer",
+    nurse: "Nurse",
   }
   return roleNames[role] || role
 }
 
 export const getPortalRoute = (role: UserRole): string => {
   const routes: Record<UserRole, string> = {
-    super_admin: "/super-admin", // Added super admin route
+    super_admin: "/super-admin",
     admin: "/admin",
     teacher: "/teacher",
     head_teacher: "/teacher",
     head_tutor: "/teacher",
     class_teacher: "/teacher",
+    subject_teacher: "/teacher",
+    principal: "/teacher",
+    vice_principal: "/teacher",
     student: "/student",
     parent: "/parent",
     librarian: "/library",
     house_master: "/house",
     finance: "/finance",
-    accountant: "/finance", // Accountant redirects to finance dashboard
+    accountant: "/finance",
+    staff: "/staff",
+    driver: "/staff/driver",
+    security: "/staff/security",
+    cleaner: "/staff/cleaner",
+    caterer: "/staff/caterer",
+    nurse: "/staff/nurse",
   }
   return routes[role] || "/admin" // Default fallback
 }

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
-import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2, Upload as UploadIcon } from "lucide-react"
+import { Search, Plus, Filter, Download, Edit, Trash2, X, Loader2, Upload as UploadIcon, AlertCircle } from "lucide-react"
 import { useStudents, useCreateStudent, useUpdateStudent, useDeleteStudent } from "@/lib/api/students"
 import { useClasses } from "@/lib/api/academic"
 import { useSchools } from "@/lib/api/schools"
@@ -49,7 +49,6 @@ export default function StudentsPage() {
     first_name: "",
     last_name: "",
     middle_name: "",
-    email: "",
     class_id: "",
     arm_id: "",
     phone: "",
@@ -57,25 +56,60 @@ export default function StudentsPage() {
     gender: "",
     address: "",
     blood_group: "",
+    parent_name: "",
+    parent_phone: "",
+    parent_email: "",
     emergency_contact: "",
   })
   
   const [medicalInfo, setMedicalInfo] = useState({
     allergies: [] as string[],
+    medications: [] as string[],
     conditions: [] as string[],
+    doctor_name: "",
+    doctor_phone: "",
+    hospital: "",
+    insurance_provider: "",
+    insurance_number: "",
+    special_needs: "",
+    notes: "",
     newAllergy: "",
+    newMedication: "",
     newCondition: "",
+  })
+
+  const [transportInfo, setTransportInfo] = useState({
+    uses_transport: false,
+    route_id: "",
+    pickup_point: "",
+    pickup_time: "",
+    dropoff_point: "",
+    dropoff_time: "",
+    bus_number: "",
+    guardian_pickup: false,
+    special_instructions: "",
+  })
+
+  const [hostelInfo, setHostelInfo] = useState({
+    is_boarder: false,
+    hostel_name: "",
+    block: "",
+    floor: "",
+    room_number: "",
+    bed_number: "",
+    roommate_preferences: "",
+    dietary_requirements: "",
+    bedding_provided: false,
+    locker_number: "",
   })
 
   const [guardians, setGuardians] = useState<Array<{
     first_name: string
     last_name: string
-    middle_name: string
     email: string
     phone: string
     address: string
     occupation: string
-    employer: string
     relationship: string
     is_primary: boolean
     emergency_contact: boolean
@@ -92,18 +126,41 @@ export default function StudentsPage() {
     setValidationErrors({})
     const errors: Record<string, string> = {}
 
-    // Validate required fields
+    // Validate required fields (per API documentation)
     if (!formData.first_name?.trim()) {
-      errors.first_name = "First name is required"
+      errors.first_name = "First name is required and cannot be empty"
     }
     
     if (!formData.last_name?.trim()) {
-      errors.last_name = "Last name is required"
+      errors.last_name = "Last name is required and cannot be empty"
+    }
+    
+    // class_id is required per API
+    if (!formData.class_id?.trim()) {
+      errors.class_id = "Class is required. Please select a class"
+    }
+    
+    // date_of_birth is required per API
+    if (!formData.date_of_birth?.trim()) {
+      errors.date_of_birth = "Date of birth is required"
+    } else {
+      // Validate date format
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(formData.date_of_birth)) {
+        errors.date_of_birth = "Date must be in YYYY-MM-DD format"
+      }
+    }
+    
+    // gender is required per API
+    if (!formData.gender?.trim()) {
+      errors.gender = "Gender is required. Please select a gender"
+    } else if (!['male', 'female', 'other'].includes(formData.gender.toLowerCase())) {
+      errors.gender = "Gender must be 'male', 'female', or 'other'"
     }
 
-    // Validate email format if provided
-    if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errors.email = "Please enter a valid email address"
+    // Validate parent email format if provided
+    if (formData.parent_email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.parent_email.trim())) {
+      errors.parent_email = "Please enter a valid email address"
     }
 
     // Validate guardians if added
@@ -124,46 +181,60 @@ export default function StudentsPage() {
       }
     })
     
-    if (!currentSchoolId) {
-      errors.school = "School information not available. Please refresh the page."
-    }
+    // Note: school_id is auto-detected from X-Subdomain header, no need to validate
 
     // If there are validation errors, set them and show toast
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors)
-      const errorMessages = Object.values(errors)
-      toast.error(`Validation Error: ${errorMessages[0]}`, {
-        description: errorMessages.length > 1 ? `And ${errorMessages.length - 1} more error(s)` : undefined
+      
+      // Create a comprehensive error message
+      const errorList = Object.entries(errors).map(([field, message]) => {
+        // Format field names for better readability
+        const fieldName = field
+          .replace(/_/g, ' ')
+          .replace(/guardian (\d+)/, 'Guardian $1')
+          .split('_')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ')
+        return `• ${fieldName}: ${message}`
+      }).join('\n')
+      
+      toast.error(`Please fix the following errors:`, {
+        description: errorList,
+        duration: 8000, // Show longer for multiple errors
       })
+      
+      // Scroll to first error field
+      setTimeout(() => {
+        const firstErrorField = document.querySelector('[class*="border-red-500"]')
+        if (firstErrorField) {
+          firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // Focus the first input
+          const input = (firstErrorField as HTMLElement).querySelector('input, select, textarea') as HTMLElement
+          if (input) {
+            input.focus()
+          }
+        }
+      }, 100)
+      
       return
     }
 
     try {
-      // Build request payload with proper type checking
+      // Build request payload according to API documentation
+      // Note: school_id is NOT included - it's auto-detected from X-Subdomain header
       const payload: any = {
-        school_id: currentSchoolId,
+        // Required fields
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
+        class_id: parseInt(formData.class_id),
+        date_of_birth: formData.date_of_birth,
+        gender: formData.gender.toLowerCase(), // Ensure lowercase
       }
 
-      // Add optional fields only if they have values
-      if (formData.email?.trim()) {
-        payload.email = formData.email.trim()
-      }
-      if (formData.phone?.trim()) {
-        payload.phone = formData.phone.trim()
-      }
-      if (formData.date_of_birth) {
-        payload.date_of_birth = formData.date_of_birth
-      }
-      if (formData.gender) {
-        payload.gender = formData.gender
-      }
-      if (formData.class_id) {
-        const classId = parseInt(formData.class_id)
-        if (!isNaN(classId)) {
-          payload.class_id = classId
-        }
+      // Optional basic fields
+      if (formData.middle_name?.trim()) {
+        payload.middle_name = formData.middle_name.trim()
       }
       if (formData.arm_id) {
         const armId = parseInt(formData.arm_id)
@@ -171,21 +242,147 @@ export default function StudentsPage() {
           payload.arm_id = armId
         }
       }
+      if (formData.phone?.trim()) {
+        payload.phone = formData.phone.trim()
+      }
+      if (formData.address?.trim()) {
+        payload.address = formData.address.trim()
+      }
+      if (formData.blood_group?.trim()) {
+        payload.blood_group = formData.blood_group.trim()
+      }
+      
+      // Parent/Guardian information (optional)
+      if (formData.parent_name?.trim()) {
+        payload.parent_name = formData.parent_name.trim()
+      }
+      if (formData.parent_phone?.trim()) {
+        payload.parent_phone = formData.parent_phone.trim()
+      }
+      if (formData.parent_email?.trim()) {
+        payload.parent_email = formData.parent_email.trim()
+      }
+      if (formData.emergency_contact?.trim()) {
+        payload.emergency_contact = formData.emergency_contact.trim()
+      }
 
-      // Add guardians if provided (max 2)
+      // Add medical_info if provided
+      const hasMedicalInfo = medicalInfo.allergies.length > 0 || 
+                             medicalInfo.medications.length > 0 || 
+                             medicalInfo.conditions.length > 0 ||
+                             medicalInfo.doctor_name?.trim() ||
+                             medicalInfo.hospital?.trim()
+      
+      if (hasMedicalInfo) {
+        payload.medical_info = {
+          allergies: medicalInfo.allergies,
+          medications: medicalInfo.medications,
+          conditions: medicalInfo.conditions,
+        }
+        if (medicalInfo.doctor_name?.trim()) {
+          payload.medical_info.doctor_name = medicalInfo.doctor_name.trim()
+        }
+        if (medicalInfo.doctor_phone?.trim()) {
+          payload.medical_info.doctor_phone = medicalInfo.doctor_phone.trim()
+        }
+        if (medicalInfo.hospital?.trim()) {
+          payload.medical_info.hospital = medicalInfo.hospital.trim()
+        }
+        if (medicalInfo.insurance_provider?.trim()) {
+          payload.medical_info.insurance_provider = medicalInfo.insurance_provider.trim()
+        }
+        if (medicalInfo.insurance_number?.trim()) {
+          payload.medical_info.insurance_number = medicalInfo.insurance_number.trim()
+        }
+        if (medicalInfo.special_needs?.trim()) {
+          payload.medical_info.special_needs = medicalInfo.special_needs.trim()
+        }
+        if (medicalInfo.notes?.trim()) {
+          payload.medical_info.notes = medicalInfo.notes.trim()
+        }
+        // Add blood_group to medical_info if provided
+        if (formData.blood_group?.trim()) {
+          payload.medical_info.blood_group = formData.blood_group.trim()
+        }
+      }
+
+      // Add transport_info if provided
+      if (transportInfo.uses_transport) {
+        payload.transport_info = {
+          uses_transport: true,
+        }
+        if (transportInfo.route_id) {
+          const routeId = parseInt(transportInfo.route_id)
+          if (!isNaN(routeId)) {
+            payload.transport_info.route_id = routeId
+          }
+        }
+        if (transportInfo.pickup_point?.trim()) {
+          payload.transport_info.pickup_point = transportInfo.pickup_point.trim()
+        }
+        if (transportInfo.pickup_time?.trim()) {
+          payload.transport_info.pickup_time = transportInfo.pickup_time.trim()
+        }
+        if (transportInfo.dropoff_point?.trim()) {
+          payload.transport_info.dropoff_point = transportInfo.dropoff_point.trim()
+        }
+        if (transportInfo.dropoff_time?.trim()) {
+          payload.transport_info.dropoff_time = transportInfo.dropoff_time.trim()
+        }
+        if (transportInfo.bus_number?.trim()) {
+          payload.transport_info.bus_number = transportInfo.bus_number.trim()
+        }
+        payload.transport_info.guardian_pickup = transportInfo.guardian_pickup
+        if (transportInfo.special_instructions?.trim()) {
+          payload.transport_info.special_instructions = transportInfo.special_instructions.trim()
+        }
+      }
+
+      // Add hostel_info if provided
+      if (hostelInfo.is_boarder) {
+        payload.hostel_info = {
+          is_boarder: true,
+        }
+        if (hostelInfo.hostel_name?.trim()) {
+          payload.hostel_info.hostel_name = hostelInfo.hostel_name.trim()
+        }
+        if (hostelInfo.block?.trim()) {
+          payload.hostel_info.block = hostelInfo.block.trim()
+        }
+        if (hostelInfo.floor?.trim()) {
+          payload.hostel_info.floor = hostelInfo.floor.trim()
+        }
+        if (hostelInfo.room_number?.trim()) {
+          payload.hostel_info.room_number = hostelInfo.room_number.trim()
+        }
+        if (hostelInfo.bed_number?.trim()) {
+          payload.hostel_info.bed_number = hostelInfo.bed_number.trim()
+        }
+        if (hostelInfo.roommate_preferences?.trim()) {
+          payload.hostel_info.roommate_preferences = hostelInfo.roommate_preferences.trim()
+        }
+        if (hostelInfo.dietary_requirements?.trim()) {
+          payload.hostel_info.dietary_requirements = hostelInfo.dietary_requirements.trim()
+        }
+        payload.hostel_info.bedding_provided = hostelInfo.bedding_provided
+        if (hostelInfo.locker_number?.trim()) {
+          payload.hostel_info.locker_number = hostelInfo.locker_number.trim()
+        }
+      }
+
+      // Add guardians if provided (max 2 per API)
       if (guardians.length > 0) {
         payload.guardians = guardians.slice(0, 2).map(g => ({
           first_name: g.first_name.trim(),
           last_name: g.last_name.trim(),
-          middle_name: g.middle_name?.trim(),
           email: g.email.trim(),
-          phone: g.phone?.trim(),
-          address: g.address?.trim(),
-          occupation: g.occupation?.trim(),
-          employer: g.employer?.trim(),
+          phone: g.phone?.trim() || undefined,
           relationship: g.relationship,
-          is_primary: g.is_primary,
-          emergency_contact: g.emergency_contact,
+          is_primary: g.is_primary || false,
+          occupation: g.occupation?.trim() || undefined,
+          address: g.address?.trim() || undefined,
+          can_pickup: g.emergency_contact || false,
+          emergency_contact: g.emergency_contact || false,
         }))
       }
 
@@ -211,8 +408,10 @@ export default function StudentsPage() {
         toast.success("Student created successfully")
       }
       
-      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" })
-      setMedicalInfo({ allergies: [], conditions: [], newAllergy: "", newCondition: "" })
+      setFormData({ first_name: "", last_name: "", middle_name: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", parent_name: "", parent_phone: "", parent_email: "", emergency_contact: "" })
+      setMedicalInfo({ allergies: [], medications: [], conditions: [], doctor_name: "", doctor_phone: "", hospital: "", insurance_provider: "", insurance_number: "", special_needs: "", notes: "", newAllergy: "", newMedication: "", newCondition: "" })
+      setTransportInfo({ uses_transport: false, route_id: "", pickup_point: "", pickup_time: "", dropoff_point: "", dropoff_time: "", bus_number: "", guardian_pickup: false, special_instructions: "" })
+      setHostelInfo({ is_boarder: false, hostel_name: "", block: "", floor: "", room_number: "", bed_number: "", roommate_preferences: "", dietary_requirements: "", bedding_provided: false, locker_number: "" })
       setGuardians([])
       setValidationErrors({})
     setShowAddForm(false)
@@ -253,18 +452,20 @@ export default function StudentsPage() {
 
   const handleEdit = (student: any) => {
       setFormData({
-      first_name: student.name?.split(' ')[0] || "",
-      last_name: student.name?.split(' ').slice(1).join(' ') || "",
-      middle_name: "",
-      email: student.email || "",
-      class_id: student.class?.id?.toString() || "",
-      arm_id: student.arm?.id?.toString() || "",
+      first_name: student.name?.split(' ')[0] || student.first_name || "",
+      last_name: student.name?.split(' ').slice(1).join(' ') || student.last_name || "",
+      middle_name: student.middle_name || "",
+      class_id: student.class?.id?.toString() || student.class_id?.toString() || "",
+      arm_id: student.arm?.id?.toString() || student.arm_id?.toString() || "",
       phone: student.phone || "",
       date_of_birth: student.date_of_birth || "",
       gender: student.gender || "",
-      address: "",
-      blood_group: "",
-      emergency_contact: "",
+      address: student.address || "",
+      blood_group: student.blood_group || "",
+      parent_name: student.parent_name || "",
+      parent_phone: student.parent_phone || "",
+      parent_email: student.parent_email || "",
+      emergency_contact: student.emergency_contact || "",
     })
     setEditingId(student.id)
       setShowAddForm(true)
@@ -302,7 +503,7 @@ export default function StudentsPage() {
         data: updateData,
       })
       toast.success("Student updated successfully")
-      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" })
+      setFormData({ first_name: "", last_name: "", middle_name: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", parent_name: "", parent_phone: "", parent_email: "", emergency_contact: "" })
       setValidationErrors({})
     setEditingId(null)
     setShowAddForm(false)
@@ -380,7 +581,7 @@ export default function StudentsPage() {
   return (
     <div className="p-6 space-y-6" style={{ position: 'relative' }}>
       {/* Header - Always visible */}
-      <div className="flex items-center justify-between" style={{ position: 'relative', zIndex: 10 }}>
+      <div className="flex items-center justify-between relative z-10">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Students</h1>
           <p className="text-muted-foreground">Manage student records and enrollment</p>
@@ -396,10 +597,8 @@ export default function StudentsPage() {
           </Button>
           <Button 
             type="button"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              console.log("Add Student button clicked", { showAddForm })
+            onClick={() => {
+              console.log("Add Student button clicked")
               setShowAddForm(true)
               setEditingId(null)
               setValidationErrors({})
@@ -407,7 +606,6 @@ export default function StudentsPage() {
                 first_name: "", 
                 last_name: "", 
                 middle_name: "", 
-                email: "", 
                 class_id: "", 
                 arm_id: "", 
                 phone: "", 
@@ -415,17 +613,31 @@ export default function StudentsPage() {
                 gender: "", 
                 address: "", 
                 blood_group: "", 
+                parent_name: "", 
+                parent_phone: "", 
+                parent_email: "", 
                 emergency_contact: "" 
               })
               setMedicalInfo({ 
                 allergies: [], 
+                medications: [], 
                 conditions: [], 
+                doctor_name: "", 
+                doctor_phone: "", 
+                hospital: "", 
+                insurance_provider: "", 
+                insurance_number: "", 
+                special_needs: "", 
+                notes: "", 
                 newAllergy: "", 
+                newMedication: "", 
                 newCondition: "" 
               })
+              setTransportInfo({ uses_transport: false, route_id: "", pickup_point: "", pickup_time: "", dropoff_point: "", dropoff_time: "", bus_number: "", guardian_pickup: false, special_instructions: "" })
+              setHostelInfo({ is_boarder: false, hostel_name: "", block: "", floor: "", room_number: "", bed_number: "", roommate_preferences: "", dietary_requirements: "", bedding_provided: false, locker_number: "" })
               setGuardians([])
             }}
-            style={{ position: 'relative', zIndex: 100 }}
+            className="relative z-50"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Student
@@ -451,9 +663,15 @@ export default function StudentsPage() {
           templateColumns={[
             "first_name", "last_name", "middle_name", 
             "class_id (or class_name)", "arm_id (or arm_name)",
-            "date_of_birth", "gender", "phone", "address",
-            "blood_group", "parent_name", "parent_phone", "parent_email",
-            "emergency_contact", "allergies", "medications"
+            "date_of_birth (YYYY-MM-DD)", "gender (male/female/other)", 
+            "phone", "address", "blood_group", 
+            "parent_name", "parent_phone", "parent_email",
+            "emergency_contact", 
+            "allergies (comma-separated)", "medications (comma-separated)", "conditions (comma-separated)",
+            "doctor_name", "doctor_phone", "hospital", 
+            "insurance_provider", "insurance_number",
+            "uses_transport (true/false)", "route_id", "pickup_point", "pickup_time",
+            "is_boarder (true/false)", "hostel_name", "block", "room_number", "bed_number"
           ]}
           maxRows={1000}
           onFileProcessed={(data) => {
@@ -500,19 +718,52 @@ export default function StudentsPage() {
 
       {/* Add/Edit Form */}
       {showAddForm && (
-        <Card>
+        <Card data-student-form>
           <CardHeader>
             <div className="flex items-center justify-between">
+              <div>
               <CardTitle>{editingId ? "Edit Student" : "Add New Student"}</CardTitle>
+                {!editingId && (
+                  <CardDescription className="mt-1">
+                    Email, username, and password will be auto-generated. Required fields: First Name, Last Name, Class, Date of Birth, Gender.
+                  </CardDescription>
+                )}
+              </div>
               <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null); setGuardians([]); setValidationErrors({}) }}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            {validationErrors.school && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-600">{validationErrors.school}</p>
+            {/* Validation Errors Summary */}
+            {Object.keys(validationErrors).length > 0 && (
+              <div className="mb-6 p-4 bg-red-50 border-2 border-red-300 rounded-lg">
+                <div className="flex items-start gap-2 mb-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-800 mb-2">Please fix the following errors:</h3>
+                    <ul className="space-y-1 text-sm text-red-700">
+                      {Object.entries(validationErrors).map(([field, message]) => {
+                        // Format field names for display
+                        let displayName = field
+                          .replace(/_/g, ' ')
+                          .replace(/guardian (\d+)/, 'Guardian $1')
+                        displayName = displayName.split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')
+                        
+                        return (
+                          <li key={field} className="flex items-start gap-2">
+                            <span className="text-red-600">•</span>
+                            <span>
+                              <strong>{displayName}:</strong> {message}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
             <div className="grid gap-4 md:grid-cols-2">
@@ -559,26 +810,6 @@ export default function StudentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Email</Label>
-                <Input 
-                  type="email"
-                  value={formData.email} 
-                  onChange={(e) => {
-                    setFormData({...formData, email: e.target.value})
-                    if (validationErrors.email) {
-                      setValidationErrors({...validationErrors, email: ""})
-                    }
-                  }}
-                  placeholder="Leave empty for auto-generation"
-                  className={validationErrors.email ? "border-red-500" : ""}
-                />
-                {validationErrors.email ? (
-                  <p className="text-sm text-red-500">{validationErrors.email}</p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
-                )}
-              </div>
-              <div className="space-y-2">
                 <Label>Phone</Label>
                 <Input 
                   value={formData.phone} 
@@ -595,20 +826,35 @@ export default function StudentsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Date of Birth</Label>
+                <Label>Date of Birth *</Label>
                 <Input 
                   type="date"
                   value={formData.date_of_birth} 
-                  onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, date_of_birth: e.target.value})
+                    if (validationErrors.date_of_birth) {
+                      setValidationErrors({...validationErrors, date_of_birth: ""})
+                    }
+                  }}
+                  className={validationErrors.date_of_birth ? "border-red-500" : ""}
                 />
+                {validationErrors.date_of_birth && (
+                  <p className="text-sm text-red-500">{validationErrors.date_of_birth}</p>
+                )}
+                <p className="text-xs text-muted-foreground">Format: YYYY-MM-DD</p>
               </div>
               <div className="space-y-2">
-                <Label>Gender</Label>
+                <Label>Gender *</Label>
                 <Select 
                   value={formData.gender} 
-                  onValueChange={(value) => setFormData({...formData, gender: value})}
+                  onValueChange={(value) => {
+                    setFormData({...formData, gender: value})
+                    if (validationErrors.gender) {
+                      setValidationErrors({...validationErrors, gender: ""})
+                    }
+                  }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={`w-full ${validationErrors.gender ? "border-red-500" : ""}`}>
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -617,6 +863,9 @@ export default function StudentsPage() {
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.gender && (
+                  <p className="text-sm text-red-500">{validationErrors.gender}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Blood Group</Label>
@@ -651,9 +900,14 @@ export default function StudentsPage() {
                 <Label>Present Class *</Label>
                 <Select 
                   value={formData.class_id || undefined} 
-                  onValueChange={(value) => setFormData({...formData, class_id: value, arm_id: ""})}
+                  onValueChange={(value) => {
+                    setFormData({...formData, class_id: value, arm_id: ""})
+                    if (validationErrors.class_id) {
+                      setValidationErrors({...validationErrors, class_id: ""})
+                    }
+                  }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={`w-full ${validationErrors.class_id ? "border-red-500" : ""}`}>
                     <SelectValue placeholder={classes.length === 0 ? "No classes available" : "Select a class"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -668,7 +922,10 @@ export default function StudentsPage() {
                     )}
                   </SelectContent>
                 </Select>
-                {classes.length === 0 && (
+                {validationErrors.class_id && (
+                  <p className="text-sm text-red-500">{validationErrors.class_id}</p>
+                )}
+                {classes.length === 0 && !validationErrors.class_id && (
                   <p className="text-xs text-muted-foreground">No classes found. Please create classes in the Classes page first.</p>
                 )}
               </div>
@@ -690,6 +947,47 @@ export default function StudentsPage() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Parent/Guardian Information Section */}
+            <div className="mt-6 space-y-4">
+              <Label className="text-base font-semibold">Parent/Guardian Information (Optional)</Label>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Parent Name</Label>
+                  <Input 
+                    value={formData.parent_name} 
+                    onChange={(e) => setFormData({...formData, parent_name: e.target.value})}
+                    placeholder="Parent/Guardian full name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Parent Phone</Label>
+                  <Input 
+                    value={formData.parent_phone} 
+                    onChange={(e) => setFormData({...formData, parent_phone: e.target.value})}
+                    placeholder="+1234567890"
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Parent Email</Label>
+                  <Input 
+                    type="email"
+                    value={formData.parent_email} 
+                    onChange={(e) => {
+                      setFormData({...formData, parent_email: e.target.value})
+                      if (validationErrors.parent_email) {
+                        setValidationErrors({...validationErrors, parent_email: ""})
+                      }
+                    }}
+                    placeholder="parent@example.com"
+                    className={validationErrors.parent_email ? "border-red-500" : ""}
+                  />
+                  {validationErrors.parent_email && (
+                    <p className="text-sm text-red-500">{validationErrors.parent_email}</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -747,6 +1045,54 @@ export default function StudentsPage() {
                     )}
                   </div>
                   <div className="space-y-2">
+                    <Label>Medications</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        value={medicalInfo.newMedication}
+                        onChange={(e) => setMedicalInfo({...medicalInfo, newMedication: e.target.value})}
+                        placeholder="Add medication"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter' && medicalInfo.newMedication.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              medications: [...medicalInfo.medications, medicalInfo.newMedication.trim()],
+                              newMedication: "",
+                            })
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (medicalInfo.newMedication.trim()) {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              medications: [...medicalInfo.medications, medicalInfo.newMedication.trim()],
+                              newMedication: "",
+                            })
+                          }
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {medicalInfo.medications.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {medicalInfo.medications.map((medication, index) => (
+                          <Badge key={index} variant="secondary" className="cursor-pointer" onClick={() => {
+                            setMedicalInfo({
+                              ...medicalInfo,
+                              medications: medicalInfo.medications.filter((_, i) => i !== index),
+                            })
+                          }}>
+                            {medication} <X className="w-3 h-3 ml-1" />
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
                     <Label>Medical Conditions</Label>
                     <div className="flex gap-2">
                       <Input
@@ -795,6 +1141,259 @@ export default function StudentsPage() {
                     )}
                   </div>
                 </div>
+                <div className="grid gap-4 md:grid-cols-2 mt-4">
+                  <div className="space-y-2">
+                    <Label>Doctor Name</Label>
+                    <Input
+                      value={medicalInfo.doctor_name}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, doctor_name: e.target.value})}
+                      placeholder="Dr. Smith"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Doctor Phone</Label>
+                    <Input
+                      value={medicalInfo.doctor_phone}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, doctor_phone: e.target.value})}
+                      placeholder="+1234567890"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Hospital</Label>
+                    <Input
+                      value={medicalInfo.hospital}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, hospital: e.target.value})}
+                      placeholder="Hospital name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Insurance Provider</Label>
+                    <Input
+                      value={medicalInfo.insurance_provider}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, insurance_provider: e.target.value})}
+                      placeholder="NHIS, etc."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Insurance Number</Label>
+                    <Input
+                      value={medicalInfo.insurance_number}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, insurance_number: e.target.value})}
+                      placeholder="Insurance number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Special Needs</Label>
+                    <Input
+                      value={medicalInfo.special_needs}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, special_needs: e.target.value})}
+                      placeholder="Special needs or requirements"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Medical Notes</Label>
+                    <Input
+                      value={medicalInfo.notes}
+                      onChange={(e) => setMedicalInfo({...medicalInfo, notes: e.target.value})}
+                      placeholder="Additional medical notes"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Transport Information Section */}
+            {!editingId && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="uses_transport"
+                    checked={transportInfo.uses_transport}
+                    onChange={(e) => setTransportInfo({...transportInfo, uses_transport: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="uses_transport" className="text-base font-semibold cursor-pointer">
+                    Transport Information (Optional)
+                  </Label>
+                </div>
+                {transportInfo.uses_transport && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Route ID</Label>
+                      <Input
+                        value={transportInfo.route_id}
+                        onChange={(e) => setTransportInfo({...transportInfo, route_id: e.target.value})}
+                        placeholder="Route ID"
+                        type="number"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bus Number</Label>
+                      <Input
+                        value={transportInfo.bus_number}
+                        onChange={(e) => setTransportInfo({...transportInfo, bus_number: e.target.value})}
+                        placeholder="BUS-001"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Pickup Point</Label>
+                      <Input
+                        value={transportInfo.pickup_point}
+                        onChange={(e) => setTransportInfo({...transportInfo, pickup_point: e.target.value})}
+                        placeholder="Main Gate"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Pickup Time</Label>
+                      <Input
+                        value={transportInfo.pickup_time}
+                        onChange={(e) => setTransportInfo({...transportInfo, pickup_time: e.target.value})}
+                        placeholder="07:30"
+                        type="time"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Dropoff Point</Label>
+                      <Input
+                        value={transportInfo.dropoff_point}
+                        onChange={(e) => setTransportInfo({...transportInfo, dropoff_point: e.target.value})}
+                        placeholder="Main Gate"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Dropoff Time</Label>
+                      <Input
+                        value={transportInfo.dropoff_time}
+                        onChange={(e) => setTransportInfo({...transportInfo, dropoff_time: e.target.value})}
+                        placeholder="15:00"
+                        type="time"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="guardian_pickup"
+                          checked={transportInfo.guardian_pickup}
+                          onChange={(e) => setTransportInfo({...transportInfo, guardian_pickup: e.target.checked})}
+                          className="w-4 h-4 rounded border-gray-300"
+                        />
+                        <Label htmlFor="guardian_pickup" className="text-sm cursor-pointer">
+                          Guardian Pickup
+                        </Label>
+                      </div>
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Special Instructions</Label>
+                      <Input
+                        value={transportInfo.special_instructions}
+                        onChange={(e) => setTransportInfo({...transportInfo, special_instructions: e.target.value})}
+                        placeholder="Special transport instructions"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hostel Information Section */}
+            {!editingId && (
+              <div className="mt-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="is_boarder"
+                    checked={hostelInfo.is_boarder}
+                    onChange={(e) => setHostelInfo({...hostelInfo, is_boarder: e.target.checked})}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="is_boarder" className="text-base font-semibold cursor-pointer">
+                    Hostel/Boarding Information (Optional)
+                  </Label>
+                </div>
+                {hostelInfo.is_boarder && (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Hostel Name</Label>
+                      <Input
+                        value={hostelInfo.hostel_name}
+                        onChange={(e) => setHostelInfo({...hostelInfo, hostel_name: e.target.value})}
+                        placeholder="King's Hostel"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Block</Label>
+                      <Input
+                        value={hostelInfo.block}
+                        onChange={(e) => setHostelInfo({...hostelInfo, block: e.target.value})}
+                        placeholder="A"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Floor</Label>
+                      <Input
+                        value={hostelInfo.floor}
+                        onChange={(e) => setHostelInfo({...hostelInfo, floor: e.target.value})}
+                        placeholder="2"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Room Number</Label>
+                      <Input
+                        value={hostelInfo.room_number}
+                        onChange={(e) => setHostelInfo({...hostelInfo, room_number: e.target.value})}
+                        placeholder="102"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Bed Number</Label>
+                      <Input
+                        value={hostelInfo.bed_number}
+                        onChange={(e) => setHostelInfo({...hostelInfo, bed_number: e.target.value})}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Locker Number</Label>
+                      <Input
+                        value={hostelInfo.locker_number}
+                        onChange={(e) => setHostelInfo({...hostelInfo, locker_number: e.target.value})}
+                        placeholder="A102-3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Roommate Preferences</Label>
+                      <Input
+                        value={hostelInfo.roommate_preferences}
+                        onChange={(e) => setHostelInfo({...hostelInfo, roommate_preferences: e.target.value})}
+                        placeholder="Quiet environment"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Dietary Requirements</Label>
+                      <Input
+                        value={hostelInfo.dietary_requirements}
+                        onChange={(e) => setHostelInfo({...hostelInfo, dietary_requirements: e.target.value})}
+                        placeholder="Vegetarian"
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="bedding_provided"
+                          checked={hostelInfo.bedding_provided}
+                          onChange={(e) => setHostelInfo({...hostelInfo, bedding_provided: e.target.checked})}
+                          className="w-4 h-4 rounded border-gray-300"
+                        />
+                        <Label htmlFor="bedding_provided" className="text-sm cursor-pointer">
+                          Bedding Provided
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -812,12 +1411,10 @@ export default function StudentsPage() {
                         setGuardians([...guardians, {
                           first_name: "",
                           last_name: "",
-                          middle_name: "",
                           email: "",
                           phone: "",
                           address: "",
                           occupation: "",
-                          employer: "",
                           relationship: "Father",
                           is_primary: guardians.length === 0, // First guardian is primary by default
                           emergency_contact: true,
@@ -977,6 +1574,18 @@ export default function StudentsPage() {
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
+                        <Label>Address</Label>
+                        <Input
+                          value={guardian.address}
+                          onChange={(e) => {
+                            const updated = [...guardians]
+                            updated[index].address = e.target.value
+                            setGuardians(updated)
+                          }}
+                          placeholder="Guardian address"
+                        />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
                         <div className="flex items-center space-x-2">
                           <input
                             type="checkbox"
@@ -1003,8 +1612,21 @@ export default function StudentsPage() {
             <div className="flex gap-2 mt-4">
               <Button 
                 type="button"
-                onClick={editingId ? handleUpdate : handleAdd}
+                onClick={async (e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  
+                  // Clear any previous validation errors before attempting submit
+                  setValidationErrors({})
+                  
+                  if (editingId) {
+                    await handleUpdate()
+                  } else {
+                    await handleAdd()
+                  }
+                }}
                 disabled={createStudent.isPending || updateStudent.isPending}
+                className={Object.keys(validationErrors).length > 0 ? "border-2 border-red-500" : ""}
               >
                 {(createStudent.isPending || updateStudent.isPending) ? (
                   <>
@@ -1013,7 +1635,13 @@ export default function StudentsPage() {
                   </>
                 ) : (
                   <>
+                    {Object.keys(validationErrors).length > 0 && (
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                    )}
                 {editingId ? "Update" : "Add"} Student
+                    {Object.keys(validationErrors).length > 0 && (
+                      <span className="ml-2 text-xs">({Object.keys(validationErrors).length} error{Object.keys(validationErrors).length > 1 ? 's' : ''})</span>
+                    )}
                   </>
                 )}
               </Button>

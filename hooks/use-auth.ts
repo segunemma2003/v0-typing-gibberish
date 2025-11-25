@@ -20,10 +20,21 @@ const isKnownRole = (role: string): role is UserRole => {
     "head_teacher",
     "head_tutor",
     "class_teacher",
+    "subject_teacher",
+    "principal",
+    "vice_principal",
     "student",
     "parent",
     "librarian",
     "house_master",
+    "finance",
+    "accountant",
+    "staff",
+    "driver",
+    "security",
+    "cleaner",
+    "caterer",
+    "nurse",
   ].includes(role)
 }
 

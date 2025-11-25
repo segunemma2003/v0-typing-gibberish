@@ -158,3 +158,10 @@ export const usePayFee = () => {
     },
   });
 };
+
+export const usePayments = (params?: { page?: number; per_page?: number; student_id?: number }) => {
+  return useQuery({
+    queryKey: ['payments', params],
+    queryFn: () => financeService.getPayments(params),
+  });
+};
