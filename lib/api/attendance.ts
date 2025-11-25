@@ -142,6 +142,25 @@ export const attendanceService = {
     const response = await apiClient.get('/attendance/reports', { params });
     return response.data;
   },
+
+  // Student My Attendance
+  getMyAttendance: async (params?: { from?: string; to?: string }): Promise<{
+    attendance: Array<{
+      date: string;
+      status: 'present' | 'absent' | 'late';
+      check_in_time?: string;
+    }>;
+    summary: {
+      total_days: number;
+      present: number;
+      absent: number;
+      late: number;
+      attendance_rate: number;
+    };
+  }> => {
+    const response = await apiClient.get('/attendance/student/me', { params });
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -206,6 +225,13 @@ export const useAttendanceReports = (params?: GetAttendanceReportsParams) => {
   return useQuery({
     queryKey: ['attendanceReports', params],
     queryFn: () => attendanceService.getAttendanceReports(params),
+  });
+};
+
+export const useMyAttendance = (params?: { from?: string; to?: string }) => {
+  return useQuery({
+    queryKey: ['myAttendance', params],
+    queryFn: () => attendanceService.getMyAttendance(params),
   });
 };
 

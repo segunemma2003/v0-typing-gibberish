@@ -229,6 +229,37 @@ export const studentService = {
     return response.data;
   },
 
+  getMyProfile: async (): Promise<Student & {
+    first_name: string;
+    last_name: string;
+    middle_name?: string;
+    email: string;
+    class: ClassInfo;
+    arm?: ArmInfo;
+    guardians: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone?: string;
+      relationship: string;
+      is_primary: boolean;
+    }>;
+    performance_summary: {
+      average_score: number;
+      rank: number;
+      total_students: number;
+    };
+  }> => {
+    const response = await apiClient.get('/students/me');
+    return response.data;
+  },
+
+  updateMyProfile: async (data: { phone?: string; address?: string; emergency_contact?: string }): Promise<{ message: string; student: Student }> => {
+    const response = await apiClient.put('/students/me', data);
+    return response.data;
+  },
+
   createStudent: async (data: CreateStudentRequest): Promise<CreateStudentResponse> => {
     const response = await apiClient.post('/students', data);
     return response.data;
@@ -279,6 +310,23 @@ export const useStudent = (id: number) => {
     queryKey: ['student', id],
     queryFn: () => studentService.getStudentById(id),
     enabled: !!id,
+  });
+};
+
+export const useMyProfile = () => {
+  return useQuery({
+    queryKey: ['myProfile'],
+    queryFn: () => studentService.getMyProfile(),
+  });
+};
+
+export const useUpdateMyProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: studentService.updateMyProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+    },
   });
 };
 

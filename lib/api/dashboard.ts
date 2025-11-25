@@ -28,32 +28,70 @@ interface AdminDashboard {
 }
 
 interface TeacherDashboard {
-  dashboard: {
-    my_classes: number;
-    my_students: number;
-    pending_assignments: number;
-    upcoming_classes: Array<{
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  teacher: {
+    id: number;
+    employee_id: string;
+    department_id: number;
+    subjects: Array<{
       id: number;
-      class: string;
-      subject: string;
-      time: string;
+      name: string;
+      code?: string;
     }>;
   };
+  stats: {
+    my_classes: number;
+    my_subjects: number;
+    my_students: number;
+    pending_assignments: number;
+    upcoming_exams: number;
+  };
+  role: string;
 }
 
 interface StudentDashboard {
-  dashboard: {
-    my_courses: number;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+  student: {
+    id: number;
+    admission_number: string;
+    class: {
+      id: number;
+      name: string;
+    };
+    guardians: Array<{
+      id: number;
+      name: string;
+      email: string;
+      relationship: string;
+    }>;
+  };
+  stats: {
+    my_class: {
+      id: number;
+      name: string;
+    };
+    my_subjects: number;
     pending_assignments: number;
     upcoming_exams: number;
-    attendance_rate: number;
     recent_grades: Array<{
       id: number;
       subject: string;
       grade: string;
       score: number;
     }>;
+    attendance_rate: number;
   };
+  role: string;
 }
 
 interface ParentDashboard {

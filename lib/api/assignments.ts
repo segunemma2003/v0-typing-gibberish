@@ -87,42 +87,76 @@ interface GradeAssignmentRequest {
 
 export const assignmentService = {
   getAssignments: async (params?: GetAssignmentsParams): Promise<AssignmentListResponse> => {
-    const response = await apiClient.get('/assignments', { params });
+    const response = await apiClient.get('/assessments/assignments', { params });
+    return response.data;
+  },
+
+  getMyAssignments: async (params?: { status?: string; subject_id?: number }): Promise<{
+    assignments: Array<Assignment & {
+      subject?: { id: number; name: string };
+      status: 'pending' | 'submitted' | 'graded' | 'late';
+      submission?: {
+        submitted_at: string;
+        marks?: number;
+        feedback?: string;
+      };
+    }>;
+    summary: {
+      total: number;
+      pending: number;
+      submitted: number;
+      graded: number;
+    };
+  }> => {
+    const response = await apiClient.get('/assessments/assignments/my-assignments', { params });
     return response.data;
   },
 
   getAssignmentById: async (id: number): Promise<Assignment> => {
-    const response = await apiClient.get(`/assignments/${id}`);
+    const response = await apiClient.get(`/assessments/assignments/${id}`);
     return response.data;
   },
 
   createAssignment: async (data: CreateAssignmentRequest): Promise<{ message: string; assignment: Assignment }> => {
-    const response = await apiClient.post('/assignments', data);
+    const response = await apiClient.post('/assessments/assignments', data);
     return response.data;
   },
 
   updateAssignment: async ({ id, data }: { id: number; data: UpdateAssignmentRequest }): Promise<{ message: string; assignment: Assignment }> => {
-    const response = await apiClient.put(`/assignments/${id}`, data);
+    const response = await apiClient.put(`/assessments/assignments/${id}`, data);
     return response.data;
   },
 
   deleteAssignment: async (id: number): Promise<{ message: string }> => {
-    const response = await apiClient.delete(`/assignments/${id}`);
+    const response = await apiClient.delete(`/assessments/assignments/${id}`);
     return response.data;
   },
 
-  getAssignmentSubmissions: async (id: number): Promise<{ data: AssignmentSubmission[] }> => {
-    const response = await apiClient.get(`/assignments/${id}/submissions`);
+  getAssignmentSubmissions: async (id: number): Promise<{
+    assignment: Assignment;
+    submissions: Array<AssignmentSubmission & {
+      student: { id: number; name: string; admission_number: string };
+      attachments?: Array<{ name: string; url: string }>;
+    }>;
+    statistics: {
+      total_students: number;
+      submitted: number;
+      pending: number;
+      late: number;
+      graded: number;
+    };
+  }> => {
+    const response = await apiClient.get(`/assessments/assignments/${id}/submissions`);
     return response.data;
   },
 
-  submitAssignment: async ({ id, data }: { id: number; data: SubmitAssignmentRequest }): Promise<{ message: string; submission: AssignmentSubmission }> => {
-    const response = await apiClient.post(`/assignments/${id}/submit`, data);
+  submitAssignment: async ({ id, data }: { id: number; data: SubmitAssignmentRequest & { attachments?: Array<{ name: string; url: string }> } }): Promise<{ message: string; submission: AssignmentSubmission }> => {
+    const response = await apiClient.post(`/assessments/assignments/${id}/submit`, data);
     return response.data;
   },
 
-  gradeAssignment: async ({ id, data }: { id: number; data: GradeAssignmentRequest }): Promise<{ message: string; submission: AssignmentSubmission }> => {
-    const response = await apiClient.put(`/assignments/${id}/grade`, data);
+  gradeAssignment: async ({ assignment_id, submission_id, data }: { assignment_id: number; submission_id: number; data: GradeAssignmentRequest & { status?: string } }): Promise<{ message: string; submission: AssignmentSubmission }> => {
+    const response = await apiClient.post(`/assessments/assignments/${assignment_id}/submissions/${submission_id}/grade`, data);
     return response.data;
   },
 };
@@ -133,6 +167,13 @@ export const useAssignments = (params?: GetAssignmentsParams) => {
   return useQuery({
     queryKey: ['assignments', params],
     queryFn: () => assignmentService.getAssignments(params),
+  });
+};
+
+export const useMyAssignments = (params?: { status?: string; subject_id?: number }) => {
+  return useQuery({
+    queryKey: ['myAssignments', params],
+    queryFn: () => assignmentService.getMyAssignments(params),
   });
 };
 

@@ -311,6 +311,21 @@ export const examsService = {
     return response.data;
   },
 
+  getMyExams: async (params?: { status?: string; subject_id?: number }): Promise<{
+    exams: Array<Exam & {
+      status: 'upcoming' | 'ongoing' | 'completed';
+      my_result?: {
+        score: number;
+        total_marks: number;
+        percentage: number;
+        grade: string;
+      };
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/exams/my-exams', { params });
+    return response.data;
+  },
+
   getExam: async (id: number): Promise<ExamResponse> => {
     const response = await apiClient.get(`/assessments/exams/${id}`);
     return response.data;
@@ -432,6 +447,13 @@ export const useExams = (params?: GetExamsParams) => {
   return useQuery({
     queryKey: ['exams', params],
     queryFn: () => examsService.getExams(params),
+  });
+};
+
+export const useMyExams = (params?: { status?: string; subject_id?: number }) => {
+  return useQuery({
+    queryKey: ['myExams', params],
+    queryFn: () => examsService.getMyExams(params),
   });
 };
 

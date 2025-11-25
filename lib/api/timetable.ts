@@ -67,6 +67,24 @@ export const timetableService = {
     return response.data;
   },
 
+  getMyTimetable: async (): Promise<{
+    student: { id: number; name: string; admission_number: string };
+    class: { id: number; name: string };
+    timetable: Array<{
+      day: string;
+      periods: Array<{
+        period: number;
+        time: string;
+        subject: string;
+        teacher: string;
+        room?: string;
+      }>;
+    }>;
+  }> => {
+    const response = await apiClient.get('/timetable/student/me');
+    return response.data;
+  },
+
   createTimetable: async (data: CreateTimetableRequest): Promise<{ message: string; timetable: TimetableEntry }> => {
     const response = await apiClient.post('/timetable', data);
     return response.data;
@@ -113,6 +131,13 @@ export const useTeacherTimetable = (teacherId: number) => {
     queryKey: ['teacherTimetable', teacherId],
     queryFn: () => timetableService.getTeacherTimetable(teacherId),
     enabled: !!teacherId,
+  });
+};
+
+export const useMyTimetable = () => {
+  return useQuery({
+    queryKey: ['myTimetable'],
+    queryFn: () => timetableService.getMyTimetable(),
   });
 };
 

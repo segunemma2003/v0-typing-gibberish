@@ -15,6 +15,8 @@ import {
   Clock,
   Award,
   Settings,
+  BookCheck,
+  HelpCircle,
 } from "lucide-react"
 
 export default function TeacherLayout({
@@ -27,6 +29,8 @@ export default function TeacherLayout({
     { title: "My Classes", href: "/teacher/classes", icon: BookOpen },
     { title: "Students", href: "/teacher/students", icon: Users },
     { title: "Assignments", href: "/teacher/assignments", icon: FileText },
+    { title: "Exams", href: "/teacher/exams", icon: BookCheck },
+    { title: "Question Bank", href: "/teacher/question-bank", icon: HelpCircle },
     { title: "Grade Book", href: "/teacher/grades", icon: BarChart3 },
     { title: "Schedule", href: "/teacher/schedule", icon: Calendar },
     { title: "Attendance", href: "/teacher/attendance", icon: Clock },
