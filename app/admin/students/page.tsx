@@ -81,18 +81,60 @@ export default function StudentsPage() {
     emergency_contact: boolean
   }>>([])
 
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
   // Get selected class's arms for dropdown
   const selectedClass = classes.find((c: any) => c.id.toString() === formData.class_id)
   const availableArms = selectedClass?.arms || []
 
   const handleAdd = async () => {
-    if (!formData.first_name || !formData.last_name) {
-      toast.error("Please fill in required fields (First Name and Last Name)")
-      return
+    // Clear previous validation errors
+    setValidationErrors({})
+    const errors: Record<string, string> = {}
+
+    // Validate required fields
+    if (!formData.first_name?.trim()) {
+      errors.first_name = "First name is required"
     }
     
+    if (!formData.last_name?.trim()) {
+      errors.last_name = "Last name is required"
+    }
+
+    // Validate email format if provided
+    if (formData.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errors.email = "Please enter a valid email address"
+    }
+
+    // Validate guardians if added
+    guardians.forEach((guardian, index) => {
+      if (!guardian.first_name?.trim()) {
+        errors[`guardian_${index}_first_name`] = "Guardian first name is required"
+      }
+      if (!guardian.last_name?.trim()) {
+        errors[`guardian_${index}_last_name`] = "Guardian last name is required"
+      }
+      if (!guardian.email?.trim()) {
+        errors[`guardian_${index}_email`] = "Guardian email is required"
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardian.email.trim())) {
+        errors[`guardian_${index}_email`] = "Please enter a valid email address"
+      }
+      if (!guardian.relationship?.trim()) {
+        errors[`guardian_${index}_relationship`] = "Guardian relationship is required"
+      }
+    })
+    
     if (!currentSchoolId) {
-      toast.error("School information not available. Please refresh the page.")
+      errors.school = "School information not available. Please refresh the page."
+    }
+
+    // If there are validation errors, set them and show toast
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors)
+      const errorMessages = Object.values(errors)
+      toast.error(`Validation Error: ${errorMessages[0]}`, {
+        description: errorMessages.length > 1 ? `And ${errorMessages.length - 1} more error(s)` : undefined
+      })
       return
     }
 
@@ -172,6 +214,7 @@ export default function StudentsPage() {
       setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" })
       setMedicalInfo({ allergies: [], conditions: [], newAllergy: "", newCondition: "" })
       setGuardians([])
+      setValidationErrors({})
     setShowAddForm(false)
       refetch()
     } catch (error: any) {
@@ -212,15 +255,20 @@ export default function StudentsPage() {
       setFormData({
       first_name: student.name?.split(' ')[0] || "",
       last_name: student.name?.split(' ').slice(1).join(' ') || "",
+      middle_name: "",
       email: student.email || "",
       class_id: student.class?.id?.toString() || "",
       arm_id: student.arm?.id?.toString() || "",
       phone: student.phone || "",
       date_of_birth: student.date_of_birth || "",
       gender: student.gender || "",
+      address: "",
+      blood_group: "",
+      emergency_contact: "",
     })
     setEditingId(student.id)
       setShowAddForm(true)
+      setValidationErrors({})
     }
 
   const handleUpdate = async () => {
@@ -254,7 +302,8 @@ export default function StudentsPage() {
         data: updateData,
       })
       toast.success("Student updated successfully")
-      setFormData({ first_name: "", last_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "" })
+      setFormData({ first_name: "", last_name: "", middle_name: "", email: "", class_id: "", arm_id: "", phone: "", date_of_birth: "", gender: "", address: "", blood_group: "", emergency_contact: "" })
+      setValidationErrors({})
     setEditingId(null)
     setShowAddForm(false)
       refetch()
@@ -353,6 +402,7 @@ export default function StudentsPage() {
               console.log("Add Student button clicked", { showAddForm })
               setShowAddForm(true)
               setEditingId(null)
+              setValidationErrors({})
               setFormData({ 
                 first_name: "", 
                 last_name: "", 
@@ -454,28 +504,51 @@ export default function StudentsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>{editingId ? "Edit Student" : "Add New Student"}</CardTitle>
-              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null); setGuardians([]) }}>
+              <Button variant="ghost" size="sm" onClick={() => { setShowAddForm(false); setEditingId(null); setGuardians([]); setValidationErrors({}) }}>
                 <X className="w-4 h-4" />
               </Button>
             </div>
           </CardHeader>
           <CardContent>
+            {validationErrors.school && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-600">{validationErrors.school}</p>
+              </div>
+            )}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>First Name *</Label>
                 <Input 
                   value={formData.first_name} 
-                  onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, first_name: e.target.value})
+                    if (validationErrors.first_name) {
+                      setValidationErrors({...validationErrors, first_name: ""})
+                    }
+                  }}
                   placeholder="Enter first name"
+                  className={validationErrors.first_name ? "border-red-500" : ""}
                 />
+                {validationErrors.first_name && (
+                  <p className="text-sm text-red-500">{validationErrors.first_name}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Last Name *</Label>
                 <Input 
                   value={formData.last_name} 
-                  onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, last_name: e.target.value})
+                    if (validationErrors.last_name) {
+                      setValidationErrors({...validationErrors, last_name: ""})
+                    }
+                  }}
                   placeholder="Enter last name"
+                  className={validationErrors.last_name ? "border-red-500" : ""}
                 />
+                {validationErrors.last_name && (
+                  <p className="text-sm text-red-500">{validationErrors.last_name}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Middle Name</Label>
@@ -490,10 +563,20 @@ export default function StudentsPage() {
                 <Input 
                   type="email"
                   value={formData.email} 
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  onChange={(e) => {
+                    setFormData({...formData, email: e.target.value})
+                    if (validationErrors.email) {
+                      setValidationErrors({...validationErrors, email: ""})
+                    }
+                  }}
                   placeholder="Leave empty for auto-generation"
+                  className={validationErrors.email ? "border-red-500" : ""}
                 />
-                <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
+                {validationErrors.email ? (
+                  <p className="text-sm text-red-500">{validationErrors.email}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Auto-generated if not provided</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Phone</Label>
@@ -788,9 +871,16 @@ export default function StudentsPage() {
                             const updated = [...guardians]
                             updated[index].first_name = e.target.value
                             setGuardians(updated)
+                            if (validationErrors[`guardian_${index}_first_name`]) {
+                              setValidationErrors({...validationErrors, [`guardian_${index}_first_name`]: ""})
+                            }
                           }}
                           placeholder="First name"
+                          className={validationErrors[`guardian_${index}_first_name`] ? "border-red-500" : ""}
                         />
+                        {validationErrors[`guardian_${index}_first_name`] && (
+                          <p className="text-sm text-red-500">{validationErrors[`guardian_${index}_first_name`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Last Name *</Label>
@@ -800,9 +890,16 @@ export default function StudentsPage() {
                             const updated = [...guardians]
                             updated[index].last_name = e.target.value
                             setGuardians(updated)
+                            if (validationErrors[`guardian_${index}_last_name`]) {
+                              setValidationErrors({...validationErrors, [`guardian_${index}_last_name`]: ""})
+                            }
                           }}
                           placeholder="Last name"
+                          className={validationErrors[`guardian_${index}_last_name`] ? "border-red-500" : ""}
                         />
+                        {validationErrors[`guardian_${index}_last_name`] && (
+                          <p className="text-sm text-red-500">{validationErrors[`guardian_${index}_last_name`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Email *</Label>
@@ -813,9 +910,16 @@ export default function StudentsPage() {
                             const updated = [...guardians]
                             updated[index].email = e.target.value
                             setGuardians(updated)
+                            if (validationErrors[`guardian_${index}_email`]) {
+                              setValidationErrors({...validationErrors, [`guardian_${index}_email`]: ""})
+                            }
                           }}
                           placeholder="email@example.com"
+                          className={validationErrors[`guardian_${index}_email`] ? "border-red-500" : ""}
                         />
+                        {validationErrors[`guardian_${index}_email`] && (
+                          <p className="text-sm text-red-500">{validationErrors[`guardian_${index}_email`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Phone</Label>
@@ -837,9 +941,12 @@ export default function StudentsPage() {
                             const updated = [...guardians]
                             updated[index].relationship = value
                             setGuardians(updated)
+                            if (validationErrors[`guardian_${index}_relationship`]) {
+                              setValidationErrors({...validationErrors, [`guardian_${index}_relationship`]: ""})
+                            }
                           }}
                         >
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className={`w-full ${validationErrors[`guardian_${index}_relationship`] ? "border-red-500" : ""}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -853,6 +960,9 @@ export default function StudentsPage() {
                             <SelectItem value="Other">Other</SelectItem>
                           </SelectContent>
                         </Select>
+                        {validationErrors[`guardian_${index}_relationship`] && (
+                          <p className="text-sm text-red-500">{validationErrors[`guardian_${index}_relationship`]}</p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label>Occupation</Label>
@@ -907,7 +1017,7 @@ export default function StudentsPage() {
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null) }}>
+              <Button variant="outline" onClick={() => { setShowAddForm(false); setEditingId(null); setValidationErrors({}) }}>
                 Cancel
               </Button>
             </div>
