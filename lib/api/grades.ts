@@ -64,6 +64,33 @@ export const gradesService = {
     const response = await apiClient.get(`/grades/student/me/subject/${subjectId}`);
     return response.data;
   },
+
+  getClassGrades: async (classId: number): Promise<{
+    class: {
+      id: number;
+      name: string;
+    };
+    statistics: {
+      total_students: number;
+      average_score: number;
+      highest_score: number;
+      lowest_score: number;
+      pass_rate: number;
+    };
+    grades: Array<{
+      student: {
+        id: number;
+        name: string;
+        admission_number: string;
+      };
+      marks: number;
+      grade: string;
+      position: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/grades/class/${classId}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -80,6 +107,14 @@ export const useSubjectPerformance = (subjectId: number) => {
     queryKey: ['subjectPerformance', subjectId],
     queryFn: () => gradesService.getSubjectPerformance(subjectId),
     enabled: !!subjectId,
+  });
+};
+
+export const useClassGrades = (classId: number) => {
+  return useQuery({
+    queryKey: ['classGrades', classId],
+    queryFn: () => gradesService.getClassGrades(classId),
+    enabled: !!classId,
   });
 };
 

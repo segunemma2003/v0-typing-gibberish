@@ -60,6 +60,15 @@ export const announcementService = {
     return response.data;
   },
 
+  getMyAnnouncements: async (params?: { page?: number; per_page?: number }): Promise<{
+    announcements: Array<Announcement & {
+      priority?: 'low' | 'normal' | 'high';
+    }>;
+  }> => {
+    const response = await apiClient.get('/announcements/my-announcements', { params });
+    return response.data;
+  },
+
   getAnnouncementById: async (id: number): Promise<Announcement> => {
     const response = await apiClient.get(`/announcements/${id}`);
     return response.data;
@@ -92,6 +101,13 @@ export const useAnnouncements = (params?: GetAnnouncementsParams) => {
   return useQuery({
     queryKey: ['announcements', params],
     queryFn: () => announcementService.getAnnouncements(params),
+  });
+};
+
+export const useMyAnnouncements = (params?: { page?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['myAnnouncements', params],
+    queryFn: () => announcementService.getMyAnnouncements(params),
   });
 };
 

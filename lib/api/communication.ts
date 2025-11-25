@@ -50,6 +50,11 @@ export const communicationService = {
     return response.data;
   },
 
+  getMyMessages: async (params?: { page?: number; per_page?: number; search?: string }): Promise<MessageListResponse> => {
+    const response = await apiClient.get('/messages/my-messages', { params });
+    return response.data;
+  },
+
   getMessageById: async (id: number): Promise<Message> => {
     const response = await apiClient.get(`/communication/messages/${id}`);
     return response.data;
@@ -131,6 +136,13 @@ export const useMessages = () => {
   return useQuery({
     queryKey: ['messages'],
     queryFn: communicationService.getMessages,
+  });
+};
+
+export const useMyMessages = (params?: { page?: number; per_page?: number; search?: string }) => {
+  return useQuery({
+    queryKey: ['myMessages', params],
+    queryFn: () => communicationService.getMyMessages(params),
   });
 };
 

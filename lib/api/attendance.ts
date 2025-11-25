@@ -131,9 +131,24 @@ export const attendanceService = {
     return response.data;
   },
 
+  // Mark Class Attendance
+  markClassAttendance: async (data: {
+    class_id: number;
+    date: string;
+    attendance: Array<{
+      student_id: number;
+      status: 'present' | 'absent' | 'late';
+      check_in_time?: string;
+      notes?: string;
+    }>;
+  }): Promise<{ message: string; created: number }> => {
+    const response = await apiClient.post('/attendance/mark', data);
+    return response.data;
+  },
+
   // Bulk Create Attendance
   bulkCreateAttendance: async (data: BulkAttendanceRequest): Promise<{ message: string; created: number }> => {
-    const response = await apiClient.post('/attendance/bulk', data);
+    const response = await apiClient.post('/bulk/attendance/mark', data);
     return response.data;
   },
 
@@ -205,6 +220,16 @@ export const useDeleteAttendance = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: attendanceService.deleteAttendance,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    },
+  });
+};
+
+export const useMarkClassAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attendanceService.markClassAttendance,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance'] });
     },
