@@ -66,8 +66,14 @@ interface CreateBookRequest {
   title: string;
   author: string;
   isbn?: string;
-  category: string;
-  total_copies: number;
+  category_id?: number;
+  category?: string;
+  publisher?: string;
+  publication_year?: number;
+  copies?: number;
+  total_copies?: number;
+  shelf_location?: string;
+  description?: string;
 }
 
 interface BorrowBookRequest {
@@ -140,6 +146,67 @@ export const libraryService = {
     popular_books: Book[];
   }> => {
     const response = await apiClient.get('/library/stats');
+    return response.data;
+  },
+
+  // Book borrowing by book ID
+  borrowBookById: async (bookId: number, data: { student_id: number; due_date: string }): Promise<{ message: string; borrowed_book: BorrowedBook }> => {
+    const response = await apiClient.post(`/library/books/${bookId}/borrow`, data);
+    return response.data;
+  },
+
+  // Return book by book ID
+  returnBookById: async (bookId: number, data: { borrow_id: number; condition?: string; fine?: number }): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/library/books/${bookId}/return`, data);
+    return response.data;
+  },
+
+  // Get overdue books
+  getOverdueBooks: async (): Promise<{ data: BorrowedBook[] }> => {
+    const response = await apiClient.get('/library/books/overdue');
+    return response.data;
+  },
+
+  // Get popular books
+  getPopularBooks: async (limit?: number): Promise<{ data: Book[] }> => {
+    const response = await apiClient.get('/library/books/popular', { params: { limit } });
+    return response.data;
+  },
+
+  // Member management
+  getBorrowingHistory: async (studentId: number): Promise<{ data: BorrowedBook[] }> => {
+    const response = await apiClient.get(`/library/members/${studentId}/history`);
+    return response.data;
+  },
+
+  getActiveBorrows: async (studentId: number): Promise<{ data: BorrowedBook[] }> => {
+    const response = await apiClient.get(`/library/members/${studentId}/active-borrows`);
+    return response.data;
+  },
+
+  blockMember: async (studentId: number, data?: { reason?: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/library/members/${studentId}/block`, data || {});
+    return response.data;
+  },
+
+  unblockMember: async (studentId: number): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/library/members/${studentId}/unblock`);
+    return response.data;
+  },
+
+  // Reports
+  getMonthlyReport: async (params?: { month?: number; year?: number }): Promise<{ data: any }> => {
+    const response = await apiClient.get('/library/reports/monthly', { params });
+    return response.data;
+  },
+
+  getMostBorrowedBooks: async (): Promise<{ data: Book[] }> => {
+    const response = await apiClient.get('/library/reports/most-borrowed');
+    return response.data;
+  },
+
+  getFineCollectionReport: async (params?: { from?: string; to?: string }): Promise<{ data: any }> => {
+    const response = await apiClient.get('/library/reports/fines', { params });
     return response.data;
   },
 };
@@ -249,6 +316,104 @@ export const useLibraryStats = () => {
   return useQuery({
     queryKey: ['libraryStats'],
     queryFn: libraryService.getLibraryStats,
+  });
+};
+
+export const useBorrowBookById = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bookId, data }: { bookId: number; data: { student_id: number; due_date: string } }) =>
+      libraryService.borrowBookById(bookId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['borrowedBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['librarianDashboard'] });
+    },
+  });
+};
+
+export const useReturnBookById = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ bookId, data }: { bookId: number; data: { borrow_id: number; condition?: string; fine?: number } }) =>
+      libraryService.returnBookById(bookId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['borrowedBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['librarianDashboard'] });
+    },
+  });
+};
+
+export const useOverdueBooks = () => {
+  return useQuery({
+    queryKey: ['overdueBooks'],
+    queryFn: libraryService.getOverdueBooks,
+  });
+};
+
+export const usePopularBooks = (limit?: number) => {
+  return useQuery({
+    queryKey: ['popularBooks', limit],
+    queryFn: () => libraryService.getPopularBooks(limit),
+  });
+};
+
+export const useBorrowingHistory = (studentId: number) => {
+  return useQuery({
+    queryKey: ['borrowingHistory', studentId],
+    queryFn: () => libraryService.getBorrowingHistory(studentId),
+    enabled: !!studentId,
+  });
+};
+
+export const useActiveBorrows = (studentId: number) => {
+  return useQuery({
+    queryKey: ['activeBorrows', studentId],
+    queryFn: () => libraryService.getActiveBorrows(studentId),
+    enabled: !!studentId,
+  });
+};
+
+export const useBlockMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ studentId, data }: { studentId: number; data?: { reason?: string } }) =>
+      libraryService.blockMember(studentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryMembers'] });
+    },
+  });
+};
+
+export const useUnblockMember = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (studentId: number) => libraryService.unblockMember(studentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryMembers'] });
+    },
+  });
+};
+
+export const useMonthlyReport = (params?: { month?: number; year?: number }) => {
+  return useQuery({
+    queryKey: ['monthlyReport', params],
+    queryFn: () => libraryService.getMonthlyReport(params),
+  });
+};
+
+export const useMostBorrowedBooks = () => {
+  return useQuery({
+    queryKey: ['mostBorrowedBooks'],
+    queryFn: libraryService.getMostBorrowedBooks,
+  });
+};
+
+export const useFineCollectionReport = (params?: { from?: string; to?: string }) => {
+  return useQuery({
+    queryKey: ['fineCollectionReport', params],
+    queryFn: () => libraryService.getFineCollectionReport(params),
   });
 };
 

@@ -1,63 +1,20 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Search, Filter, Calendar, Clock, FileText, AlertTriangle } from "lucide-react"
+import { Search, Filter, Calendar, Clock, FileText, AlertTriangle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { useMyAssignments } from "@/lib/api/assessment"
+import { format } from "date-fns"
 
 export default function StudentAssignmentsPage() {
-  const assignments = [
-    {
-      id: "1",
-      title: "Quadratic Equations Worksheet",
-      subject: "Mathematics",
-      teacher: "Dr. Sarah Wilson",
-      dueDate: "Today",
-      dueTime: "11:59 PM",
-      type: "homework",
-      status: "pending",
-      priority: "high",
-      description: "Complete problems 1-20 from Chapter 5",
-    },
-    {
-      id: "2",
-      title: "Physics Lab Report",
-      subject: "Physics",
-      teacher: "Mr. John Davis",
-      dueDate: "Tomorrow",
-      dueTime: "2:00 PM",
-      type: "project",
-      status: "pending",
-      priority: "medium",
-      description: "Analyze motion data from pendulum experiment",
-    },
-    {
-      id: "3",
-      title: "Literature Essay",
-      subject: "English",
-      teacher: "Ms. Emily Chen",
-      dueDate: "March 20",
-      dueTime: "9:00 AM",
-      type: "project",
-      status: "submitted",
-      priority: "low",
-      description: "5-page analysis of Shakespeare's Hamlet",
-    },
-    {
-      id: "4",
-      title: "Chemistry Quiz",
-      subject: "Chemistry",
-      teacher: "Dr. Michael Brown",
-      dueDate: "March 18",
-      dueTime: "1:00 PM",
-      type: "quiz",
-      status: "overdue",
-      priority: "high",
-      description: "Covers chapters 8-10 on chemical bonding",
-    },
-  ]
+  const [searchTerm, setSearchTerm] = useState("")
+  const { data: assignmentsData, isLoading } = useMyAssignments()
+
+  const assignments = assignmentsData?.assignments || []
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -94,6 +51,14 @@ export default function StudentAssignmentsPage() {
     return null
   }
 
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -110,7 +75,12 @@ export default function StudentAssignmentsPage() {
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input placeholder="Search assignments..." className="pl-10" />
+              <Input 
+                placeholder="Search assignments..." 
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
@@ -124,63 +94,81 @@ export default function StudentAssignmentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Assignments</CardTitle>
-          <CardDescription>{assignments.length} assignments total</CardDescription>
+          <CardDescription>
+            {assignments.length} assignment{assignments.length !== 1 ? "s" : ""} total
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {assignments.map((assignment) => (
-              <div key={assignment.id} className="flex items-start justify-between p-4 border rounded-lg">
-                <div className="flex items-start space-x-4">
-                  <div className="flex flex-col items-center justify-center w-12 h-12 bg-muted rounded-lg">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
+          {assignments.length > 0 ? (
+            <div className="space-y-4">
+              {assignments
+                .filter((assignment: any) => 
+                  !searchTerm || 
+                  assignment.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  assignment.subject?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((assignment: any) => (
+                <div key={assignment.id} className="flex items-start justify-between p-4 border rounded-lg">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex flex-col items-center justify-center w-12 h-12 bg-muted rounded-lg">
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium">{assignment.title}</h4>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {assignment.subject?.name || assignment.subject} • {assignment.teacher?.name || assignment.teacher}
+                      </p>
+                      {assignment.description && (
+                        <p className="text-sm text-muted-foreground">{assignment.description}</p>
+                      )}
+                      <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                        {assignment.due_date && (
+                          <div className="flex items-center space-x-1">
+                            <Calendar className="w-3 h-3" />
+                            <span>{format(new Date(assignment.due_date), "MMM dd, yyyy")}</span>
+                          </div>
+                        )}
+                        {assignment.due_date && (
+                          <div className="flex items-center space-x-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{format(new Date(assignment.due_date), "HH:mm")}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-medium">{assignment.title}</h4>
-                      {getPriorityIcon(assignment.priority)}
+                  <div className="flex items-center space-x-3">
+                    <div className="flex flex-col items-end space-y-2">
+                      <Badge variant={getTypeColor(assignment.type || "homework")} className="text-xs">
+                        {assignment.type || "assignment"}
+                      </Badge>
+                      <span className={`text-xs font-medium ${getStatusColor(assignment.status)}`}>
+                        {assignment.status}
+                      </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {assignment.subject} • {assignment.teacher}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{assignment.description}</p>
-                    <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{assignment.dueDate}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3" />
-                        <span>{assignment.dueTime}</span>
-                      </div>
-                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => {
+                        if (assignment.status === "submitted" || assignment.status === "graded") {
+                          toast.error("This assignment has already been submitted")
+                          return
+                        }
+                        // Handle submit logic here - navigate to submission page
+                        window.location.href = `/student/assignments/${assignment.id}`
+                      }}
+                    >
+                      {assignment.status === "submitted" || assignment.status === "graded" ? "View" : "Submit"}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <div className="flex flex-col items-end space-y-2">
-                    <Badge variant={getTypeColor(assignment.type)} className="text-xs">
-                      {assignment.type}
-                    </Badge>
-                    <span className={`text-xs font-medium ${getStatusColor(assignment.status)}`}>
-                      {assignment.status}
-                    </span>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => {
-                      if (assignment.status === "submitted") {
-                        toast.error("This assignment has already been submitted")
-                        return
-                      }
-                      // Handle submit logic here
-                    }}
-                  >
-                    {assignment.status === "submitted" ? "Submitted" : "Submit"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">No assignments found</div>
+          )}
         </CardContent>
       </Card>
     </div>

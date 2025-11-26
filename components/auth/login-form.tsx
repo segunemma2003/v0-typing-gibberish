@@ -288,7 +288,12 @@ export function LoginForm() {
                 <Button 
                   type="submit" 
                   className="w-full h-12 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                  disabled={isLoading}
+                  onClick={(e) => {
+                    if (isLoading) {
+                      e.preventDefault();
+                      return;
+                    }
+                  }}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center">

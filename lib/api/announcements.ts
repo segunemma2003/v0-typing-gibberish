@@ -93,6 +93,21 @@ export const announcementService = {
     const response = await apiClient.post(`/announcements/${id}/publish`);
     return response.data;
   },
+
+  // Parent/Guardian endpoints
+  getAnnouncementsForParents: async (): Promise<{
+    announcements: Array<{
+      id: number;
+      title: string;
+      content: string;
+      priority?: 'low' | 'normal' | 'high';
+      created_at: string;
+      expires_at?: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/announcements/for-parents');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -158,6 +173,14 @@ export const usePublishAnnouncement = () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       queryClient.invalidateQueries({ queryKey: ['announcement', variables] });
     },
+  });
+};
+
+// Parent/Guardian hooks
+export const useAnnouncementsForParents = () => {
+  return useQuery({
+    queryKey: ['announcementsForParents'],
+    queryFn: announcementService.getAnnouncementsForParents,
   });
 };
 

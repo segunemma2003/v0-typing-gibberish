@@ -158,12 +158,54 @@ export const attendanceService = {
     return response.data;
   },
 
-  // Student My Attendance
-  getMyAttendance: async (params?: { from?: string; to?: string }): Promise<{
+  // Parent/Guardian endpoints - Child attendance
+  getChildAttendance: async (childId: number, params?: { from?: string; to?: string; per_page?: number }): Promise<{
+    student: {
+      id: number;
+      name: string;
+      admission_number: string;
+      class: string;
+    };
     attendance: Array<{
       date: string;
-      status: 'present' | 'absent' | 'late';
+      day: string;
+      status: 'present' | 'absent' | 'late' | 'excused';
       check_in_time?: string;
+      notes?: string;
+      excused?: boolean;
+    }>;
+    summary: {
+      total_days: number;
+      present: number;
+      absent: number;
+      late: number;
+      excused_absences: number;
+      attendance_rate: number;
+      punctuality_rate: number;
+    };
+    period: {
+      from: string;
+      to: string;
+    };
+  }> => {
+    const response = await apiClient.get(`/attendance/student/${childId}`, { params });
+    return response.data;
+  },
+
+  // Student My Attendance
+  getMyAttendance: async (params?: { from?: string; to?: string; per_page?: number }): Promise<{
+    student: {
+      id: number;
+      name: string;
+      admission_number: string;
+      class: string;
+    };
+    attendance: Array<{
+      date: string;
+      day: string;
+      status: 'present' | 'absent' | 'late' | 'excused';
+      check_in_time?: string;
+      notes?: string;
     }>;
     summary: {
       total_days: number;
@@ -171,6 +213,7 @@ export const attendanceService = {
       absent: number;
       late: number;
       attendance_rate: number;
+      punctuality_rate?: number;
     };
   }> => {
     const response = await apiClient.get('/attendance/student/me', { params });
@@ -257,6 +300,15 @@ export const useMyAttendance = (params?: { from?: string; to?: string }) => {
   return useQuery({
     queryKey: ['myAttendance', params],
     queryFn: () => attendanceService.getMyAttendance(params),
+  });
+};
+
+// Parent/Guardian hooks - Child attendance
+export const useChildAttendance = (childId: number, params?: { from?: string; to?: string; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['childAttendance', childId, params],
+    queryFn: () => attendanceService.getChildAttendance(childId, params),
+    enabled: !!childId,
   });
 };
 

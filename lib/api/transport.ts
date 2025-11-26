@@ -196,6 +196,80 @@ export const transportService = {
     const response = await apiClient.get('/transport/pickup/secure');
     return response.data;
   },
+
+  // Driver-specific endpoints
+  getMyRoute: async (): Promise<{ data: TransportRoute }> => {
+    const response = await apiClient.get('/transport/drivers/me/route');
+    return response.data;
+  },
+
+  getMyStudents: async (): Promise<{ data: StudentTransport[] }> => {
+    const response = await apiClient.get('/transport/drivers/me/students');
+    return response.data;
+  },
+
+  markStudentPickup: async (data: {
+    student_id: number;
+    pickup_point_id?: number;
+    pickup_time: string;
+    status: 'picked_up';
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/transport/attendance/pickup', data);
+    return response.data;
+  },
+
+  markStudentDropoff: async (data: {
+    student_id: number;
+    dropoff_point_id?: number;
+    dropoff_time: string;
+    status: 'dropped_off';
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/transport/attendance/dropoff', data);
+    return response.data;
+  },
+
+  startTrip: async (data?: {
+    route_id?: number;
+    vehicle_id?: number;
+  }): Promise<{ message: string; trip: any }> => {
+    const response = await apiClient.post('/transport/trips/start', data || {});
+    return response.data;
+  },
+
+  endTrip: async (data?: {
+    trip_id?: number;
+    end_location?: string;
+  }): Promise<{ message: string; trip: any }> => {
+    const response = await apiClient.post('/transport/trips/end', data || {});
+    return response.data;
+  },
+
+  getMyTrips: async (params?: {
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{ data: any[] }> => {
+    const response = await apiClient.get('/transport/drivers/me/trips', { params });
+    return response.data;
+  },
+
+  getMyVehicle: async (): Promise<{ data: Vehicle }> => {
+    const response = await apiClient.get('/transport/drivers/me/vehicle');
+    return response.data;
+  },
+
+  reportVehicleIssue: async (id: number, data: {
+    issue_type: string;
+    description: string;
+    severity?: 'low' | 'medium' | 'high' | 'critical';
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/transport/vehicles/${id}/report-issue`, data);
+    return response.data;
+  },
+
+  getMyMaintenance: async (): Promise<{ data: any[] }> => {
+    const response = await apiClient.get('/transport/drivers/me/maintenance');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -344,6 +418,101 @@ export const useAssignStudentTransport = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['studentTransport'] });
     },
+  });
+};
+
+// Driver-specific hooks
+export const useMyRoute = () => {
+  return useQuery({
+    queryKey: ['myRoute'],
+    queryFn: transportService.getMyRoute,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useMyStudents = () => {
+  return useQuery({
+    queryKey: ['myStudents'],
+    queryFn: transportService.getMyStudents,
+    staleTime: 1000 * 60 * 1, // 1 minute for real-time updates
+  });
+};
+
+export const useMarkStudentPickup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.markStudentPickup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myStudents'] });
+      queryClient.invalidateQueries({ queryKey: ['driverDashboard'] });
+    },
+  });
+};
+
+export const useMarkStudentDropoff = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.markStudentDropoff,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myStudents'] });
+      queryClient.invalidateQueries({ queryKey: ['driverDashboard'] });
+    },
+  });
+};
+
+export const useStartTrip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.startTrip,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myTrips'] });
+      queryClient.invalidateQueries({ queryKey: ['driverDashboard'] });
+    },
+  });
+};
+
+export const useEndTrip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transportService.endTrip,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myTrips'] });
+      queryClient.invalidateQueries({ queryKey: ['driverDashboard'] });
+    },
+  });
+};
+
+export const useMyTrips = (params?: { start_date?: string; end_date?: string }) => {
+  return useQuery({
+    queryKey: ['myTrips', params],
+    queryFn: () => transportService.getMyTrips(params),
+  });
+};
+
+export const useMyVehicle = () => {
+  return useQuery({
+    queryKey: ['myVehicle'],
+    queryFn: transportService.getMyVehicle,
+    staleTime: 1000 * 60 * 2,
+  });
+};
+
+export const useReportVehicleIssue = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { issue_type: string; description: string; severity?: string } }) =>
+      transportService.reportVehicleIssue(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myVehicle'] });
+      queryClient.invalidateQueries({ queryKey: ['driverDashboard'] });
+    },
+  });
+};
+
+export const useMyMaintenance = () => {
+  return useQuery({
+    queryKey: ['myMaintenance'],
+    queryFn: transportService.getMyMaintenance,
   });
 };
 

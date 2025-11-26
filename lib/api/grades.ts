@@ -91,6 +91,17 @@ export const gradesService = {
     const response = await apiClient.get(`/grades/class/${classId}`);
     return response.data;
   },
+
+  // Parent/Guardian endpoints - Child grades
+  getChildGrades: async (childId: number, params?: GetMyGradesParams): Promise<MyGradesResponse> => {
+    const response = await apiClient.get(`/grades/student/${childId}`, { params });
+    return response.data;
+  },
+
+  getChildSubjectPerformance: async (childId: number, subjectId: number): Promise<SubjectPerformanceResponse> => {
+    const response = await apiClient.get(`/grades/student/${childId}/subject/${subjectId}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -115,6 +126,23 @@ export const useClassGrades = (classId: number) => {
     queryKey: ['classGrades', classId],
     queryFn: () => gradesService.getClassGrades(classId),
     enabled: !!classId,
+  });
+};
+
+// Parent/Guardian hooks - Child grades
+export const useChildGrades = (childId: number, params?: GetMyGradesParams) => {
+  return useQuery({
+    queryKey: ['childGrades', childId, params],
+    queryFn: () => gradesService.getChildGrades(childId, params),
+    enabled: !!childId,
+  });
+};
+
+export const useChildSubjectPerformance = (childId: number, subjectId: number) => {
+  return useQuery({
+    queryKey: ['childSubjectPerformance', childId, subjectId],
+    queryFn: () => gradesService.getChildSubjectPerformance(childId, subjectId),
+    enabled: !!childId && !!subjectId,
   });
 };
 

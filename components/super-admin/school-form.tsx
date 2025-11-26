@@ -226,7 +226,15 @@ export function SchoolForm({ school, onSave, onCancel, isLoading }: SchoolFormPr
           <X className="w-4 h-4 mr-2" />
           Cancel
         </Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button 
+          type="submit"
+          onClick={(e) => {
+            if (isLoading) {
+              e.preventDefault();
+              return;
+            }
+          }}
+        >
           <Save className="w-4 h-4 mr-2" />
           {isLoading ? "Saving..." : school ? "Update School" : "Create School"}
         </Button>

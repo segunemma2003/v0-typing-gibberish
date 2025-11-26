@@ -195,6 +195,32 @@ export const guardianService = {
     const response = await apiClient.delete(`/guardians/${guardian_id}/students/${student_id}`);
     return response.data;
   },
+
+  // Parent/Guardian specific endpoints
+  getMyChildren: async (): Promise<{ guardian: any; children: any[] }> => {
+    const response = await apiClient.get('/guardians/me/children');
+    return response.data;
+  },
+
+  getMyProfile: async (): Promise<Guardian> => {
+    const response = await apiClient.get('/guardians/me');
+    return response.data;
+  },
+
+  updateMyProfile: async (data: UpdateGuardianRequest): Promise<{ message: string; guardian: Guardian }> => {
+    const response = await apiClient.put('/guardians/me', data);
+    return response.data;
+  },
+
+  uploadProfilePicture: async (data: { profile_picture: string }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/users/me/profile-picture', data);
+    return response.data;
+  },
+
+  deleteProfilePicture: async (): Promise<{ message: string }> => {
+    const response = await apiClient.delete('/users/me/profile-picture');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -328,6 +354,54 @@ export const useGuardianPayments = (guardian_id: number, params?: { page?: numbe
     queryKey: ['guardianPayments', guardian_id, params],
     queryFn: () => guardianService.getGuardianPayments(guardian_id, params),
     enabled: !!guardian_id,
+  });
+};
+
+// Parent/Guardian specific hooks
+export const useMyChildren = () => {
+  return useQuery({
+    queryKey: ['myChildren'],
+    queryFn: guardianService.getMyChildren,
+  });
+};
+
+export const useMyProfile = () => {
+  return useQuery({
+    queryKey: ['myProfile'],
+    queryFn: guardianService.getMyProfile,
+  });
+};
+
+export const useUpdateMyProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: guardianService.updateMyProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['parentDashboard'] });
+    },
+  });
+};
+
+export const useUploadProfilePicture = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: guardianService.uploadProfilePicture,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['parentDashboard'] });
+    },
+  });
+};
+
+export const useDeleteProfilePicture = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: guardianService.deleteProfilePicture,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['parentDashboard'] });
+    },
   });
 };
 

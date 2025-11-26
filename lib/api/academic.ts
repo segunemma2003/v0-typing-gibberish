@@ -201,6 +201,100 @@ export const academicService = {
     const response = await apiClient.delete(`/terms/${id}`);
     return response.data;
   },
+
+  // Student-specific endpoints
+  getMyClass: async (): Promise<{
+    id: number;
+    name: string;
+    description?: string;
+    capacity: number;
+    students_count: number;
+    class_teacher: {
+      id: number;
+      name: string;
+      email: string;
+      phone?: string;
+    };
+    subjects: Array<{
+      id: number;
+      name: string;
+      code?: string;
+      teacher: {
+        id: number;
+        name: string;
+        email: string;
+        phone?: string;
+      };
+    }>;
+  }> => {
+    const response = await apiClient.get('/classes/my-class');
+    return response.data;
+  },
+
+  getMySubjects: async (): Promise<Array<{
+    id: number;
+    name: string;
+    code: string;
+    description?: string;
+    teacher: {
+      name: string;
+      email: string;
+      phone?: string;
+    };
+    my_performance: {
+      average_score: number;
+      total_assignments: number;
+      completed_assignments: number;
+      total_exams: number;
+      exam_average: number;
+    };
+  }>> => {
+    const response = await apiClient.get('/subjects/my-subjects');
+    return response.data;
+  },
+
+  // HOD-specific endpoints
+  getSubjectPerformance: async (subjectId: number): Promise<{
+    subject: {
+      id: number;
+      name: string;
+      code?: string;
+    };
+    statistics: {
+      total_students: number;
+      average_score: number;
+      pass_rate: number;
+      highest_score: number;
+      lowest_score: number;
+    };
+    class_performance: Array<{
+      class_id: number;
+      class_name: string;
+      average_score: number;
+      student_count: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/subjects/${subjectId}/performance`);
+    return response.data;
+  },
+
+  getCurriculumProgress: async (subjectId: number): Promise<{
+    subject: {
+      id: number;
+      name: string;
+    };
+    curriculum: Array<{
+      topic: string;
+      planned_date: string;
+      completed_date?: string;
+      status: 'pending' | 'in_progress' | 'completed';
+      completion_percentage: number;
+    }>;
+    overall_progress: number;
+  }> => {
+    const response = await apiClient.get(`/subjects/${subjectId}/curriculum-progress`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -383,5 +477,37 @@ export const useDeleteTerm = () => {
       queryClient.invalidateQueries({ queryKey: ['terms'] });
       queryClient.invalidateQueries({ queryKey: ['academicYears'] });
     },
+  });
+};
+
+// Student-specific hooks
+export const useMyClass = () => {
+  return useQuery({
+    queryKey: ['myClass'],
+    queryFn: academicService.getMyClass,
+  });
+};
+
+export const useMySubjects = () => {
+  return useQuery({
+    queryKey: ['mySubjects'],
+    queryFn: academicService.getMySubjects,
+  });
+};
+
+// HOD-specific hooks
+export const useSubjectPerformance = (subjectId: number) => {
+  return useQuery({
+    queryKey: ['subjectPerformance', subjectId],
+    queryFn: () => academicService.getSubjectPerformance(subjectId),
+    enabled: !!subjectId,
+  });
+};
+
+export const useCurriculumProgress = (subjectId: number) => {
+  return useQuery({
+    queryKey: ['curriculumProgress', subjectId],
+    queryFn: () => academicService.getCurriculumProgress(subjectId),
+    enabled: !!subjectId,
   });
 };

@@ -62,7 +62,23 @@ export const timetableService = {
     return response.data;
   },
 
-  getTeacherTimetable: async (teacherId: number): Promise<TimetableListResponse> => {
+  getTeacherTimetable: async (teacherId: number): Promise<{
+    teacher: {
+      id: number;
+      name: string;
+      email?: string;
+    };
+    timetable: Array<{
+      day: string;
+      periods: Array<{
+        period: number;
+        time: string;
+        subject: string;
+        class: string;
+        room?: string;
+      }>;
+    }>;
+  }> => {
     const response = await apiClient.get(`/timetable/teacher/${teacherId}`);
     return response.data;
   },

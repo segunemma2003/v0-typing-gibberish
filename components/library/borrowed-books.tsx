@@ -160,7 +160,13 @@ export function BorrowedBooks() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={book.renewals >= book.maxRenewals}
+                      onClick={() => {
+                        if (book.renewals >= book.maxRenewals) {
+                          // Show toast error instead of disabling
+                          return;
+                        }
+                        // Handle renew logic
+                      }}
                       className="bg-transparent"
                     >
                       Renew

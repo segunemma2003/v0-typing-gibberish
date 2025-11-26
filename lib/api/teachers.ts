@@ -100,6 +100,61 @@ export const teacherService = {
     const response = await apiClient.delete(`/teachers/${id}`);
     return response.data;
   },
+
+  // Teacher-specific endpoints
+  getMyProfile: async (): Promise<Teacher & {
+    qualification?: string;
+    specialization?: string;
+    department?: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.get('/teachers/me');
+    return response.data;
+  },
+
+  updateMyProfile: async (data: {
+    phone?: string;
+    address?: string;
+    qualification?: string;
+    specialization?: string;
+  }): Promise<{ message: string; teacher: Teacher }> => {
+    const response = await apiClient.put('/teachers/me', data);
+    return response.data;
+  },
+
+  getMyClasses: async (): Promise<Array<{
+    id: number;
+    name: string;
+    capacity: number;
+    students_count: number;
+    class_teacher: {
+      id: number;
+      name: string;
+    };
+    arms?: Array<{
+      id: number;
+      name: string;
+    }>;
+  }>> => {
+    const response = await apiClient.get('/classes', { params: { class_teacher_id: 'me' } });
+    return Array.isArray(response.data) ? response.data : (response.data?.data || []);
+  },
+
+  getMySubjects: async (): Promise<Array<{
+    id: number;
+    name: string;
+    code: string;
+    classes: Array<{
+      id: number;
+      name: string;
+    }>;
+    students_count: number;
+  }>> => {
+    const response = await apiClient.get('/subjects', { params: { teacher_id: 'me' } });
+    return Array.isArray(response.data) ? response.data : (response.data?.data || []);
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -150,5 +205,38 @@ export const useDeleteTeacher = () => {
       console.log('Teacher deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
     },
+  });
+};
+
+// Teacher-specific hooks
+export const useMyProfile = () => {
+  return useQuery({
+    queryKey: ['myProfile'],
+    queryFn: teacherService.getMyProfile,
+  });
+};
+
+export const useUpdateMyProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: teacherService.updateMyProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['teacherDashboard'] });
+    },
+  });
+};
+
+export const useMyClasses = () => {
+  return useQuery({
+    queryKey: ['myClasses'],
+    queryFn: teacherService.getMyClasses,
+  });
+};
+
+export const useMySubjects = () => {
+  return useQuery({
+    queryKey: ['mySubjects'],
+    queryFn: teacherService.getMySubjects,
   });
 };

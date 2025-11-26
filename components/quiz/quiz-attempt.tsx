@@ -8,15 +8,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Clock, CheckCircle, AlertCircle } from "lucide-react"
-
-interface Question {
-  id: string
-  type: "multiple-choice" | "true-false" | "short-answer" | "essay"
-  question: string
-  options?: string[]
-  points: number
-}
+import { Clock, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { useQuiz, useQuizQuestions, useStartQuizAttempt, useSubmitQuiz } from "@/lib/api/quiz"
+import { toast } from "sonner"
 
 interface QuizAttemptProps {
   quizId: string
@@ -25,48 +19,42 @@ interface QuizAttemptProps {
 export function QuizAttempt({ quizId }: QuizAttemptProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [timeRemaining, setTimeRemaining] = useState(45 * 60) // 45 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(0)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [attemptId, setAttemptId] = useState<number | null>(null)
 
-  // Mock quiz data
-  const quiz = {
-    id: quizId,
-    title: "Algebra Fundamentals",
-    subject: "Mathematics",
-    timeLimit: 45,
-    totalPoints: 100,
-    questions: [
-      {
-        id: "1",
-        type: "multiple-choice" as const,
-        question: "What is the value of x in the equation 2x + 5 = 13?",
-        options: ["x = 3", "x = 4", "x = 5", "x = 6"],
-        points: 10,
-      },
-      {
-        id: "2",
-        type: "multiple-choice" as const,
-        question: "Which of the following is a quadratic equation?",
-        options: ["2x + 3 = 0", "x² + 5x + 6 = 0", "3x = 12", "x + y = 10"],
-        points: 10,
-      },
-      {
-        id: "3",
-        type: "true-false" as const,
-        question: "The slope of a horizontal line is zero.",
-        options: ["True", "False"],
-        points: 5,
-      },
-      {
-        id: "4",
-        type: "short-answer" as const,
-        question: "Solve for y: 3y - 7 = 14",
-        points: 15,
-      },
-    ],
-  }
+  const { data: quizData, isLoading: quizLoading } = useQuiz(Number(quizId))
+  const { data: questionsData, isLoading: questionsLoading } = useQuizQuestions(Number(quizId))
+  const startAttempt = useStartQuizAttempt()
+  const submitQuiz = useSubmitQuiz()
 
-  const currentQuestion = quiz.questions[currentQuestionIndex]
+  const quiz = quizData
+  const questions = questionsData?.data || []
+  const currentQuestion = questions[currentQuestionIndex]
+
+  // Initialize time remaining from quiz data
+  useEffect(() => {
+    if (quiz?.time_limit) {
+      setTimeRemaining(quiz.time_limit * 60) // Convert minutes to seconds
+    }
+  }, [quiz])
+
+  // Start attempt when component loads
+  useEffect(() => {
+    if (quiz && !attemptId) {
+      startAttempt.mutate(
+        { id: Number(quizId), data: {} },
+        {
+          onSuccess: (data) => {
+            setAttemptId(data.attempt.id)
+          },
+          onError: (error: any) => {
+            toast.error(error?.response?.data?.message || "Failed to start quiz attempt")
+          },
+        }
+      )
+    }
+  }, [quiz, quizId, attemptId, startAttempt])
 
   useEffect(() => {
     if (timeRemaining > 0 && !isSubmitted) {
@@ -100,9 +88,28 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
   }
 
   const handleSubmit = () => {
-    setIsSubmitted(true)
-    // Here you would typically send the answers to your backend
-    console.log("Quiz submitted:", answers)
+    if (!attemptId || !quiz) return
+
+    const submitData = {
+      id: Number(quizId),
+      data: {
+        attempt_id: attemptId,
+        answers: Object.entries(answers).map(([questionId, answer]) => ({
+          question_id: Number(questionId),
+          answer: Array.isArray(answer) ? answer : [answer],
+        })),
+      },
+    }
+
+    submitQuiz.mutate(submitData, {
+      onSuccess: () => {
+        setIsSubmitted(true)
+        toast.success("Quiz submitted successfully")
+      },
+      onError: (error: any) => {
+        toast.error(error?.response?.data?.message || "Failed to submit quiz")
+      },
+    })
   }
 
   const getAnsweredCount = () => {
@@ -110,7 +117,28 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
   }
 
   const getProgressPercentage = () => {
-    return (getAnsweredCount() / quiz.questions.length) * 100
+    if (questions.length === 0) return 0
+    return (getAnsweredCount() / questions.length) * 100
+  }
+
+  if (quizLoading || questionsLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (!quiz || questions.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-muted-foreground">No quiz data available</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   if (isSubmitted) {
@@ -125,7 +153,7 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
             </p>
             <div className="pt-4">
               <p className="text-sm text-muted-foreground">
-                Questions answered: {getAnsweredCount()} / {quiz.questions.length}
+                Questions answered: {getAnsweredCount()} / {questions.length}
               </p>
             </div>
           </CardContent>
@@ -141,8 +169,8 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>{quiz.title}</CardTitle>
-              <Badge variant="outline">{quiz.subject}</Badge>
+              <CardTitle>{quiz.title || "Quiz"}</CardTitle>
+              {quiz.subject && <Badge variant="outline">{quiz.subject}</Badge>}
             </div>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
@@ -173,73 +201,97 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Question {currentQuestionIndex + 1} of {quiz.questions.length}
+              Question {currentQuestionIndex + 1} of {questions.length}
             </CardTitle>
-            <Badge variant="outline">{currentQuestion.points} points</Badge>
+            {currentQuestion?.points && (
+              <Badge variant="outline">{currentQuestion.points} points</Badge>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <p className="text-lg">{currentQuestion.question}</p>
+          {currentQuestion ? (
+            <>
+              <p className="text-lg">{currentQuestion.question}</p>
 
-          {currentQuestion.type === "multiple-choice" && (
-            <RadioGroup
-              value={answers[currentQuestion.id] || ""}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-            >
-              {currentQuestion.options?.map((option, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option} id={`option-${index}`} />
-                  <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
+              {(currentQuestion.type === "multiple-choice" || currentQuestion.type === "multiple_choice") && currentQuestion.options && (
+                <RadioGroup
+                  value={answers[currentQuestion.id?.toString() || ""] || ""}
+                  onValueChange={(value) => handleAnswerChange(currentQuestion.id?.toString() || "", value)}
+                >
+                  {currentQuestion.options.map((option: any, index: number) => {
+                    const optionValue = typeof option === "string" ? option : option.value || option.key
+                    return (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem value={optionValue} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`} className="cursor-pointer">
+                          {optionValue}
+                        </Label>
+                      </div>
+                    )
+                  })}
+                </RadioGroup>
+              )}
 
-          {currentQuestion.type === "true-false" && (
-            <RadioGroup
-              value={answers[currentQuestion.id] || ""}
-              onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="True" id="true" />
-                <Label htmlFor="true" className="cursor-pointer">
-                  True
-                </Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="False" id="false" />
-                <Label htmlFor="false" className="cursor-pointer">
-                  False
-                </Label>
-              </div>
-            </RadioGroup>
-          )}
+              {(currentQuestion.type === "true-false" || currentQuestion.type === "true_false") && (
+                <RadioGroup
+                  value={answers[currentQuestion.id?.toString() || ""] || ""}
+                  onValueChange={(value) => handleAnswerChange(currentQuestion.id?.toString() || "", value)}
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="True" id="true" />
+                    <Label htmlFor="true" className="cursor-pointer">
+                      True
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="False" id="false" />
+                    <Label htmlFor="false" className="cursor-pointer">
+                      False
+                    </Label>
+                  </div>
+                </RadioGroup>
+              )}
 
-          {(currentQuestion.type === "short-answer" || currentQuestion.type === "essay") && (
-            <Textarea
-              placeholder="Enter your answer here..."
-              value={answers[currentQuestion.id] || ""}
-              onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-              rows={currentQuestion.type === "essay" ? 8 : 3}
-            />
+              {(currentQuestion.type === "short-answer" || currentQuestion.type === "short_answer" || currentQuestion.type === "essay") && (
+                <Textarea
+                  placeholder="Enter your answer here..."
+                  value={answers[currentQuestion.id?.toString() || ""] || ""}
+                  onChange={(e) => handleAnswerChange(currentQuestion.id?.toString() || "", e.target.value)}
+                  rows={currentQuestion.type === "essay" ? 8 : 3}
+                />
+              )}
+            </>
+          ) : (
+            <p className="text-muted-foreground">No question available</p>
           )}
         </CardContent>
       </Card>
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={handlePrevious} disabled={currentQuestionIndex === 0}>
+        <Button 
+          variant="outline" 
+          onClick={() => {
+            if (currentQuestionIndex === 0) {
+              // Already at first question, show message if needed
+              return;
+            }
+            handlePrevious();
+          }}
+        >
           Previous
         </Button>
 
         <div className="flex space-x-2">
-          {quiz.questions.map((_, index) => (
+          {questions.map((question: any, index: number) => (
             <Button
-              key={index}
+              key={question.id || index}
               variant={
-                index === currentQuestionIndex ? "default" : answers[quiz.questions[index].id] ? "secondary" : "outline"
+                index === currentQuestionIndex
+                  ? "default"
+                  : answers[question.id?.toString() || ""]
+                  ? "secondary"
+                  : "outline"
               }
               size="sm"
               onClick={() => setCurrentQuestionIndex(index)}
@@ -249,8 +301,17 @@ export function QuizAttempt({ quizId }: QuizAttemptProps) {
           ))}
         </div>
 
-        {currentQuestionIndex === quiz.questions.length - 1 ? (
-          <Button onClick={handleSubmit}>Submit Quiz</Button>
+        {currentQuestionIndex === questions.length - 1 ? (
+          <Button onClick={handleSubmit}>
+            {submitQuiz.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Quiz"
+            )}
+          </Button>
         ) : (
           <Button onClick={handleNext}>Next</Button>
         )}

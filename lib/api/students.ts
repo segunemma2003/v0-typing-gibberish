@@ -294,6 +294,28 @@ export const studentService = {
     const response = await apiClient.get(`/students/${id}/results`, { params });
     return response.data;
   },
+
+  // Student-specific endpoints
+  getMyGuardians: async (): Promise<{
+    student: {
+      id: number;
+      name: string;
+    };
+    guardians: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string;
+      address?: string;
+      occupation?: string;
+      relationship: string;
+      is_primary: boolean;
+    }>;
+  }> => {
+    const response = await apiClient.get('/students/me/guardians');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -326,7 +348,15 @@ export const useUpdateMyProfile = () => {
     mutationFn: studentService.updateMyProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['studentDashboard'] });
     },
+  });
+};
+
+export const useMyGuardians = () => {
+  return useQuery({
+    queryKey: ['myGuardians'],
+    queryFn: studentService.getMyGuardians,
   });
 };
 

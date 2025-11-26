@@ -100,7 +100,17 @@ export function BookCatalog() {
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button size="sm" className="flex-1" disabled={book.available_copies === 0}>
+                  <Button 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      if (book.available_copies === 0) {
+                        // Show toast error instead of disabling
+                        return;
+                      }
+                      // Handle borrow logic
+                    }}
+                  >
                     {book.status === "available" ? "Borrow" : "Unavailable"}
                   </Button>
                   <Button size="sm" variant="outline" className="flex-1 bg-transparent">

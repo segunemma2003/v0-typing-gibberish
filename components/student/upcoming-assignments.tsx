@@ -141,7 +141,17 @@ export function UpcomingAssignments() {
                     {assignment.status}
                   </span>
                 </div>
-                <Button size="sm" variant="outline" disabled={assignment.status === "submitted"}>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    if (assignment.status === "submitted") {
+                      // Show toast or navigate to view submission
+                      return;
+                    }
+                    // Handle submit logic
+                  }}
+                >
                   {assignment.status === "submitted" ? "Submitted" : "Submit"}
                 </Button>
               </div>

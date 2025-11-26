@@ -163,6 +163,244 @@ export const assessmentService = {
     const response = await apiClient.post(`/cbt/sessions/${session_id}/submit`, data);
     return response.data;
   },
+
+  // Parent/Guardian endpoints - Child assignments
+  getChildAssignments: async (childId: number, params?: { status?: string; subject_id?: number; per_page?: number }): Promise<{
+    student: {
+      id: number;
+      name: string;
+      class: string;
+    };
+    assignments: Array<{
+      id: number;
+      title: string;
+      description: string;
+      subject: string;
+      teacher: string;
+      due_date: string;
+      total_marks: number;
+      status: string;
+      submission?: {
+        submitted_at: string;
+        marks?: number;
+        grade?: string;
+        feedback?: string;
+        on_time: boolean;
+      };
+      days_remaining?: number;
+    }>;
+    summary: {
+      total: number;
+      pending: number;
+      submitted: number;
+      graded: number;
+      late: number;
+      average_score?: number;
+    };
+  }> => {
+    const response = await apiClient.get(`/assessments/assignments/student/${childId}`, { params });
+    return response.data;
+  },
+
+  getChildAssignmentDetails: async (assignmentId: number, childId: number): Promise<any> => {
+    const response = await apiClient.get(`/assessments/assignments/${assignmentId}/student/${childId}`);
+    return response.data;
+  },
+
+  // Parent/Guardian endpoints - Child exams
+  getChildExams: async (childId: number, params?: { status?: string; subject_id?: number; term_id?: number }): Promise<{
+    student: {
+      id: number;
+      name: string;
+      class: string;
+    };
+    exams: Array<{
+      id: number;
+      title: string;
+      subject: string;
+      exam_type?: string;
+      date: string;
+      start_time?: string;
+      end_time?: string;
+      total_marks: number;
+      is_cbt?: boolean;
+      status: string;
+      result?: {
+        marks: number;
+        percentage: number;
+        grade: string;
+        position: number;
+        total_students: number;
+        class_average: number;
+        teacher_remarks?: string;
+      };
+    }>;
+  }> => {
+    const response = await apiClient.get(`/assessments/exams/student/${childId}`, { params });
+    return response.data;
+  },
+
+  getChildExamResult: async (examId: number, childId: number): Promise<any> => {
+    const response = await apiClient.get(`/assessments/exams/${examId}/student/${childId}`);
+    return response.data;
+  },
+
+  // Student-specific endpoints - My Assignments
+  getMyAssignments: async (params?: { status?: string; subject_id?: number; per_page?: number }): Promise<{
+    assignments: Array<{
+      id: number;
+      title: string;
+      description: string;
+      subject: {
+        id: number;
+        name: string;
+      };
+      teacher: {
+        name: string;
+      };
+      due_date: string;
+      total_marks: number;
+      status: string;
+      submission?: {
+        submitted_at: string;
+        marks?: number;
+        grade?: string;
+        feedback?: string;
+      };
+      attachments?: Array<{
+        name: string;
+        url: string;
+      }>;
+    }>;
+    summary: {
+      total: number;
+      pending: number;
+      submitted: number;
+      graded: number;
+      late: number;
+    };
+  }> => {
+    const response = await apiClient.get('/assessments/assignments/my-assignments', { params });
+    return response.data;
+  },
+
+  getAssignmentDetails: async (id: number): Promise<any> => {
+    const response = await apiClient.get(`/assessments/assignments/${id}`);
+    return response.data;
+  },
+
+  submitAssignment: async (id: number, data: {
+    content: string;
+    attachments?: Array<{ name: string; url: string }>;
+  }): Promise<{ message: string; submission: any }> => {
+    const response = await apiClient.post(`/assessments/assignments/${id}/submit`, data);
+    return response.data;
+  },
+
+  // Student-specific endpoints - My Exams
+  getMyExams: async (params?: { status?: string; subject_id?: number; per_page?: number }): Promise<{
+    exams: Array<{
+      id: number;
+      title: string;
+      exam_code?: string;
+      subject: {
+        id: number;
+        name: string;
+      };
+      exam_type?: string;
+      start_date: string;
+      end_date?: string;
+      duration_minutes?: number;
+      total_marks: number;
+      is_cbt?: boolean;
+      status: string;
+      my_result?: {
+        marks: number;
+        grade: string;
+        position: number;
+        total_students: number;
+      };
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/exams/my-exams', { params });
+    return response.data;
+  },
+
+  getMyExamResult: async (examId: number): Promise<any> => {
+    const response = await apiClient.get(`/assessments/exams/${examId}/my-result`);
+    return response.data;
+  },
+
+  // Student-specific endpoints - CBT
+  startCBTExam: async (examId: number): Promise<{
+    message: string;
+    session: {
+      id: string;
+      exam: {
+        id: number;
+        title: string;
+        duration_minutes: number;
+        total_marks: number;
+      };
+      started_at: string;
+      ends_at: string;
+      time_remaining: number;
+    };
+  }> => {
+    const response = await apiClient.post(`/assessments/cbt/${examId}/start`);
+    return response.data;
+  },
+
+  getCBTQuestions: async (examId: number): Promise<{
+    session_id: string;
+    exam: {
+      id: number;
+      title: string;
+      total_marks: number;
+    };
+    questions: Array<{
+      id: number;
+      question: string;
+      question_type: string;
+      options: Array<{ key: string; value: string }>;
+      marks: number;
+    }>;
+    total_questions: number;
+    time_remaining: number;
+  }> => {
+    const response = await apiClient.get(`/assessments/cbt/${examId}/questions`);
+    return response.data;
+  },
+
+  submitCBTAnswers: async (data: {
+    session_id: string;
+    exam_id: number;
+    answers: Array<{
+      question_id: number;
+      answer: string[];
+    }>;
+  }): Promise<{
+    message: string;
+    result: {
+      exam: {
+        id: number;
+        title: string;
+      };
+      total_questions: number;
+      answered: number;
+      unanswered: number;
+      score: number;
+      total_marks: number;
+      percentage: number;
+      grade: string;
+      status: string;
+      position: number;
+      total_students: number;
+    };
+  }> => {
+    const response = await apiClient.post('/assessments/cbt/submit', data);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -237,6 +475,114 @@ export const useSubmitCBTAnswers = () => {
       console.log('CBT answers submitted successfully', data);
       queryClient.invalidateQueries({ queryKey: ['cbtSessions'] });
       queryClient.invalidateQueries({ queryKey: ['cbtSession', variables.session_id] });
+    },
+  });
+};
+
+// Parent/Guardian hooks - Child assignments and exams
+export const useChildAssignments = (childId: number, params?: { status?: string; subject_id?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['childAssignments', childId, params],
+    queryFn: () => assessmentService.getChildAssignments(childId, params),
+    enabled: !!childId,
+  });
+};
+
+export const useChildAssignmentDetails = (assignmentId: number, childId: number) => {
+  return useQuery({
+    queryKey: ['childAssignmentDetails', assignmentId, childId],
+    queryFn: () => assessmentService.getChildAssignmentDetails(assignmentId, childId),
+    enabled: !!assignmentId && !!childId,
+  });
+};
+
+export const useChildExams = (childId: number, params?: { status?: string; subject_id?: number; term_id?: number }) => {
+  return useQuery({
+    queryKey: ['childExams', childId, params],
+    queryFn: () => assessmentService.getChildExams(childId, params),
+    enabled: !!childId,
+  });
+};
+
+export const useChildExamResult = (examId: number, childId: number) => {
+  return useQuery({
+    queryKey: ['childExamResult', examId, childId],
+    queryFn: () => assessmentService.getChildExamResult(examId, childId),
+    enabled: !!examId && !!childId,
+  });
+};
+
+// Student-specific hooks - My Assignments
+export const useMyAssignments = (params?: { status?: string; subject_id?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['myAssignments', params],
+    queryFn: () => assessmentService.getMyAssignments(params),
+  });
+};
+
+export const useAssignmentDetails = (id: number) => {
+  return useQuery({
+    queryKey: ['assignmentDetails', id],
+    queryFn: () => assessmentService.getAssignmentDetails(id),
+    enabled: !!id,
+  });
+};
+
+export const useSubmitAssignment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { content: string; attachments?: Array<{ name: string; url: string }> } }) =>
+      assessmentService.submitAssignment(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myAssignments'] });
+      queryClient.invalidateQueries({ queryKey: ['studentDashboard'] });
+    },
+  });
+};
+
+// Student-specific hooks - My Exams
+export const useMyExams = (params?: { status?: string; subject_id?: number; per_page?: number }) => {
+  return useQuery({
+    queryKey: ['myExams', params],
+    queryFn: () => assessmentService.getMyExams(params),
+  });
+};
+
+export const useMyExamResult = (examId: number) => {
+  return useQuery({
+    queryKey: ['myExamResult', examId],
+    queryFn: () => assessmentService.getMyExamResult(examId),
+    enabled: !!examId,
+  });
+};
+
+// Student-specific hooks - CBT
+export const useStartCBTExam = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (examId: number) => assessmentService.startCBTExam(examId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myExams'] });
+    },
+  });
+};
+
+export const useCBTQuestions = (examId: number) => {
+  return useQuery({
+    queryKey: ['cbtQuestions', examId],
+    queryFn: () => assessmentService.getCBTQuestions(examId),
+    enabled: !!examId,
+  });
+};
+
+export const useSubmitCBTAnswers = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { session_id: string; exam_id: number; answers: Array<{ question_id: number; answer: string[] }> }) =>
+      assessmentService.submitCBTAnswers(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myExams'] });
+      queryClient.invalidateQueries({ queryKey: ['studentDashboard'] });
     },
   });
 };

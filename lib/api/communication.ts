@@ -65,6 +65,18 @@ export const communicationService = {
     return response.data;
   },
 
+  // Parent/Guardian specific - Send message to teacher
+  sendMessageToTeacher: async (data: {
+    recipient_id: number;
+    recipient_type: 'teacher';
+    subject: string;
+    message: string;
+    regarding_student_id?: number;
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/messages/send', data);
+    return response.data;
+  },
+
   updateMessage: async ({ id, data }: { id: number; data: Partial<SendMessageRequest> }): Promise<{ message: string; updated_message: Message }> => {
     const response = await apiClient.put(`/communication/messages/${id}`, data);
     return response.data;
@@ -153,6 +165,18 @@ export const useSendMessage = () => {
     onSuccess: (data) => {
       console.log('Message sent successfully', data);
       queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
+
+// Parent/Guardian hook - Send message to teacher
+export const useSendMessageToTeacher = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: communicationService.sendMessageToTeacher,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['myMessages'] });
     },
   });
 };
