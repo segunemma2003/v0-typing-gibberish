@@ -1,3 +1,5 @@
+"use client"
+
 import { BorrowedBooks } from "@/components/library/borrowed-books"
 
 export default function LibraryBorrowedPage() {

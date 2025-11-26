@@ -1,3 +1,5 @@
+"use client"
+
 import { BookCatalog } from "@/components/library/book-catalog"
 
 export default function LibraryCatalogPage() {

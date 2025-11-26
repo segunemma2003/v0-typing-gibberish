@@ -1,3 +1,5 @@
+"use client"
+
 import { DigitalResources } from "@/components/library/digital-resources"
 
 export default function LibraryDigitalPage() {
