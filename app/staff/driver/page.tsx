@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/use-auth"
 import { useStaffDashboard } from "@/lib/api/dashboard"
-import { useTransportVehicles, useTransportRoutes } from "@/lib/api/transport"
+import { useVehicles as useTransportVehicles, useTransportRoutes } from "@/lib/api/transport"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Bus, MapPin, Users, Clock, CheckCircle } from "lucide-react"

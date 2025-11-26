@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/use-auth"
 import { useLibrarianDashboard } from "@/lib/api/dashboard"
-import { useLibraryBooks, useLibraryBorrowed } from "@/lib/api/library"
+import { useBooks as useLibraryBooks, useBorrowedBooks as useLibraryBorrowed } from "@/lib/api/library"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, BookOpen, Users, AlertCircle, Calendar, FileText } from "lucide-react"
