@@ -467,18 +467,6 @@ export const useStartCBTSession = () => {
   });
 };
 
-export const useSubmitCBTAnswers = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: assessmentService.submitCBTAnswers,
-    onSuccess: (data, variables) => {
-      console.log('CBT answers submitted successfully', data);
-      queryClient.invalidateQueries({ queryKey: ['cbtSessions'] });
-      queryClient.invalidateQueries({ queryKey: ['cbtSession', variables.session_id] });
-    },
-  });
-};
-
 // Parent/Guardian hooks - Child assignments and exams
 export const useChildAssignments = (childId: number, params?: { status?: string; subject_id?: number; per_page?: number }) => {
   return useQuery({
