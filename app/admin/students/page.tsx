@@ -678,40 +678,100 @@ export default function StudentsPage() {
             console.log("Excel data processed:", data)
           }}
           onUpload={async (excelData) => {
-            // Create maps for class and arm lookup
-            const classMap = new Map<string, number>()
-            classes.forEach((c: any) => {
-              classMap.set(c.name?.toLowerCase() || "", c.id)
-              classMap.set(String(c.id), c.id)
-            })
+            try {
+              // Create maps for class and arm lookup (case-insensitive)
+              const classMap = new Map<string, number>()
+              classes.forEach((c: any) => {
+                if (c.name) {
+                  classMap.set(c.name.toLowerCase().trim(), c.id)
+                  classMap.set(c.name.trim(), c.id) // Also store original case
+                }
+                classMap.set(String(c.id), c.id)
+              })
 
-            const armMap = new Map<string, number>()
-            classes.forEach((c: any) => {
-              if (c.arms) {
-                c.arms.forEach((arm: any) => {
-                  armMap.set(arm.name?.toLowerCase() || "", arm.id)
-                  armMap.set(String(arm.id), arm.id)
+              const armMap = new Map<string, number>()
+              classes.forEach((c: any) => {
+                if (c.arms) {
+                  c.arms.forEach((arm: any) => {
+                    if (arm.name) {
+                      armMap.set(arm.name.toLowerCase().trim(), arm.id)
+                      armMap.set(arm.name.trim(), arm.id) // Also store original case
+                    }
+                    armMap.set(String(arm.id), arm.id)
+                  })
+                }
+              })
+
+              // Parse Excel rows to API format
+              const parseErrors: string[] = []
+              const students = excelData.map((row: any, index: number) => {
+                try {
+                  const student = parseStudentRow(row, classMap, armMap)
+                  return student
+                } catch (error: any) {
+                  console.error("Error parsing row:", row, error)
+                  parseErrors.push(`Row ${row._rowIndex || index + 2}: ${error.message}`)
+                  return null
+                }
+              }).filter((s: any) => s !== null)
+
+              if (parseErrors.length > 0) {
+                toast.error(`Found ${parseErrors.length} parsing error(s)`, {
+                  description: parseErrors.slice(0, 5).join("\n") + (parseErrors.length > 5 ? `\n... and ${parseErrors.length - 5} more` : ""),
+                  duration: 10000,
                 })
               }
-            })
 
-            // Parse Excel rows to API format
-            const students = excelData.map((row: any) => {
-              try {
-                return parseStudentRow(row, classMap, armMap)
-              } catch (error: any) {
-                console.error("Error parsing row:", row, error)
-                throw new Error(`Row ${row._rowIndex || 'unknown'}: ${error.message}`)
+              if (students.length === 0) {
+                throw new Error("No valid student data found in Excel file. Please check required fields: first_name, last_name, date_of_birth, gender, class_id")
               }
-            }).filter((s: any) => s.first_name && s.last_name)
 
-            if (students.length === 0) {
-              throw new Error("No valid student data found in Excel file")
+              const response = await bulkCreateStudents.mutateAsync({ students })
+              await refetch()
+              return response
+            } catch (error: any) {
+              console.error("Error in bulk upload:", error)
+              let errorMessage = "Failed to upload students"
+              
+              if (error?.response?.data) {
+                const data = error.response.data
+                // Handle validation errors (Laravel format)
+                if (data.errors) {
+                  const errors = data.errors
+                  const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+                    const msg = Array.isArray(messages) ? messages.join(", ") : messages
+                    return `${field}: ${msg}`
+                  })
+                  errorMessage = errorMessages.join("; ")
+                }
+                // Handle messages format
+                else if (data.messages) {
+                  const messages = data.messages
+                  const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+                    const message = Array.isArray(msg) ? msg.join(", ") : msg
+                    return `${field}: ${message}`
+                  })
+                  errorMessage = errorMessages.join("; ")
+                }
+                // Handle bulk upload specific error format
+                else if (data.data?.failed && Array.isArray(data.data.failed)) {
+                  const failedErrors = data.data.failed.map((err: any) => {
+                    return `Row ${err.index || err.row || '?'}: ${err.error || JSON.stringify(err)}`
+                  }).slice(0, 10)
+                  errorMessage = `Failed rows:\n${failedErrors.join("\n")}${data.data.failed.length > 10 ? `\n... and ${data.data.failed.length - 10} more` : ""}`
+                }
+                else {
+                  errorMessage = data.message || data.error || data.detail || errorMessage
+                }
+              } else if (error?.message) {
+                errorMessage = error.message
+              }
+              
+              toast.error(errorMessage, {
+                duration: 15000,
+              })
+              throw error
             }
-
-            const response = await bulkCreateStudents.mutateAsync({ students })
-            await refetch()
-            return response
           }}
         />
       )}

@@ -422,30 +422,84 @@ export default function TeachersPage() {
             console.log("Excel data processed:", data)
           }}
           onUpload={async (excelData) => {
-            // Create maps for department lookup
-            const departmentMap = new Map<string, number>()
-            departments.forEach((dept: any) => {
-              departmentMap.set(dept.name?.toLowerCase() || "", dept.id)
-              departmentMap.set(String(dept.id), dept.id)
-            })
+            try {
+              // Create maps for department lookup
+              const departmentMap = new Map<string, number>()
+              departments.forEach((dept: any) => {
+                departmentMap.set(dept.name?.toLowerCase() || "", dept.id)
+                departmentMap.set(String(dept.id), dept.id)
+              })
 
-            // Parse Excel rows to API format
-            const teachers = excelData.map((row: any) => {
-              try {
-                return parseTeacherRow(row, departmentMap)
-              } catch (error: any) {
-                console.error("Error parsing row:", row, error)
-                throw new Error(`Row ${row._rowIndex || 'unknown'}: ${error.message}`)
+              // Parse Excel rows to API format
+              const parseErrors: string[] = []
+              const teachers = excelData.map((row: any, index: number) => {
+                try {
+                  const teacher = parseTeacherRow(row, departmentMap)
+                  return teacher
+                } catch (error: any) {
+                  console.error("Error parsing row:", row, error)
+                  parseErrors.push(`Row ${row._rowIndex || index + 2}: ${error.message}`)
+                  return null
+                }
+              }).filter((t: any) => t !== null)
+
+              if (parseErrors.length > 0) {
+                toast.error(`Found ${parseErrors.length} parsing error(s)`, {
+                  description: parseErrors.slice(0, 5).join("\n") + (parseErrors.length > 5 ? `\n... and ${parseErrors.length - 5} more` : ""),
+                  duration: 10000,
+                })
               }
-            }).filter((t: any) => t.first_name && t.last_name)
 
-            if (teachers.length === 0) {
-              throw new Error("No valid teacher data found in Excel file")
+              if (teachers.length === 0) {
+                throw new Error("No valid teacher data found in Excel file. Please check required fields: first_name, last_name, employment_date")
+              }
+
+              const response = await bulkCreateTeachers.mutateAsync({ teachers })
+              await refetch()
+              return response
+            } catch (error: any) {
+              console.error("Error in bulk upload:", error)
+              let errorMessage = "Failed to upload teachers"
+              
+              if (error?.response?.data) {
+                const data = error.response.data
+                // Handle validation errors (Laravel format)
+                if (data.errors) {
+                  const errors = data.errors
+                  const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+                    const msg = Array.isArray(messages) ? messages.join(", ") : messages
+                    return `${field}: ${msg}`
+                  })
+                  errorMessage = errorMessages.join("; ")
+                }
+                // Handle messages format
+                else if (data.messages) {
+                  const messages = data.messages
+                  const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+                    const message = Array.isArray(msg) ? msg.join(", ") : msg
+                    return `${field}: ${message}`
+                  })
+                  errorMessage = errorMessages.join("; ")
+                }
+                // Handle bulk upload specific error format
+                else if (data.data?.failed && Array.isArray(data.data.failed)) {
+                  const failedErrors = data.data.failed.map((err: any) => {
+                    return `Row ${err.index || err.row || '?'}: ${err.error || JSON.stringify(err)}`
+                  }).slice(0, 10)
+                  errorMessage = `Failed rows:\n${failedErrors.join("\n")}${data.data.failed.length > 10 ? `\n... and ${data.data.failed.length - 10} more` : ""}`
+                }
+                else {
+                  errorMessage = data.message || data.error || data.detail || errorMessage
+                }
+              } else if (error?.message) {
+                errorMessage = error.message
+              }
+              
+              toast.error(errorMessage, {
+                duration: 15000,
+              })
+              throw error
             }
-
-            const response = await bulkCreateTeachers.mutateAsync({ teachers })
-            await refetch()
-            return response
           }}
         />
       )}

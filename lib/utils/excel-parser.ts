@@ -102,46 +102,87 @@ export interface ExcelQuestionRow {
 
 /**
  * Parse Excel row to student format
+ * Throws error if required fields are missing
  */
 export function parseStudentRow(row: any, classMap: Map<string, number>, armMap: Map<string, number>): any {
+  const first_name = String(row.first_name || row["first name"] || "").trim()
+  const last_name = String(row.last_name || row["last name"] || "").trim()
+  
+  if (!first_name) {
+    throw new Error("first_name is required")
+  }
+  if (!last_name) {
+    throw new Error("last_name is required")
+  }
+  
   const student: any = {
-    first_name: String(row.first_name || row["first name"] || "").trim(),
-    last_name: String(row.last_name || row["last name"] || "").trim(),
+    first_name,
+    last_name,
   }
 
   if (row.middle_name || row["middle name"]) {
     student.middle_name = String(row.middle_name || row["middle name"] || "").trim()
   }
 
-  // Handle class_id - can be ID or name
+  // Handle class_id - can be ID or name (required field)
   if (row.class_id || row["class id"] || row.class_name || row["class name"] || row.class) {
     const classValue = row.class_id || row["class id"] || row.class_name || row["class name"] || row.class
     if (typeof classValue === "number") {
       student.class_id = classValue
-    } else if (classMap.has(String(classValue).trim())) {
-      student.class_id = classMap.get(String(classValue).trim())
+    } else {
+      const classValueStr = String(classValue).trim()
+      // Try exact match first, then lowercase
+      if (classMap.has(classValueStr)) {
+        student.class_id = classMap.get(classValueStr)
+      } else if (classMap.has(classValueStr.toLowerCase())) {
+        student.class_id = classMap.get(classValueStr.toLowerCase())
+      } else {
+        const availableClasses = Array.from(classMap.keys()).filter(k => !/^\d+$/.test(k)).slice(0, 5).join(", ")
+        throw new Error(`Invalid class_id/class_name: "${classValue}". Available classes: ${availableClasses}${Array.from(classMap.keys()).filter(k => !/^\d+$/.test(k)).length > 5 ? "..." : ""}`)
+      }
     }
+  } else {
+    throw new Error("class_id or class_name is required")
   }
 
-  // Handle arm_id - can be ID or name
+  // Handle arm_id - can be ID or name (optional)
   if (row.arm_id || row["arm id"] || row.arm_name || row["arm name"] || row.arm) {
     const armValue = row.arm_id || row["arm id"] || row.arm_name || row["arm name"] || row.arm
     if (typeof armValue === "number") {
       student.arm_id = armValue
-    } else if (armMap.has(String(armValue).trim())) {
-      student.arm_id = armMap.get(String(armValue).trim())
+    } else {
+      const armValueStr = String(armValue).trim()
+      // Try exact match first, then lowercase
+      if (armMap.has(armValueStr)) {
+        student.arm_id = armMap.get(armValueStr)
+      } else if (armMap.has(armValueStr.toLowerCase())) {
+        student.arm_id = armMap.get(armValueStr.toLowerCase())
+      }
+      // Note: arm_id is optional, so we don't throw error if not found
     }
   }
 
+  // date_of_birth is required
   if (row.date_of_birth || row["date of birth"] || row.dob) {
-    student.date_of_birth = formatDate(row.date_of_birth || row["date of birth"] || row.dob)
+    const dob = formatDate(row.date_of_birth || row["date of birth"] || row.dob)
+    if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+      throw new Error(`Invalid date_of_birth format. Expected YYYY-MM-DD, got: ${row.date_of_birth || row["date of birth"] || row.dob}`)
+    }
+    student.date_of_birth = dob
+  } else {
+    throw new Error("date_of_birth is required")
   }
 
+  // gender is required
   if (row.gender) {
     const gender = String(row.gender).toLowerCase().trim()
     if (["male", "female", "other", "m", "f"].includes(gender)) {
       student.gender = gender === "m" ? "male" : gender === "f" ? "female" : gender
+    } else {
+      throw new Error(`Invalid gender: "${row.gender}". Must be: male, female, other, m, or f`)
     }
+  } else {
+    throw new Error("gender is required")
   }
 
   if (row.phone || row["phone number"]) {
@@ -210,24 +251,42 @@ export function parseStudentRow(row: any, classMap: Map<string, number>, armMap:
 
 /**
  * Parse Excel row to teacher format
+ * Throws error if required fields are missing
  */
 export function parseTeacherRow(row: any, departmentMap: Map<string, number>): any {
+  const first_name = String(row.first_name || row["first name"] || "").trim()
+  const last_name = String(row.last_name || row["last name"] || "").trim()
+  
+  if (!first_name) {
+    throw new Error("first_name is required")
+  }
+  if (!last_name) {
+    throw new Error("last_name is required")
+  }
+  
   const teacher: any = {
-    first_name: String(row.first_name || row["first name"] || "").trim(),
-    last_name: String(row.last_name || row["last name"] || "").trim(),
+    first_name,
+    last_name,
   }
 
   if (row.middle_name || row["middle name"]) {
     teacher.middle_name = String(row.middle_name || row["middle name"] || "").trim()
   }
 
-  // Handle department
+  // Handle department (optional for teachers)
   if (row.department_id || row["department id"] || row.department_name || row["department name"] || row.department) {
     const deptValue = row.department_id || row["department id"] || row.department_name || row["department name"] || row.department
     if (typeof deptValue === "number") {
       teacher.department_id = deptValue
-    } else if (departmentMap.has(String(deptValue).trim())) {
-      teacher.department_id = departmentMap.get(String(deptValue).trim())
+    } else {
+      const deptValueStr = String(deptValue).trim()
+      // Try exact match first, then lowercase
+      if (departmentMap.has(deptValueStr)) {
+        teacher.department_id = departmentMap.get(deptValueStr)
+      } else if (departmentMap.has(deptValueStr.toLowerCase())) {
+        teacher.department_id = departmentMap.get(deptValueStr.toLowerCase())
+      }
+      // Note: department_id is optional for teachers, so we don't throw error if not found
     }
   }
 
@@ -240,9 +299,16 @@ export function parseTeacherRow(row: any, departmentMap: Map<string, number>): a
     teacher.experience_years = typeof exp === "number" ? exp : parseInt(String(exp)) || undefined
   }
 
+  // employment_date is required
   const hireDate = row.hire_date || row["hire date"] || row.employment_date || row["employment date"]
   if (hireDate) {
-    teacher.employment_date = formatDate(hireDate)
+    const empDate = formatDate(hireDate)
+    if (!empDate || !/^\d{4}-\d{2}-\d{2}$/.test(empDate)) {
+      throw new Error(`Invalid employment_date/hire_date format. Expected YYYY-MM-DD, got: ${hireDate}`)
+    }
+    teacher.employment_date = empDate
+  } else {
+    throw new Error("employment_date or hire_date is required")
   }
 
   if (row.date_of_birth || row["date of birth"] || row.dob) {

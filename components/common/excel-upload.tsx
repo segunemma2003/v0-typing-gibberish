@@ -110,6 +110,11 @@ export function ExcelUpload({
       toast.error("No data to upload")
       return
     }
+    
+    if (uploading) {
+      toast.warning("Upload already in progress. Please wait...")
+      return
+    }
 
     setUploading(true)
     setUploadResult(null)
@@ -139,17 +144,52 @@ export function ExcelUpload({
       }
     } catch (error: any) {
       console.error("Error uploading data:", error)
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to upload data"
-      toast.error(errorMessage)
+      let errorMessage = "Failed to upload data"
+      
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle bulk upload specific error format
+        else if (data.data?.failed && Array.isArray(data.data.failed)) {
+          const failedErrors = data.data.failed.map((err: any, idx: number) => {
+            return `Row ${err.index || err.row || idx + 1}: ${err.error || JSON.stringify(err)}`
+          }).join("; ")
+          errorMessage = `Upload failed for some rows: ${failedErrors}`
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage, {
+        duration: 10000, // Show longer for bulk upload errors
+      })
+      
       setUploadResult({
         success: false,
         created: 0,
         failed: previewData.length,
-        errors: [{ error: errorMessage }],
+        errors: error?.response?.data?.data?.failed || [{ error: errorMessage }],
       })
     } finally {
       setUploading(false)
@@ -189,45 +229,10 @@ export function ExcelUpload({
         return cleanCol
       })
 
-      // Create example/hint rows for guidance
-      const exampleRow = templateColumns.map(col => {
-        const colLower = col.toLowerCase()
-        // Add helpful examples based on column type
-        if (colLower.includes('date_of_birth') || colLower.includes('dob') || colLower.includes('date')) {
-          return '2020-01-15'
-        }
-        if (colLower.includes('email')) {
-          return 'student@example.com'
-        }
-        if (colLower.includes('phone')) {
-          return '+1234567890'
-        }
-        if (colLower.includes('gender')) {
-          return 'male'
-        }
-        if (colLower.includes('class_id') || colLower.includes('class_name')) {
-          return 'JSS1'
-        }
-        if (colLower.includes('arm_id') || colLower.includes('arm_name')) {
-          return 'A'
-        }
-        if (colLower.includes('blood_group')) {
-          return 'O+'
-        }
-        if (colLower.includes('first_name')) {
-          return 'John'
-        }
-        if (colLower.includes('last_name')) {
-          return 'Doe'
-        }
-        return ''
-      })
-
       // Create instruction row
       const instructionRow = templateColumns.map((col, index) => {
-        const colLower = col.toLowerCase()
         if (index === 0) {
-          return 'Fill in your data below. Remove this row before uploading.'
+          return 'INSTRUCTIONS: Fill in your data below. Remove this instruction row before uploading.'
         }
         if (col.includes('(')) {
           // Extract the hint from parentheses
@@ -236,11 +241,164 @@ export function ExcelUpload({
         return ''
       })
 
-      // Create worksheet data: headers, instructions, example
+      // Helper function to generate example value based on column
+      const getExampleValue = (col: string, rowIndex: number = 0): string => {
+        const colLower = col.toLowerCase()
+        
+        // Date fields
+        if (colLower.includes('date_of_birth') || colLower.includes('dob')) {
+          return rowIndex === 0 ? '2010-05-15' : rowIndex === 1 ? '2011-08-20' : '2012-03-10'
+        }
+        if (colLower.includes('employment_date') || colLower.includes('hire_date')) {
+          return rowIndex === 0 ? '2020-01-15' : rowIndex === 1 ? '2019-06-01' : '2021-03-20'
+        }
+        if (colLower.includes('date') && !colLower.includes('birth') && !colLower.includes('employment') && !colLower.includes('hire')) {
+          return '2024-01-15'
+        }
+        
+        // Email fields
+        if (colLower.includes('email')) {
+          return rowIndex === 0 ? 'john.doe@example.com' : rowIndex === 1 ? 'jane.smith@example.com' : 'bob.wilson@example.com'
+        }
+        
+        // Phone fields
+        if (colLower.includes('phone')) {
+          return rowIndex === 0 ? '+1234567890' : rowIndex === 1 ? '+1234567891' : '+1234567892'
+        }
+        
+        // Gender
+        if (colLower.includes('gender')) {
+          return rowIndex === 0 ? 'male' : rowIndex === 1 ? 'female' : 'male'
+        }
+        
+        // Class fields
+        if (colLower.includes('class_id') || colLower.includes('class_name') || colLower.includes('class ')) {
+          return rowIndex === 0 ? 'JSS1' : rowIndex === 1 ? 'JSS2' : 'SS1'
+        }
+        
+        // Arm fields
+        if (colLower.includes('arm_id') || colLower.includes('arm_name') || colLower.includes('arm ')) {
+          return rowIndex === 0 ? 'A' : rowIndex === 1 ? 'B' : 'A'
+        }
+        
+        // Department
+        if (colLower.includes('department_id') || colLower.includes('department_name') || colLower.includes('department ')) {
+          return rowIndex === 0 ? 'Science' : rowIndex === 1 ? 'Mathematics' : 'English'
+        }
+        
+        // Blood group
+        if (colLower.includes('blood_group') || colLower.includes('blood group')) {
+          return rowIndex === 0 ? 'O+' : rowIndex === 1 ? 'A+' : 'B+'
+        }
+        
+        // Names
+        if (colLower.includes('first_name') || colLower.includes('first name')) {
+          return rowIndex === 0 ? 'John' : rowIndex === 1 ? 'Jane' : 'Bob'
+        }
+        if (colLower.includes('last_name') || colLower.includes('last name')) {
+          return rowIndex === 0 ? 'Doe' : rowIndex === 1 ? 'Smith' : 'Wilson'
+        }
+        if (colLower.includes('middle_name') || colLower.includes('middle name')) {
+          return rowIndex === 0 ? 'Michael' : rowIndex === 1 ? 'Elizabeth' : 'James'
+        }
+        
+        // Address
+        if (colLower.includes('address')) {
+          return rowIndex === 0 ? '123 Main Street, City' : rowIndex === 1 ? '456 Oak Avenue, Town' : '789 Pine Road, Village'
+        }
+        
+        // Qualification
+        if (colLower.includes('qualification')) {
+          return rowIndex === 0 ? 'B.Ed' : rowIndex === 1 ? 'M.Sc' : 'Ph.D'
+        }
+        
+        // Experience
+        if (colLower.includes('experience_years') || colLower.includes('experience years')) {
+          return rowIndex === 0 ? '5' : rowIndex === 1 ? '10' : '3'
+        }
+        
+        // Boolean fields
+        if (colLower.includes('uses_transport') || colLower.includes('is_boarder')) {
+          return rowIndex === 0 ? 'true' : rowIndex === 1 ? 'false' : 'true'
+        }
+        
+        // Route/Transport
+        if (colLower.includes('route_id') || colLower.includes('route id')) {
+          return '1'
+        }
+        if (colLower.includes('pickup_point') || colLower.includes('pickup point')) {
+          return 'Main Gate'
+        }
+        if (colLower.includes('pickup_time') || colLower.includes('pickup time')) {
+          return '07:30'
+        }
+        
+        // Hostel
+        if (colLower.includes('hostel_name') || colLower.includes('hostel name')) {
+          return 'Boys Hostel'
+        }
+        if (colLower.includes('block')) {
+          return 'A'
+        }
+        if (colLower.includes('room_number') || colLower.includes('room number')) {
+          return rowIndex === 0 ? '101' : rowIndex === 1 ? '102' : '103'
+        }
+        if (colLower.includes('bed_number') || colLower.includes('bed number')) {
+          return rowIndex === 0 ? '1' : rowIndex === 1 ? '2' : '3'
+        }
+        
+        // Medical
+        if (colLower.includes('allergies')) {
+          return 'Peanuts, Dairy'
+        }
+        if (colLower.includes('medications')) {
+          return 'Inhaler, Vitamins'
+        }
+        if (colLower.includes('doctor_name') || colLower.includes('doctor name')) {
+          return 'Dr. Smith'
+        }
+        if (colLower.includes('doctor_phone') || colLower.includes('doctor phone')) {
+          return '+1234567890'
+        }
+        if (colLower.includes('hospital')) {
+          return 'City Hospital'
+        }
+        
+        // Parent/Guardian
+        if (colLower.includes('parent_name') || colLower.includes('parent name')) {
+          return rowIndex === 0 ? 'John Doe Sr.' : rowIndex === 1 ? 'Jane Smith' : 'Bob Wilson'
+        }
+        if (colLower.includes('parent_email') || colLower.includes('parent email')) {
+          return rowIndex === 0 ? 'parent1@example.com' : rowIndex === 1 ? 'parent2@example.com' : 'parent3@example.com'
+        }
+        if (colLower.includes('emergency_contact') || colLower.includes('emergency contact')) {
+          return '+1234567890'
+        }
+        
+        // Position/Employment
+        if (colLower.includes('position')) {
+          return rowIndex === 0 ? 'Senior Teacher' : rowIndex === 1 ? 'Head of Department' : 'Teacher'
+        }
+        if (colLower.includes('employment_type') || colLower.includes('employment type')) {
+          return 'full_time'
+        }
+        if (colLower.includes('salary')) {
+          return '50000'
+        }
+        
+        return ''
+      }
+
+      // Create multiple sample data rows (3 examples)
+      const sampleRows = [0, 1, 2].map(rowIndex => 
+        templateColumns.map(col => getExampleValue(col, rowIndex))
+      )
+
+      // Create worksheet data: headers, instructions, then sample rows
       const worksheetData = [
         headers,
         instructionRow,
-        exampleRow
+        ...sampleRows
       ]
 
       // Create workbook
@@ -263,8 +421,8 @@ export function ExcelUpload({
       // Write file and trigger download
       XLSX.writeFile(workbook, filename)
       
-      toast.success(`Template downloaded: ${filename}`, {
-        description: 'Fill in your data and upload it back here'
+      toast.success(`Sample Excel file downloaded: ${filename}`, {
+        description: 'The file includes 3 sample rows. Fill in your data and remove the instruction row before uploading.'
       })
     } catch (error: any) {
       console.error("Error generating template:", error)
@@ -317,7 +475,7 @@ export function ExcelUpload({
                       className="gap-2"
                     >
                       <Download className="w-4 h-4" />
-                      Download Template
+                      Download Sample Excel
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -330,8 +488,8 @@ export function ExcelUpload({
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                   <p className="text-xs text-blue-800 dark:text-blue-200">
-                    💡 <strong>Tip:</strong> Download the template above to get an Excel file with the correct column structure. 
-                    Fill it with your data and upload it here.
+                    💡 <strong>Tip:</strong> Click "Download Sample Excel" to get a template file with 3 example rows showing the correct format. 
+                    Fill in your data, remove the instruction row, and upload it here.
                   </p>
                 </div>
               </div>
@@ -417,7 +575,7 @@ export function ExcelUpload({
             )}
 
             <div className="flex gap-2">
-              <Button onClick={handleUpload} disabled={uploading || previewData.length === 0}>
+              <Button onClick={handleUpload}>
                 {uploading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -430,7 +588,7 @@ export function ExcelUpload({
                   </>
                 )}
               </Button>
-              <Button variant="outline" onClick={handleRemoveFile} disabled={uploading}>
+              <Button variant="outline" onClick={handleRemoveFile}>
                 Cancel
               </Button>
             </div>
