@@ -724,7 +724,7 @@ export default function TeacherExamsPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" onClick={handleSubmit} disabled={createExam.isPending || updateExam.isPending}>
+              <Button type="button" onClick={handleSubmit}>
                 {(createExam.isPending || updateExam.isPending) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -888,7 +888,7 @@ export default function TeacherExamsPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Add Question
               </Button>
-              <Button type="button" onClick={handleSubmitQuestions} disabled={createQuestions.isPending}>
+              <Button type="button" onClick={handleSubmitQuestions}>
                 {createQuestions.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

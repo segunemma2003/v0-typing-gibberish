@@ -934,7 +934,6 @@ export default function StudentsPage() {
                 <Select 
                   value={formData.arm_id} 
                   onValueChange={(value) => setFormData({...formData, arm_id: value})}
-                  disabled={!formData.class_id}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={formData.class_id ? "Select an arm" : "Select a class first"} />
@@ -1625,7 +1624,6 @@ export default function StudentsPage() {
                     await handleAdd()
                   }
                 }}
-                disabled={createStudent.isPending || updateStudent.isPending}
                 className={Object.keys(validationErrors).length > 0 ? "border-2 border-red-500" : ""}
               >
                 {(createStudent.isPending || updateStudent.isPending) ? (
@@ -1740,7 +1738,6 @@ export default function StudentsPage() {
                       variant="outline" 
                       size="sm" 
                       onClick={() => handleDelete(student.id)}
-                      disabled={deleteStudent.isPending}
                     >
                       {deleteStudent.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

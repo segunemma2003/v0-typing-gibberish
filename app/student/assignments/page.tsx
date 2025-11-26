@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Search, Filter, Calendar, Clock, FileText, AlertTriangle } from "lucide-react"
+import { toast } from "sonner"
 
 export default function StudentAssignmentsPage() {
   const assignments = [
@@ -161,7 +162,17 @@ export default function StudentAssignmentsPage() {
                       {assignment.status}
                     </span>
                   </div>
-                  <Button size="sm" variant="outline" disabled={assignment.status === "submitted"}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      if (assignment.status === "submitted") {
+                        toast.error("This assignment has already been submitted")
+                        return
+                      }
+                      // Handle submit logic here
+                    }}
+                  >
                     {assignment.status === "submitted" ? "Submitted" : "Submit"}
                   </Button>
                 </div>

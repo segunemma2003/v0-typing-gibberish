@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,6 +40,14 @@ export default function TeachersPage() {
   const deleteTeacher = useDeleteTeacher()
   const bulkCreateTeachers = useBulkCreateTeachers()
 
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading teachers'
+      toast.error(`Error loading teachers: ${errorMessage}`)
+    }
+  }, [error])
+
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -77,13 +85,26 @@ export default function TeachersPage() {
       let errorMessage = "Failed to create teacher"
       if (error?.response?.data) {
         const data = error.response.data
-        if (data.messages) {
-          const errorMessages = Object.entries(data.messages).map(([field, messages]: [string, any]) => {
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
             const msg = Array.isArray(messages) ? messages.join(", ") : messages
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -143,13 +164,26 @@ export default function TeachersPage() {
       let errorMessage = "Failed to update teacher"
       if (error?.response?.data) {
         const data = error.response.data
-        if (data.messages) {
-          const errorMessages = Object.entries(data.messages).map(([field, messages]: [string, any]) => {
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
             const msg = Array.isArray(messages) ? messages.join(", ") : messages
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -348,7 +382,7 @@ export default function TeachersPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createTeacher.isPending || updateTeacher.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createTeacher.isPending || updateTeacher.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -506,7 +540,6 @@ export default function TeachersPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(teacher.id)}
-                        disabled={deleteTeacher.isPending}
                       >
                     <Trash2 className="w-4 h-4" />
                   </Button>

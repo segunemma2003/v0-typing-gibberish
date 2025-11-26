@@ -232,7 +232,6 @@ export default function TeacherAssignmentsPage() {
                 <Button 
                   type="button" 
                   onClick={handleSubmit}
-                  disabled={createAssignment.isPending || updateAssignment.isPending}
                 >
                   {(createAssignment.isPending || updateAssignment.isPending) ? (
                     <>

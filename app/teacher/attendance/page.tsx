@@ -111,7 +111,7 @@ export default function TeacherAttendancePage() {
           <h1 className="text-3xl font-bold tracking-tight">Attendance</h1>
           <p className="text-muted-foreground">Mark and track student attendance</p>
         </div>
-        <Button onClick={handleSave} disabled={markAttendance.isPending || !selectedClassId}>
+        <Button onClick={handleSave}>
           {markAttendance.isPending ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

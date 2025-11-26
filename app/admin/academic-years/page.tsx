@@ -124,15 +124,28 @@ export default function AcademicYearsPage() {
       
       if (error?.response?.data) {
         const data = error.response.data
-        errorMessage = data.message || data.error || data.detail || JSON.stringify(data)
-      } else if (error?.response?.data?.errors) {
-        // Handle validation errors object
-        const errors = error.response.data.errors
-        const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
-          const msg = Array.isArray(messages) ? messages.join(", ") : messages
-          return `${field}: ${msg}`
-        })
-        errorMessage = errorMessages.join("; ")
+        // Handle validation errors (Laravel format) - check this FIRST
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
       } else if (error?.message) {
         errorMessage = error.message
       }
@@ -219,15 +232,28 @@ export default function AcademicYearsPage() {
       
       if (error?.response?.data) {
         const data = error.response.data
-        errorMessage = data.message || data.error || data.detail || JSON.stringify(data)
-      } else if (error?.response?.data?.errors) {
-        // Handle validation errors object
-        const errors = error.response.data.errors
-        const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
-          const msg = Array.isArray(messages) ? messages.join(", ") : messages
-          return `${field}: ${msg}`
-        })
-        errorMessage = errorMessages.join("; ")
+        // Handle validation errors (Laravel format) - check this FIRST
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
       } else if (error?.message) {
         errorMessage = error.message
       }
@@ -246,6 +272,11 @@ export default function AcademicYearsPage() {
       const year = academicYears.find((y: any) => y.id === id)
       if (!year) {
         toast.error("Academic year not found")
+        return
+      }
+      
+      if (year.is_current) {
+        toast.error("Cannot delete the current academic year")
         return
       }
       
@@ -413,7 +444,6 @@ export default function AcademicYearsPage() {
                     toast.error(errorMessage)
                   }
                 }}
-                disabled={!!createAcademicYear.isPending || !!updateAcademicYear.isPending}
                 style={{ cursor: (createAcademicYear.isPending || updateAcademicYear.isPending) ? 'not-allowed' : 'pointer' }}
               >
                 {(createAcademicYear.isPending || updateAcademicYear.isPending) ? (
@@ -492,8 +522,6 @@ export default function AcademicYearsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(year.id)}
-                      disabled={deleteAcademicYear.isPending || year.is_current}
-                      title={year.is_current ? "Cannot delete current academic year" : ""}
                     >
                       {deleteAcademicYear.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

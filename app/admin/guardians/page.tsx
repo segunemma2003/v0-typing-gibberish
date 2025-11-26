@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +32,14 @@ export default function GuardiansPage() {
   const deleteGuardian = useDeleteGuardian()
   const assignStudent = useAssignStudentToGuardian()
   const removeStudent = useRemoveStudentFromGuardian()
+
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading guardians'
+      toast.error(`Error loading guardians: ${errorMessage}`)
+    }
+  }, [error])
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -95,7 +103,34 @@ export default function GuardiansPage() {
       refetch()
     } catch (error: any) {
       console.error("Error creating guardian:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create guardian"
+      let errorMessage = "Failed to create guardian"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -158,7 +193,34 @@ export default function GuardiansPage() {
       refetch()
     } catch (error: any) {
       console.error("Error updating guardian:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update guardian"
+      let errorMessage = "Failed to update guardian"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -172,7 +234,34 @@ export default function GuardiansPage() {
       refetch()
     } catch (error: any) {
       console.error("Error deleting guardian:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete guardian"
+      let errorMessage = "Failed to delete guardian"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -199,7 +288,34 @@ export default function GuardiansPage() {
       refetch()
     } catch (error: any) {
       console.error("Error assigning student:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to assign student"
+      let errorMessage = "Failed to assign student"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -213,7 +329,34 @@ export default function GuardiansPage() {
       refetch()
     } catch (error: any) {
       console.error("Error removing student:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to remove student"
+      let errorMessage = "Failed to remove student"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -337,7 +480,6 @@ export default function GuardiansPage() {
             <div className="flex gap-2 mt-4">
               <Button
                 onClick={editingId ? handleUpdate : handleAdd}
-                disabled={createGuardian.isPending || updateGuardian.isPending}
               >
                 {(createGuardian.isPending || updateGuardian.isPending) ? (
                   <>
@@ -438,7 +580,6 @@ export default function GuardiansPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleDelete(guardian.id)}
-                        disabled={deleteGuardian.isPending}
                       >
                         {deleteGuardian.isPending ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -488,7 +629,6 @@ export default function GuardiansPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleRemoveStudent(guardian.id, student.id)}
-                            disabled={removeStudent.isPending}
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -586,7 +726,6 @@ export default function GuardiansPage() {
                         <div className="flex gap-2 mt-4">
                           <Button
                             onClick={() => handleAssignStudent(guardian.id)}
-                            disabled={assignStudent.isPending}
                           >
                             {assignStudent.isPending ? (
                               <>

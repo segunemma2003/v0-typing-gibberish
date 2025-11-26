@@ -156,7 +156,7 @@ export default function TeacherMessagesPage() {
               onChange={(e) => setMessage(e.target.value)}
             />
             <div className="flex gap-2">
-              <Button onClick={handleSend} disabled={sendMessage.isPending}>
+              <Button onClick={handleSend}>
                 {sendMessage.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

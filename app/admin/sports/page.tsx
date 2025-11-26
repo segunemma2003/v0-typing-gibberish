@@ -310,7 +310,7 @@ export default function SportsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreateEvent} disabled={createEvent.isPending}>
+                  <Button onClick={handleCreateEvent}>
                     {createEvent.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -443,7 +443,7 @@ export default function SportsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreateTeam} disabled={createTeam.isPending}>
+                  <Button onClick={handleCreateTeam}>
                     {createTeam.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -579,7 +579,7 @@ export default function SportsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreateActivity} disabled={createActivity.isPending}>
+                  <Button onClick={handleCreateActivity}>
                     {createActivity.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

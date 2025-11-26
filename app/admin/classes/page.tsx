@@ -68,6 +68,14 @@ export default function ClassesPage() {
   const updateClass = useUpdateClass()
   const deleteClass = useDeleteClass()
 
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading classes'
+      toast.error(`Error loading classes: ${errorMessage}`)
+    }
+  }, [error])
+
   const [formData, setFormData] = useState({
     name: "",
     level: "",
@@ -122,6 +130,7 @@ export default function ClassesPage() {
       let errorMessage = "Failed to create class"
       if (error?.response?.data) {
         const data = error.response.data
+        // Handle validation errors (Laravel format)
         if (data.errors) {
           const errors = data.errors
           const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
@@ -129,7 +138,18 @@ export default function ClassesPage() {
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -184,6 +204,7 @@ export default function ClassesPage() {
       let errorMessage = "Failed to update class"
       if (error?.response?.data) {
         const data = error.response.data
+        // Handle validation errors (Laravel format)
         if (data.errors) {
           const errors = data.errors
           const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
@@ -191,7 +212,18 @@ export default function ClassesPage() {
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -359,7 +391,7 @@ export default function ClassesPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createClass.isPending || updateClass.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createClass.isPending || updateClass.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -473,7 +505,6 @@ export default function ClassesPage() {
                       size="sm"
                       className="flex-1"
                       onClick={() => handleDelete(classItem.id)}
-                      disabled={deleteClass.isPending}
                     >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Delete

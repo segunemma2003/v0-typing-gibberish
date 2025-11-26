@@ -97,7 +97,7 @@ export default function SettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <p className="text-muted-foreground">Manage school settings and preferences</p>
         </div>
-        <Button onClick={handleSave} disabled={updateSchool.isPending}>
+        <Button onClick={handleSave}>
           <Save className="w-4 h-4 mr-2" />
           {updateSchool.isPending ? (
             <>

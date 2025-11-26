@@ -168,7 +168,6 @@ export default function SchoolsPage() {
                       size="sm"
                       onClick={() => handleDeleteSchool(tenant.id)}
                       className="text-red-600 hover:text-red-700"
-                      disabled={deleteTenant.isPending}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

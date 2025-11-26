@@ -230,7 +230,7 @@ export default function HousesPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createHouse.isPending || updateHouse.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createHouse.isPending || updateHouse.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -306,7 +306,7 @@ export default function HousesPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={handleAddPoints} disabled={addHousePoints.isPending}>
+              <Button onClick={handleAddPoints}>
                 {addHousePoints.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -449,7 +449,6 @@ export default function HousesPage() {
                     size="sm"
                     className="flex-1"
                     onClick={() => handleDelete(house.id)}
-                    disabled={deleteHouse.isPending}
                   >
                     <Trash2 className="w-4 h-4 mr-1" />
                     Delete

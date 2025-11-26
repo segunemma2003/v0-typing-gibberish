@@ -403,7 +403,7 @@ export default function TransportPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={editingId ? handleUpdateVehicle : handleCreateVehicle} disabled={createVehicle.isPending || updateVehicle.isPending}>
+                  <Button onClick={editingId ? handleUpdateVehicle : handleCreateVehicle}>
                     {createVehicle.isPending || updateVehicle.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -466,7 +466,7 @@ export default function TransportPage() {
                         <Edit className="w-4 h-4 mr-1" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteVehicle(vehicle.id)} disabled={deleteVehicle.isPending}>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteVehicle(vehicle.id)}>
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
@@ -556,7 +556,7 @@ export default function TransportPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreateRoute} disabled={createRoute.isPending}>
+                  <Button onClick={handleCreateRoute}>
                     {createRoute.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -623,7 +623,7 @@ export default function TransportPage() {
                       )}
                     </div>
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteRoute(route.id)} disabled={deleteRoute.isPending}>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteRoute(route.id)}>
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
@@ -696,7 +696,7 @@ export default function TransportPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleCreateDriver} disabled={createDriver.isPending}>
+                  <Button onClick={handleCreateDriver}>
                     {createDriver.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -749,7 +749,7 @@ export default function TransportPage() {
                       )}
               </div>
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteDriver(driver.id)} disabled={deleteDriver.isPending}>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteDriver(driver.id)}>
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>

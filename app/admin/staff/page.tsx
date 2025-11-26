@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,6 +39,14 @@ export default function StaffPage() {
   const createStaff = useCreateStaff()
   const updateStaff = useUpdateStaff()
   const deleteStaff = useDeleteStaff()
+
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading staff'
+      toast.error(`Error loading staff: ${errorMessage}`)
+    }
+  }, [error])
 
   const staff = staffResponse?.data || []
   // API may return direct array or wrapped in { data: [...] }
@@ -109,7 +117,34 @@ export default function StaffPage() {
       refetch()
     } catch (error: any) {
       console.error("Error creating staff:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create staff member"
+      let errorMessage = "Failed to create staff member"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -169,7 +204,34 @@ export default function StaffPage() {
       refetch()
     } catch (error: any) {
       console.error("Error updating staff:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update staff member"
+      let errorMessage = "Failed to update staff member"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -182,7 +244,35 @@ export default function StaffPage() {
       toast.success("Staff member deleted successfully")
       refetch()
     } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to delete staff member")
+      let errorMessage = "Failed to delete staff member"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
+      toast.error(errorMessage)
     }
   }
 
@@ -352,7 +442,7 @@ export default function StaffPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createStaff.isPending || updateStaff.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createStaff.isPending || updateStaff.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -450,7 +540,7 @@ export default function StaffPage() {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(member)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(member.id)} disabled={deleteStaff.isPending}>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(member.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

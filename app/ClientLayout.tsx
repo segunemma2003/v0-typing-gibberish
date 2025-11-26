@@ -12,6 +12,7 @@ import { LoginTest } from "@/components/debug/login-test"
 import "./globals.css"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Toaster } from 'sonner';
 
 // const montserrat = Montserrat({
 //   subsets: ["latin"],
@@ -42,6 +43,7 @@ function ClientContent({ children }: { children: React.ReactNode }) {
           <TenantDebug />
           {/* <LoginTest /> */}
         </Suspense>
+        <Toaster position="top-right" richColors />
       </TenantProvider>
     </QueryClientProvider>
   );

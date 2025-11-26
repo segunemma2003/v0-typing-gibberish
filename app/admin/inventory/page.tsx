@@ -296,7 +296,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={handleCreateCategory} disabled={createCategory.isPending}>
+              <Button onClick={handleCreateCategory}>
                 {createCategory.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -395,7 +395,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createItem.isPending || updateItem.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createItem.isPending || updateItem.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -495,7 +495,7 @@ export default function InventoryPage() {
                     <Button variant="outline" size="sm" onClick={() => handleEdit(item)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)} disabled={deleteItem.isPending}>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(item.id)}>
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>

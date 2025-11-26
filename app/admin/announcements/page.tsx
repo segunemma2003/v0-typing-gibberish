@@ -224,7 +224,6 @@ export default function AnnouncementsPage() {
               <div className="flex gap-2">
                 <Button
                   type="submit"
-                  disabled={createAnnouncement.isPending || updateAnnouncement.isPending}
                 >
                   {createAnnouncement.isPending || updateAnnouncement.isPending ? (
                     <>
@@ -314,7 +313,6 @@ export default function AnnouncementsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => handlePublish(announcement.id)}
-                        disabled={publishAnnouncement.isPending}
                       >
                         <Send className="w-4 h-4 mr-1" />
                         Publish
@@ -327,7 +325,6 @@ export default function AnnouncementsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(announcement.id)}
-                      disabled={deleteAnnouncement.isPending}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

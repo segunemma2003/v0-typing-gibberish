@@ -78,7 +78,34 @@ export default function TermsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error creating term:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create term"
+      let errorMessage = "Failed to create term"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -125,19 +152,46 @@ export default function TermsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error updating term:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update term"
+      let errorMessage = "Failed to update term"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
 
   const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this term?")) return
+    
     const term = terms.find((t: any) => t.id === id)
     if (term?.is_current) {
       toast.error("Cannot delete the current term")
       return
     }
-    
-    if (!confirm("Are you sure you want to delete this term?")) return
 
     try {
       await deleteTerm.mutateAsync(id)
@@ -145,7 +199,34 @@ export default function TermsPage() {
       refetch()
     } catch (error: any) {
       console.error("Error deleting term:", error)
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete term"
+      let errorMessage = "Failed to delete term"
+      if (error?.response?.data) {
+        const data = error.response.data
+        // Handle validation errors (Laravel format)
+        if (data.errors) {
+          const errors = data.errors
+          const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages
+            return `${field}: ${msg}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
+          errorMessage = data.message || data.error || data.detail || errorMessage
+        }
+      } else if (error?.message) {
+        errorMessage = error.message
+      }
       toast.error(errorMessage)
     }
   }
@@ -209,7 +290,6 @@ export default function TermsPage() {
                       }))
                     }
                   }}
-                  disabled={!!editingId}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select academic year" />
@@ -293,7 +373,6 @@ export default function TermsPage() {
             <div className="flex gap-2 mt-4">
               <Button
                 onClick={editingId ? handleUpdate : handleAdd}
-                disabled={createTerm.isPending || updateTerm.isPending}
               >
                 {(createTerm.isPending || updateTerm.isPending) ? (
                   <>
@@ -395,7 +474,6 @@ export default function TermsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(term.id)}
-                      disabled={deleteTerm.isPending || term.is_current}
                       title={term.is_current ? "Cannot delete current term" : ""}
                     >
                       {deleteTerm.isPending ? (

@@ -686,7 +686,6 @@ export default function StoriesPage() {
               <Button
                 type="button"
                 onClick={handleSubmit}
-                disabled={createStory.isPending || updateStory.isPending}
               >
                 {(createStory.isPending || updateStory.isPending) ? (
                   <>

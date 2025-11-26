@@ -665,7 +665,7 @@ export default function TeacherQuestionBankPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button type="button" onClick={handleSubmit} disabled={createQuestion.isPending || updateQuestion.isPending}>
+              <Button type="button" onClick={handleSubmit}>
                 {(createQuestion.isPending || updateQuestion.isPending) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />

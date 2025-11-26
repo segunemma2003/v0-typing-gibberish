@@ -298,7 +298,6 @@ export default function TimetablePage() {
             <div className="flex gap-2 mt-4">
               <Button
                 onClick={editingId ? handleUpdate : handleAdd}
-                disabled={createTimetable.isPending || updateTimetable.isPending}
               >
                 {createTimetable.isPending || updateTimetable.isPending ? (
                   <>
@@ -420,7 +419,6 @@ export default function TimetablePage() {
                                 size="sm"
                                 className="h-6 w-6 p-0"
                                 onClick={() => handleDelete(entry.id)}
-                                disabled={deleteTimetable.isPending}
                               >
                                 <Trash2 className="w-3 h-3" />
                               </Button>

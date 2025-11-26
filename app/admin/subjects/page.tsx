@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +31,14 @@ export default function SubjectsPage() {
   const createSubject = useCreateSubject()
   const updateSubject = useUpdateSubject()
   const deleteSubject = useDeleteSubject()
+
+  // Show toast error when error state changes
+  useEffect(() => {
+    if (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error loading subjects'
+      toast.error(`Error loading subjects: ${errorMessage}`)
+    }
+  }, [error])
 
   const [formData, setFormData] = useState({
     name: "",
@@ -72,6 +80,7 @@ export default function SubjectsPage() {
       let errorMessage = "Failed to create subject"
       if (error?.response?.data) {
         const data = error.response.data
+        // Handle validation errors (Laravel format)
         if (data.errors) {
           const errors = data.errors
           const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
@@ -79,7 +88,18 @@ export default function SubjectsPage() {
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -128,6 +148,7 @@ export default function SubjectsPage() {
       let errorMessage = "Failed to update subject"
       if (error?.response?.data) {
         const data = error.response.data
+        // Handle validation errors (Laravel format)
         if (data.errors) {
           const errors = data.errors
           const errorMessages = Object.entries(errors).map(([field, messages]: [string, any]) => {
@@ -135,7 +156,18 @@ export default function SubjectsPage() {
             return `${field}: ${msg}`
           })
           errorMessage = errorMessages.join("; ")
-        } else {
+        }
+        // Handle messages format (another common format)
+        else if (data.messages) {
+          const messages = data.messages
+          const errorMessages = Object.entries(messages).map(([field, msg]: [string, any]) => {
+            const message = Array.isArray(msg) ? msg.join(", ") : msg
+            return `${field}: ${message}`
+          })
+          errorMessage = errorMessages.join("; ")
+        }
+        // Handle simple message format
+        else {
           errorMessage = data.message || data.error || data.detail || errorMessage
         }
       } else if (error?.message) {
@@ -281,7 +313,7 @@ export default function SubjectsPage() {
               </div>
             </div>
             <div className="flex gap-2 mt-4">
-              <Button onClick={editingId ? handleUpdate : handleAdd} disabled={createSubject.isPending || updateSubject.isPending}>
+              <Button onClick={editingId ? handleUpdate : handleAdd}>
                 {createSubject.isPending || updateSubject.isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -391,7 +423,6 @@ export default function SubjectsPage() {
                       size="sm"
                       className="flex-1"
                       onClick={() => handleDelete(subject.id)}
-                      disabled={deleteSubject.isPending}
                     >
                   <Trash2 className="w-4 h-4 mr-1" />
                   Delete
