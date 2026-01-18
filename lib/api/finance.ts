@@ -331,6 +331,252 @@ export const financeService = {
     const response = await apiClient.get(`/financial/payments/student/${childId}`);
     return response.data;
   },
+
+  // School Admin - Financial Management APIs
+  getFeeStructure: async (params?: {
+    class_id?: number;
+  }): Promise<{
+    fee_structure: Array<{
+      fee_type: string;
+      class_id: number;
+      total_amount: number;
+      count: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/financial/fees/structure', { params });
+    return response.data;
+  },
+
+  createFeeStructure: async (data: {
+    fee_type: string;
+    amount: number;
+    class_ids: number[];
+    academic_year_id: number;
+    term_id: number;
+    due_date: string;
+  }): Promise<{
+    message: string;
+    structure: any;
+  }> => {
+    const response = await apiClient.post('/financial/fees/structure', data);
+    return response.data;
+  },
+
+  updateFeeStructure: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      fee_type: string;
+      amount: number;
+      class_ids: number[];
+      due_date: string;
+    }>;
+  }): Promise<{
+    message: string;
+    structure: any;
+  }> => {
+    const response = await apiClient.put(`/financial/fees/structure/${id}`, data);
+    return response.data;
+  },
+
+  getStudentFees: async (studentId: number): Promise<{
+    student_id: number;
+    fees: Array<{
+      id: number;
+      fee_type: string;
+      amount: number;
+      balance: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/financial/fees/student/${studentId}`);
+    return response.data;
+  },
+
+  payFee: async ({ id, data }: {
+    id: number;
+    data: {
+      amount: number;
+      payment_method: string;
+      payment_reference: string;
+      payment_date: string;
+    };
+  }): Promise<{
+    message: string;
+    payment: any;
+  }> => {
+    const response = await apiClient.post(`/financial/fees/${id}/pay`, data);
+    return response.data;
+  },
+
+  getPayments: async (params?: {
+    student_id?: number;
+    start_date?: string;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      student_id: number;
+      amount: number;
+      payment_method: string;
+      payment_reference: string;
+      payment_date: string;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/financial/payments', { params });
+    return response.data;
+  },
+
+  createPayment: async (data: {
+    student_id: number;
+    fee_id: number;
+    amount: number;
+    payment_method: string;
+    payment_reference: string;
+    payment_date: string;
+  }): Promise<{
+    message: string;
+    payment: any;
+  }> => {
+    const response = await apiClient.post('/financial/payments', data);
+    return response.data;
+  },
+
+  updatePayment: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      amount: number;
+      payment_method: string;
+      payment_reference: string;
+      status: string;
+    }>;
+  }): Promise<{
+    message: string;
+    payment: any;
+  }> => {
+    const response = await apiClient.put(`/financial/payments/${id}`, data);
+    return response.data;
+  },
+
+  deletePayment: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/financial/payments/${id}`);
+    return response.data;
+  },
+
+  getPaymentReceipt: async (id: number): Promise<Blob> => {
+    const response = await apiClient.get(`/financial/payments/receipt/${id}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  getExpenses: async (params?: {
+    category?: string;
+    start_date?: string;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      description: string;
+      amount: number;
+      category: string;
+      date: string;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/financial/expenses', { params });
+    return response.data;
+  },
+
+  createExpense: async (data: {
+    description: string;
+    amount: number;
+    category: string;
+    date: string;
+    payment_method?: string;
+    vendor?: string;
+  }): Promise<{
+    message: string;
+    expense: any;
+  }> => {
+    const response = await apiClient.post('/financial/expenses', data);
+    return response.data;
+  },
+
+  updateExpense: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      description: string;
+      amount: number;
+      category: string;
+      date: string;
+      status: string;
+    }>;
+  }): Promise<{
+    message: string;
+    expense: any;
+  }> => {
+    const response = await apiClient.put(`/financial/expenses/${id}`, data);
+    return response.data;
+  },
+
+  deleteExpense: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/financial/expenses/${id}`);
+    return response.data;
+  },
+
+  getPayroll: async (params?: {
+    month?: number;
+    year?: number;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      staff_id: number;
+      month: number;
+      year: number;
+      basic_salary: number;
+      allowances: number;
+      deductions: number;
+      net_salary: number;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/financial/payroll', { params });
+    return response.data;
+  },
+
+  createPayroll: async (data: {
+    staff_id: number;
+    month: number;
+    year: number;
+    basic_salary: number;
+    allowances?: number;
+    deductions?: number;
+  }): Promise<{
+    message: string;
+    payroll: any;
+  }> => {
+    const response = await apiClient.post('/financial/payroll', data);
+    return response.data;
+  },
+
+  updatePayroll: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      basic_salary: number;
+      allowances: number;
+      deductions: number;
+      status: string;
+    }>;
+  }): Promise<{
+    message: string;
+    payroll: any;
+  }> => {
+    const response = await apiClient.put(`/financial/payroll/${id}`, data);
+    return response.data;
+  },
+
+  deletePayroll: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/financial/payroll/${id}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

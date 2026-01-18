@@ -567,6 +567,43 @@ export const dashboardService = {
     const response = await apiClient.get('/dashboard/security');
     return response.data;
   },
+
+  // School Admin Dashboard APIs
+  getDashboard: async (): Promise<{
+    summary: {
+      students: number;
+      teachers: number;
+      staff: number;
+      classes: number;
+    };
+    recent_activities: Array<{
+      id: number;
+      type: string;
+      description: string;
+      timestamp: string;
+      user?: string;
+    }>;
+    upcoming_events: Array<{
+      id: number;
+      title: string;
+      date: string;
+      type: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/dashboard');
+    return response.data;
+  },
+
+  getDashboardStats: async (): Promise<{
+    users: number;
+    students: number;
+    teachers: number;
+    classes: number;
+    subjects: number;
+  }> => {
+    const response = await apiClient.get('/dashboard/stats');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -672,6 +709,23 @@ export const useSecurityDashboard = () => {
     queryKey: ['securityDashboard'],
     queryFn: dashboardService.getSecurityDashboard,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+};
+
+// School Admin Dashboard Hooks
+export const useDashboard = () => {
+  return useQuery({
+    queryKey: ['dashboard'],
+    queryFn: dashboardService.getDashboard,
+    staleTime: 1000 * 60 * 5,
+  });
+};
+
+export const useDashboardStats = () => {
+  return useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: dashboardService.getDashboardStats,
+    staleTime: 1000 * 60 * 5,
   });
 };
 

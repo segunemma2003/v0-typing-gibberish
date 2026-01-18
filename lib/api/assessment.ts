@@ -401,6 +401,455 @@ export const assessmentService = {
     const response = await apiClient.post('/assessments/cbt/submit', data);
     return response.data;
   },
+
+  // School Admin - Grading Systems
+  getGradingSystems: async (): Promise<{
+    grading_systems: Array<{
+      id: number;
+      name: string;
+      grade_boundaries: Array<{
+        min: number;
+        max: number;
+        grade: string;
+        remark: string;
+      }>;
+      pass_mark: number;
+      is_default: boolean;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/grading-systems');
+    return response.data;
+  },
+
+  getDefaultGradingSystem: async (): Promise<{
+    grading_system: {
+      id: number;
+      name: string;
+      grade_boundaries: Array<{
+        min: number;
+        max: number;
+        grade: string;
+        remark: string;
+      }>;
+      pass_mark: number;
+      is_default: boolean;
+    };
+  }> => {
+    const response = await apiClient.get('/assessments/grading-systems/default');
+    return response.data;
+  },
+
+  createGradingSystem: async (data: {
+    name: string;
+    description?: string;
+    grade_boundaries: Array<{
+      min: number;
+      max: number;
+      grade: string;
+      remark: string;
+    }>;
+    pass_mark: number;
+    is_default?: boolean;
+  }): Promise<{
+    message: string;
+    grading_system: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.post('/assessments/grading-systems', data);
+    return response.data;
+  },
+
+  updateGradingSystem: async ({ id, data }: {
+    id: number;
+    data: {
+      name?: string;
+      description?: string;
+      grade_boundaries?: Array<{
+        min: number;
+        max: number;
+        grade: string;
+        remark: string;
+      }>;
+      pass_mark?: number;
+      is_default?: boolean;
+    };
+  }): Promise<{
+    message: string;
+    grading_system: any;
+  }> => {
+    const response = await apiClient.put(`/assessments/grading-systems/${id}`, data);
+    return response.data;
+  },
+
+  deleteGradingSystem: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/assessments/grading-systems/${id}`);
+    return response.data;
+  },
+
+  calculateGrade: async (data: {
+    score: number;
+    grading_system_id: number;
+  }): Promise<{
+    grade: string;
+    remark: string;
+  }> => {
+    const response = await apiClient.post('/assessments/grading-systems/calculate-grade', data);
+    return response.data;
+  },
+
+  // School Admin - Continuous Assessments
+  getContinuousAssessments: async (params?: {
+    class_id?: number;
+    term_id?: number;
+    academic_year_id?: number;
+  }): Promise<{
+    assessments: Array<{
+      id: number;
+      name: string;
+      type: string;
+      class_id: number;
+      subject_id: number;
+      total_marks: number;
+      assessment_date: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/continuous-assessments', { params });
+    return response.data;
+  },
+
+  createContinuousAssessment: async (data: {
+    name: string;
+    type: string;
+    class_id: number;
+    subject_id: number;
+    term_id: number;
+    academic_year_id: number;
+    total_marks: number;
+    assessment_date: string;
+  }): Promise<{
+    message: string;
+    assessment: any;
+  }> => {
+    const response = await apiClient.post('/assessments/continuous-assessments', data);
+    return response.data;
+  },
+
+  updateContinuousAssessment: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      name: string;
+      type: string;
+      class_id: number;
+      subject_id: number;
+      term_id: number;
+      academic_year_id: number;
+      total_marks: number;
+      assessment_date: string;
+    }>;
+  }): Promise<{
+    message: string;
+    assessment: any;
+  }> => {
+    const response = await apiClient.put(`/assessments/continuous-assessments/${id}`, data);
+    return response.data;
+  },
+
+  deleteContinuousAssessment: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/assessments/continuous-assessments/${id}`);
+    return response.data;
+  },
+
+  recordCAScores: async ({ id, data }: {
+    id: number;
+    data: {
+      scores: Array<{
+        student_id: number;
+        score: number;
+      }>;
+    };
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post(`/assessments/continuous-assessments/${id}/record-scores`, data);
+    return response.data;
+  },
+
+  getCAScores: async (id: number): Promise<{
+    assessment: any;
+    scores: Array<{
+      student_id: number;
+      student_name: string;
+      score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/assessments/continuous-assessments/${id}/scores`);
+    return response.data;
+  },
+
+  getStudentCAScores: async (studentId: number): Promise<{
+    student: any;
+    scores: Array<{
+      assessment_id: number;
+      assessment_name: string;
+      score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/assessments/continuous-assessments/student/${studentId}/scores`);
+    return response.data;
+  },
+
+  // School Admin - Psychomotor Assessments
+  getPsychomotorAssessmentsByClass: async (classId: number, params?: {
+    term_id?: number;
+    academic_year_id?: number;
+  }): Promise<{
+    assessments: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/assessments/psychomotor-assessments/class/${classId}`, { params });
+    return response.data;
+  },
+
+  getPsychomotorAssessment: async (studentId: number, termId: number, academicYearId: number): Promise<{
+    student: any;
+    term: any;
+    academic_year: any;
+    ratings: Record<string, number>;
+  }> => {
+    const response = await apiClient.get(`/assessments/psychomotor-assessments/${studentId}/${termId}/${academicYearId}`);
+    return response.data;
+  },
+
+  createPsychomotorAssessment: async (data: {
+    student_id: number;
+    term_id: number;
+    academic_year_id: number;
+    ratings: Record<string, number>;
+  }): Promise<{
+    message: string;
+    assessment: any;
+  }> => {
+    const response = await apiClient.post('/assessments/psychomotor-assessments', data);
+    return response.data;
+  },
+
+  bulkCreatePsychomotorAssessments: async (data: {
+    class_id: number;
+    term_id: number;
+    academic_year_id: number;
+    assessments: Array<{
+      student_id: number;
+      ratings: Record<string, number>;
+    }>;
+  }): Promise<{
+    message: string;
+    created: number;
+  }> => {
+    const response = await apiClient.post('/assessments/psychomotor-assessments/bulk', data);
+    return response.data;
+  },
+
+  deletePsychomotorAssessment: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/assessments/psychomotor-assessments/${id}`);
+    return response.data;
+  },
+
+  // School Admin - Results Management
+  generateResults: async (data: {
+    class_id: number;
+    term_id: number;
+    academic_year_id: number;
+  }): Promise<{
+    message: string;
+    results_generated: number;
+  }> => {
+    const response = await apiClient.post('/assessments/results/generate', data);
+    return response.data;
+  },
+
+  getStudentResult: async (studentId: number, termId: number, academicYearId: number): Promise<{
+    student: any;
+    term: any;
+    academic_year: any;
+    results: Array<any>;
+    summary: {
+      total_subjects: number;
+      average_score: number;
+      overall_grade: string;
+      class_position: number;
+    };
+  }> => {
+    const response = await apiClient.get(`/assessments/results/student/${studentId}/${termId}/${academicYearId}`);
+    return response.data;
+  },
+
+  getClassResults: async (classId: number, params?: {
+    term_id?: number;
+    academic_year_id?: number;
+  }): Promise<{
+    class: {
+      id: number;
+      name: string;
+    };
+    results: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/assessments/results/class/${classId}`, { params });
+    return response.data;
+  },
+
+  addCommentsToResult: async ({ resultId, data }: {
+    resultId: number;
+    data: {
+      principal_comment?: string;
+      teacher_comment?: string;
+    };
+  }): Promise<{
+    message: string;
+    result: any;
+  }> => {
+    const response = await apiClient.post(`/assessments/results/${resultId}/comments`, data);
+    return response.data;
+  },
+
+  approveResult: async (resultId: number): Promise<{
+    message: string;
+    result: any;
+  }> => {
+    const response = await apiClient.post(`/assessments/results/${resultId}/approve`);
+    return response.data;
+  },
+
+  publishResults: async (data: {
+    class_id?: number;
+    term_id: number;
+    academic_year_id: number;
+  }): Promise<{
+    message: string;
+    published_count: number;
+  }> => {
+    const response = await apiClient.post('/assessments/results/publish', data);
+    return response.data;
+  },
+
+  // School Admin - Scoreboards
+  getScoreboardForClass: async (classId: number, params?: {
+    term_id?: number;
+    academic_year_id?: number;
+    limit?: number;
+  }): Promise<{
+    scoreboard: Array<{
+      student_id: number;
+      student_name: string;
+      total_score: number;
+      average: number;
+      position: number;
+      grade: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/assessments/scoreboards/class/${classId}`, { params });
+    return response.data;
+  },
+
+  getTopPerformers: async (params?: {
+    term_id?: number;
+    academic_year_id?: number;
+    limit?: number;
+  }): Promise<{
+    top_performers: Array<{
+      student_id: number;
+      student_name: string;
+      class: string;
+      total_score: number;
+      average: number;
+      position: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/scoreboards/top-performers', { params });
+    return response.data;
+  },
+
+  getSubjectToppers: async (subjectId: number): Promise<{
+    subject: any;
+    toppers: Array<{
+      student_id: number;
+      student_name: string;
+      score: number;
+      position: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/assessments/scoreboards/subject/${subjectId}/toppers`);
+    return response.data;
+  },
+
+  refreshScoreboard: async (): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post('/assessments/scoreboards/refresh');
+    return response.data;
+  },
+
+  getClassComparison: async (params?: {
+    term_id?: number;
+    academic_year_id?: number;
+  }): Promise<{
+    comparison: Array<{
+      class_id: number;
+      class_name: string;
+      average_score: number;
+      pass_rate: number;
+      total_students: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/scoreboards/class-comparison', { params });
+    return response.data;
+  },
+
+  // School Admin - Report Cards
+  getReportCard: async (studentId: number, termId: number, academicYearId: number): Promise<{
+    student: any;
+    term: any;
+    academic_year: any;
+    report_card: any;
+  }> => {
+    const response = await apiClient.get(`/assessments/report-cards/${studentId}/${termId}/${academicYearId}`);
+    return response.data;
+  },
+
+  generatePDFReportCard: async (studentId: number, termId: number, academicYearId: number): Promise<Blob> => {
+    const response = await apiClient.get(`/assessments/report-cards/${studentId}/${termId}/${academicYearId}/pdf`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  getPrintableReportCard: async (studentId: number, termId: number, academicYearId: number): Promise<{
+    student: any;
+    term: any;
+    academic_year: any;
+    report_card: any;
+  }> => {
+    const response = await apiClient.get(`/assessments/report-cards/${studentId}/${termId}/${academicYearId}/print`);
+    return response.data;
+  },
+
+  bulkDownloadReportCards: async (data: {
+    class_id: number;
+    term_id: number;
+    academic_year_id: number;
+  }): Promise<Blob> => {
+    const response = await apiClient.post('/assessments/report-cards/bulk-download', data, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  emailReportCard: async (studentId: number, termId: number, academicYearId: number): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post(`/assessments/report-cards/${studentId}/${termId}/${academicYearId}/email`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -571,6 +1020,310 @@ export const useSubmitCBTAnswers = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myExams'] });
       queryClient.invalidateQueries({ queryKey: ['studentDashboard'] });
+    },
+  });
+};
+
+// School Admin - Grading Systems Hooks
+export const useGradingSystems = () => {
+  return useQuery({
+    queryKey: ['gradingSystems'],
+    queryFn: () => assessmentService.getGradingSystems(),
+  });
+};
+
+export const useDefaultGradingSystem = () => {
+  return useQuery({
+    queryKey: ['defaultGradingSystem'],
+    queryFn: () => assessmentService.getDefaultGradingSystem(),
+  });
+};
+
+export const useCreateGradingSystem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.createGradingSystem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gradingSystems'] });
+      queryClient.invalidateQueries({ queryKey: ['defaultGradingSystem'] });
+    },
+  });
+};
+
+export const useUpdateGradingSystem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.updateGradingSystem,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['gradingSystems'] });
+      queryClient.invalidateQueries({ queryKey: ['defaultGradingSystem'] });
+    },
+  });
+};
+
+export const useDeleteGradingSystem = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.deleteGradingSystem,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gradingSystems'] });
+    },
+  });
+};
+
+export const useCalculateGrade = () => {
+  return useMutation({
+    mutationFn: assessmentService.calculateGrade,
+  });
+};
+
+// School Admin - Continuous Assessments Hooks
+export const useContinuousAssessments = (params?: { class_id?: number; term_id?: number; academic_year_id?: number }) => {
+  return useQuery({
+    queryKey: ['continuousAssessments', params],
+    queryFn: () => assessmentService.getContinuousAssessments(params),
+  });
+};
+
+export const useCreateContinuousAssessment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.createContinuousAssessment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['continuousAssessments'] });
+    },
+  });
+};
+
+export const useUpdateContinuousAssessment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.updateContinuousAssessment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['continuousAssessments'] });
+    },
+  });
+};
+
+export const useDeleteContinuousAssessment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.deleteContinuousAssessment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['continuousAssessments'] });
+    },
+  });
+};
+
+export const useRecordCAScores = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.recordCAScores,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['continuousAssessments'] });
+    },
+  });
+};
+
+export const useCAScores = (id: number) => {
+  return useQuery({
+    queryKey: ['caScores', id],
+    queryFn: () => assessmentService.getCAScores(id),
+    enabled: !!id,
+  });
+};
+
+export const useStudentCAScores = (studentId: number) => {
+  return useQuery({
+    queryKey: ['studentCAScores', studentId],
+    queryFn: () => assessmentService.getStudentCAScores(studentId),
+    enabled: !!studentId,
+  });
+};
+
+// School Admin - Psychomotor Assessments Hooks
+export const usePsychomotorAssessmentsByClass = (classId: number, params?: { term_id?: number; academic_year_id?: number }) => {
+  return useQuery({
+    queryKey: ['psychomotorAssessments', classId, params],
+    queryFn: () => assessmentService.getPsychomotorAssessmentsByClass(classId, params),
+    enabled: !!classId,
+  });
+};
+
+export const usePsychomotorAssessment = (studentId: number, termId: number, academicYearId: number) => {
+  return useQuery({
+    queryKey: ['psychomotorAssessment', studentId, termId, academicYearId],
+    queryFn: () => assessmentService.getPsychomotorAssessment(studentId, termId, academicYearId),
+    enabled: !!studentId && !!termId && !!academicYearId,
+  });
+};
+
+export const useCreatePsychomotorAssessment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.createPsychomotorAssessment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['psychomotorAssessments'] });
+    },
+  });
+};
+
+export const useBulkCreatePsychomotorAssessments = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.bulkCreatePsychomotorAssessments,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['psychomotorAssessments'] });
+    },
+  });
+};
+
+export const useDeletePsychomotorAssessment = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.deletePsychomotorAssessment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['psychomotorAssessments'] });
+    },
+  });
+};
+
+// School Admin - Results Management Hooks
+export const useGenerateResults = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.generateResults,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+    },
+  });
+};
+
+export const useStudentResult = (studentId: number, termId: number, academicYearId: number) => {
+  return useQuery({
+    queryKey: ['studentResult', studentId, termId, academicYearId],
+    queryFn: () => assessmentService.getStudentResult(studentId, termId, academicYearId),
+    enabled: !!studentId && !!termId && !!academicYearId,
+  });
+};
+
+export const useClassResults = (classId: number, params?: { term_id?: number; academic_year_id?: number }) => {
+  return useQuery({
+    queryKey: ['classResults', classId, params],
+    queryFn: () => assessmentService.getClassResults(classId, params),
+    enabled: !!classId,
+  });
+};
+
+export const useAddCommentsToResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.addCommentsToResult,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+    },
+  });
+};
+
+export const useApproveResult = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.approveResult,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+    },
+  });
+};
+
+export const usePublishResults = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.publishResults,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['results'] });
+    },
+  });
+};
+
+// School Admin - Scoreboards Hooks
+export const useScoreboardForClass = (classId: number, params?: { term_id?: number; academic_year_id?: number; limit?: number }) => {
+  return useQuery({
+    queryKey: ['scoreboard', classId, params],
+    queryFn: () => assessmentService.getScoreboardForClass(classId, params),
+    enabled: !!classId,
+  });
+};
+
+export const useTopPerformers = (params?: { term_id?: number; academic_year_id?: number; limit?: number }) => {
+  return useQuery({
+    queryKey: ['topPerformers', params],
+    queryFn: () => assessmentService.getTopPerformers(params),
+  });
+};
+
+export const useSubjectToppers = (subjectId: number) => {
+  return useQuery({
+    queryKey: ['subjectToppers', subjectId],
+    queryFn: () => assessmentService.getSubjectToppers(subjectId),
+    enabled: !!subjectId,
+  });
+};
+
+export const useRefreshScoreboard = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assessmentService.refreshScoreboard,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scoreboard'] });
+      queryClient.invalidateQueries({ queryKey: ['topPerformers'] });
+    },
+  });
+};
+
+export const useClassComparison = (params?: { term_id?: number; academic_year_id?: number }) => {
+  return useQuery({
+    queryKey: ['classComparison', params],
+    queryFn: () => assessmentService.getClassComparison(params),
+  });
+};
+
+// School Admin - Report Cards Hooks
+export const useReportCard = (studentId: number, termId: number, academicYearId: number) => {
+  return useQuery({
+    queryKey: ['reportCard', studentId, termId, academicYearId],
+    queryFn: () => assessmentService.getReportCard(studentId, termId, academicYearId),
+    enabled: !!studentId && !!termId && !!academicYearId,
+  });
+};
+
+export const useGeneratePDFReportCard = () => {
+  return useMutation({
+    mutationFn: ({ studentId, termId, academicYearId }: { studentId: number; termId: number; academicYearId: number }) =>
+      assessmentService.generatePDFReportCard(studentId, termId, academicYearId),
+  });
+};
+
+export const usePrintableReportCard = (studentId: number, termId: number, academicYearId: number) => {
+  return useQuery({
+    queryKey: ['printableReportCard', studentId, termId, academicYearId],
+    queryFn: () => assessmentService.getPrintableReportCard(studentId, termId, academicYearId),
+    enabled: !!studentId && !!termId && !!academicYearId,
+  });
+};
+
+export const useBulkDownloadReportCards = () => {
+  return useMutation({
+    mutationFn: assessmentService.bulkDownloadReportCards,
+  });
+};
+
+export const useEmailReportCard = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ studentId, termId, academicYearId }: { studentId: number; termId: number; academicYearId: number }) =>
+      assessmentService.emailReportCard(studentId, termId, academicYearId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reportCard'] });
     },
   });
 };

@@ -121,6 +121,81 @@ export const houseService = {
     const response = await apiClient.get('/houses/competitions');
     return response.data;
   },
+
+  // School Admin - Houses APIs (already have most, adding missing ones)
+  getHouses: async (): Promise<{
+    houses: Array<{
+      id: number;
+      name: string;
+      color: string;
+      motto?: string;
+      points: number;
+      captain_id?: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/houses');
+    return response.data;
+  },
+
+  createHouse: async (data: {
+    name: string;
+    color: string;
+    motto?: string;
+    captain_id?: number;
+  }): Promise<{
+    message: string;
+    house: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.post('/houses', data);
+    return response.data;
+  },
+
+  updateHouse: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      color: string;
+      points: number;
+      motto?: string;
+    }>;
+  }): Promise<{
+    message: string;
+    house: any;
+  }> => {
+    const response = await apiClient.put(`/houses/${id}`, data);
+    return response.data;
+  },
+
+  addPointsToHouse: async ({ id, data }: {
+    id: number;
+    data: {
+      points: number;
+      reason: string;
+      awarded_by: number;
+    };
+  }): Promise<{
+    message: string;
+    point: any;
+  }> => {
+    const response = await apiClient.post(`/houses/${id}/points`, data);
+    return response.data;
+  },
+
+  getHousePoints: async (id: number): Promise<{
+    data: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/houses/${id}/points`);
+    return response.data;
+  },
+
+  listHouseCompetitions: async (): Promise<{
+    competitions: Array<any>;
+  }> => {
+    const response = await apiClient.get('/houses/competitions');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

@@ -155,6 +155,41 @@ export const teacherService = {
     const response = await apiClient.get('/subjects', { params: { teacher_id: 'me' } });
     return Array.isArray(response.data) ? response.data : (response.data?.data || []);
   },
+
+  // School Admin - Get Teacher Classes
+  getTeacherClasses: async (id: number): Promise<{
+    teacher: {
+      id: number;
+      first_name: string;
+      last_name: string;
+    };
+    classes: Array<{
+      id: number;
+      name: string;
+      level?: string;
+      students_count?: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/teachers/${id}/classes`);
+    return response.data;
+  },
+
+  // School Admin - Get Teacher Subjects
+  getTeacherSubjects: async (id: number): Promise<{
+    teacher: {
+      id: number;
+      first_name: string;
+      last_name: string;
+    };
+    subjects: Array<{
+      id: number;
+      name: string;
+      code: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/teachers/${id}/subjects`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -238,5 +273,22 @@ export const useMySubjects = () => {
   return useQuery({
     queryKey: ['mySubjects'],
     queryFn: teacherService.getMySubjects,
+  });
+};
+
+// School Admin - Teacher Management Hooks
+export const useTeacherClasses = (id: number) => {
+  return useQuery({
+    queryKey: ['teacherClasses', id],
+    queryFn: () => teacherService.getTeacherClasses(id),
+    enabled: !!id,
+  });
+};
+
+export const useTeacherSubjects = (id: number) => {
+  return useQuery({
+    queryKey: ['teacherSubjects', id],
+    queryFn: () => teacherService.getTeacherSubjects(id),
+    enabled: !!id,
   });
 };

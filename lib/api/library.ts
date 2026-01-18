@@ -209,6 +209,166 @@ export const libraryService = {
     const response = await apiClient.get('/library/reports/fines', { params });
     return response.data;
   },
+
+  // School Admin - Library Management APIs
+  getLibraryBooks: async (params?: {
+    search?: string;
+    category?: string;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      author: string;
+      isbn: string;
+      total_copies: number;
+      available_copies: number;
+      category: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/library/books', { params });
+    return response.data;
+  },
+
+  createLibraryBook: async (data: {
+    title: string;
+    author: string;
+    isbn: string;
+    publisher?: string;
+    publication_year?: number;
+    category: string;
+    total_copies: number;
+    available_copies: number;
+    price?: number;
+    location?: string;
+  }): Promise<{
+    message: string;
+    book: any;
+  }> => {
+    const response = await apiClient.post('/library/books', data);
+    return response.data;
+  },
+
+  updateLibraryBook: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      total_copies: number;
+      available_copies: number;
+      title: string;
+      author: string;
+    }>;
+  }): Promise<{
+    message: string;
+    book: any;
+  }> => {
+    const response = await apiClient.put(`/library/books/${id}`, data);
+    return response.data;
+  },
+
+  deleteLibraryBook: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/library/books/${id}`);
+    return response.data;
+  },
+
+  borrowLibraryBook: async ({ id, data }: {
+    id: number;
+    data: {
+      student_id: number;
+      due_date: string;
+    };
+  }): Promise<{
+    message: string;
+    borrow: any;
+  }> => {
+    const response = await apiClient.post(`/library/books/${id}/borrow`, data);
+    return response.data;
+  },
+
+  returnLibraryBook: async ({ id, data }: {
+    id: number;
+    data: {
+      borrow_id: number;
+      condition?: string;
+      remarks?: string;
+    };
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post(`/library/books/${id}/return`, data);
+    return response.data;
+  },
+
+  getBorrowedBooks: async (params?: {
+    status?: string;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      book_id: number;
+      student_id: number;
+      borrowed_date: string;
+      due_date: string;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/library/borrowed', { params });
+    return response.data;
+  },
+
+  getLibraryStats: async (): Promise<{
+    stats: {
+      total_books: number;
+      borrowed_books: number;
+      available_books: number;
+      overdue_books: number;
+    };
+  }> => {
+    const response = await apiClient.get('/library/stats');
+    return response.data;
+  },
+
+  getDigitalResources: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      digital_url: string;
+      is_digital: boolean;
+    }>;
+  }> => {
+    const response = await apiClient.get('/library/digital-resources');
+    return response.data;
+  },
+
+  addDigitalResource: async (data: {
+    title: string;
+    author?: string;
+    digital_url: string;
+    is_digital: boolean;
+  }): Promise<{
+    message: string;
+    resource: any;
+  }> => {
+    const response = await apiClient.post('/library/digital-resources', data);
+    return response.data;
+  },
+
+  reserveBook: async ({ id, data }: {
+    id: number;
+    data: {
+      student_id: number;
+    };
+  }): Promise<{
+    message: string;
+    reservation: any;
+  }> => {
+    const response = await apiClient.post(`/library/books/${id}/reserve`, data);
+    return response.data;
+  },
+
+  getBorrowingHistory: async (studentId: number): Promise<{
+    history: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/library/history/${studentId}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -417,3 +577,114 @@ export const useFineCollectionReport = (params?: { from?: string; to?: string })
   });
 };
 
+// School Admin - Library Management Hooks
+export const useLibraryBooks = (params?: { search?: string; category?: string }) => {
+  return useQuery({
+    queryKey: ['libraryBooks', params],
+    queryFn: () => libraryService.getLibraryBooks(params),
+  });
+};
+
+export const useCreateLibraryBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.createLibraryBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+    },
+  });
+};
+
+export const useUpdateLibraryBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.updateLibraryBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+    },
+  });
+};
+
+export const useDeleteLibraryBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.deleteLibraryBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+    },
+  });
+};
+
+export const useBorrowLibraryBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.borrowLibraryBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['borrowedBooks'] });
+    },
+  });
+};
+
+export const useReturnLibraryBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.returnLibraryBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+      queryClient.invalidateQueries({ queryKey: ['borrowedBooks'] });
+    },
+  });
+};
+
+export const useBorrowedBooksAdmin = (params?: { status?: string }) => {
+  return useQuery({
+    queryKey: ['borrowedBooksAdmin', params],
+    queryFn: () => libraryService.getBorrowedBooks(params),
+  });
+};
+
+export const useLibraryStatsAdmin = () => {
+  return useQuery({
+    queryKey: ['libraryStatsAdmin'],
+    queryFn: () => libraryService.getLibraryStats(),
+  });
+};
+
+export const useDigitalResourcesAdmin = () => {
+  return useQuery({
+    queryKey: ['digitalResourcesAdmin'],
+    queryFn: () => libraryService.getDigitalResources(),
+  });
+};
+
+export const useAddDigitalResource = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.addDigitalResource,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['digitalResourcesAdmin'] });
+    },
+  });
+};
+
+export const useReserveBook = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: libraryService.reserveBook,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['libraryBooks'] });
+    },
+  });
+};
+
+export const useBorrowingHistoryAdmin = (studentId: number) => {
+  return useQuery({
+    queryKey: ['borrowingHistoryAdmin', studentId],
+    queryFn: () => libraryService.getBorrowingHistory(studentId),
+    enabled: !!studentId,
+  });
+};

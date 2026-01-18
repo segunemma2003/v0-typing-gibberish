@@ -295,6 +295,150 @@ export const academicService = {
     const response = await apiClient.get(`/subjects/${subjectId}/curriculum-progress`);
     return response.data;
   },
+
+  // Get Class with students
+  getClass: async (id: number): Promise<{
+    id: number;
+    name: string;
+    students: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      admission_number: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/classes/${id}`);
+    return response.data;
+  },
+
+  // Get Class Students
+  getClassStudents: async (id: number): Promise<{
+    class: {
+      id: number;
+      name: string;
+    };
+    students: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      admission_number: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/classes/${id}/students`);
+    return response.data;
+  },
+
+  // Arms (Class Sections) Management
+  getArms: async (): Promise<{
+    arms: Array<{
+      id: number;
+      name: string;
+      description?: string;
+      status: 'active' | 'inactive';
+    }>;
+  }> => {
+    const response = await apiClient.get('/arms');
+    return response.data;
+  },
+
+  getArm: async (id: number): Promise<{
+    id: number;
+    name: string;
+    description?: string;
+    status: 'active' | 'inactive';
+  }> => {
+    const response = await apiClient.get(`/arms/${id}`);
+    return response.data;
+  },
+
+  createArm: async (data: {
+    name: string;
+    description?: string;
+  }): Promise<{
+    message: string;
+    arm: {
+      id: number;
+      name: string;
+      description?: string;
+      status: 'active';
+    };
+  }> => {
+    const response = await apiClient.post('/arms', data);
+    return response.data;
+  },
+
+  updateArm: async ({ id, data }: {
+    id: number;
+    data: {
+      name?: string;
+      description?: string;
+      status?: 'active' | 'inactive';
+    };
+  }): Promise<{
+    message: string;
+    arm: {
+      id: number;
+      name: string;
+      description?: string;
+      status: 'active' | 'inactive';
+    };
+  }> => {
+    const response = await apiClient.put(`/arms/${id}`, data);
+    return response.data;
+  },
+
+  deleteArm: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/arms/${id}`);
+    return response.data;
+  },
+
+  assignArmToClass: async (data: {
+    arm_id: number;
+    class_id: number;
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/arms/assign-to-class', data);
+    return response.data;
+  },
+
+  removeArmFromClass: async (data: {
+    arm_id: number;
+    class_id: number;
+  }): Promise<{ message: string }> => {
+    const response = await apiClient.post('/arms/remove-from-class', data);
+    return response.data;
+  },
+
+  getClassArms: async (classId: number): Promise<{
+    class: {
+      id: number;
+      name: string;
+    };
+    arms: Array<{
+      id: number;
+      name: string;
+      description?: string;
+      status: 'active' | 'inactive';
+    }>;
+  }> => {
+    const response = await apiClient.get(`/arms/class/${classId}`);
+    return response.data;
+  },
+
+  getArmStudents: async (armId: number): Promise<{
+    arm: {
+      id: number;
+      name: string;
+    };
+    students: Array<{
+      id: number;
+      first_name: string;
+      last_name: string;
+      admission_number: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/arms/${armId}/students`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -509,5 +653,107 @@ export const useCurriculumProgress = (subjectId: number) => {
     queryKey: ['curriculumProgress', subjectId],
     queryFn: () => academicService.getCurriculumProgress(subjectId),
     enabled: !!subjectId,
+  });
+};
+
+// Class Hooks
+export const useClass = (id: number) => {
+  return useQuery({
+    queryKey: ['class', id],
+    queryFn: () => academicService.getClass(id),
+    enabled: !!id,
+  });
+};
+
+export const useClassStudents = (id: number) => {
+  return useQuery({
+    queryKey: ['classStudents', id],
+    queryFn: () => academicService.getClassStudents(id),
+    enabled: !!id,
+  });
+};
+
+// Arms (Class Sections) Hooks
+export const useArms = () => {
+  return useQuery({
+    queryKey: ['arms'],
+    queryFn: () => academicService.getArms(),
+  });
+};
+
+export const useArm = (id: number) => {
+  return useQuery({
+    queryKey: ['arm', id],
+    queryFn: () => academicService.getArm(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateArm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.createArm,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['arms'] });
+    },
+  });
+};
+
+export const useUpdateArm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.updateArm,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['arms'] });
+      queryClient.invalidateQueries({ queryKey: ['arm', variables.id] });
+    },
+  });
+};
+
+export const useDeleteArm = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.deleteArm,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['arms'] });
+    },
+  });
+};
+
+export const useAssignArmToClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.assignArmToClass,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['arms'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+    },
+  });
+};
+
+export const useRemoveArmFromClass = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: academicService.removeArmFromClass,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['arms'] });
+      queryClient.invalidateQueries({ queryKey: ['classes'] });
+    },
+  });
+};
+
+export const useClassArms = (classId: number) => {
+  return useQuery({
+    queryKey: ['classArms', classId],
+    queryFn: () => academicService.getClassArms(classId),
+    enabled: !!classId,
+  });
+};
+
+export const useArmStudents = (armId: number) => {
+  return useQuery({
+    queryKey: ['armStudents', armId],
+    queryFn: () => academicService.getArmStudents(armId),
+    enabled: !!armId,
   });
 };

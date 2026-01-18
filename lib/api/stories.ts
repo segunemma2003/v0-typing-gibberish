@@ -203,6 +203,19 @@ export const storiesService = {
     const response = await apiClient.get(`/stories/${storyId}/analytics`);
     return response.data;
   },
+
+  // School Admin - School Stories APIs (already have most, adding missing ones)
+  listStories: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      content: string;
+      published_at: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/stories');
+    return response.data;
+  },
 };
 
 // TanStack Query Hooks

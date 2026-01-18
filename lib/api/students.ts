@@ -316,6 +316,45 @@ export const studentService = {
     const response = await apiClient.get('/students/me/guardians');
     return response.data;
   },
+
+  // Get Student Assignments
+  getStudentAssignments: async (id: number): Promise<{
+    student: {
+      id: number;
+      name: string;
+    };
+    assignments: Array<{
+      id: number;
+      title: string;
+      subject: string;
+      due_date: string;
+      status?: string;
+      score?: number;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/students/${id}/assignments`);
+    return response.data;
+  },
+
+  // Get Student Subjects
+  getStudentSubjects: async (id: number): Promise<{
+    student: {
+      id: number;
+      name: string;
+      class: {
+        id: number;
+        name: string;
+      };
+    };
+    subjects: Array<{
+      id: number;
+      name: string;
+      code: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/students/${id}/subjects`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -418,6 +457,22 @@ export const useStudentResults = (id: number, params?: GetStudentResultsParams) 
   return useQuery({
     queryKey: ['studentResults', id, params],
     queryFn: () => studentService.getStudentResults(id, params),
+    enabled: !!id,
+  });
+};
+
+export const useStudentAssignments = (id: number) => {
+  return useQuery({
+    queryKey: ['studentAssignments', id],
+    queryFn: () => studentService.getStudentAssignments(id),
+    enabled: !!id,
+  });
+};
+
+export const useStudentSubjects = (id: number) => {
+  return useQuery({
+    queryKey: ['studentSubjects', id],
+    queryFn: () => studentService.getStudentSubjects(id),
     enabled: !!id,
   });
 };

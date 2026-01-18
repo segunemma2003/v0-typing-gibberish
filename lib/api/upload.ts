@@ -77,6 +77,64 @@ export const uploadService = {
     });
     return response.data;
   },
+
+  // School Admin - File Uploads APIs
+  getPresignedURLs: async (params?: {
+    files: Array<{
+      filename: string;
+      content_type: string;
+    }>;
+  }): Promise<{
+    urls: Array<{
+      filename: string;
+      url: string;
+      key: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/uploads/presigned-urls', { params });
+    return response.data;
+  },
+
+  uploadFile: async (file: File): Promise<{
+    message: string;
+    file: {
+      url: string;
+      key: string;
+    };
+  }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/uploads/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  uploadMultipleFiles: async (files: File[]): Promise<{
+    message: string;
+    files: Array<{
+      url: string;
+      key: string;
+    }>;
+  }> => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('files[]', file);
+    });
+    const response = await apiClient.post('/uploads/upload/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  deleteFile: async (key: string): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/uploads/${key}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

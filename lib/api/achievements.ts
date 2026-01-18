@@ -75,6 +75,69 @@ export const achievementService = {
     const response = await apiClient.delete(`/achievements/${id}`);
     return response.data;
   },
+
+  // School Admin - Achievements APIs
+  listAchievements: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      description?: string;
+      category: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/achievements');
+    return response.data;
+  },
+
+  createAchievement: async (data: {
+    title: string;
+    description?: string;
+    category: string;
+  }): Promise<{
+    message: string;
+    achievement: any;
+  }> => {
+    const response = await apiClient.post('/achievements', data);
+    return response.data;
+  },
+
+  getAchievement: async (id: number): Promise<{
+    achievement: any;
+  }> => {
+    const response = await apiClient.get(`/achievements/${id}`);
+    return response.data;
+  },
+
+  updateAchievement: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      description: string;
+      category: string;
+    }>;
+  }): Promise<{
+    message: string;
+    achievement: any;
+  }> => {
+    const response = await apiClient.put(`/achievements/${id}`, data);
+    return response.data;
+  },
+
+  deleteAchievement: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/achievements/${id}`);
+    return response.data;
+  },
+
+  getStudentAchievements: async (studentId: number): Promise<{
+    student: {
+      id: number;
+      name: string;
+    };
+    achievements: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/achievements/student/${studentId}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

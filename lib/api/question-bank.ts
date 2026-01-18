@@ -155,6 +155,84 @@ export const questionBankService = {
     const response = await apiClient.get('/question-bank/statistics');
     return response.data;
   },
+
+  // School Admin - Question Banks APIs
+  listQuestionBanks: async (): Promise<{
+    data: Array<{
+      id: number;
+      subject_id: number;
+      class_id: number;
+      title: string;
+      questions_count: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/question-bank');
+    return response.data;
+  },
+
+  createQuestionBank: async (data: {
+    subject_id: number;
+    class_id: number;
+    title: string;
+    description?: string;
+  }): Promise<{
+    message: string;
+    question_bank: any;
+  }> => {
+    const response = await apiClient.post('/question-bank', data);
+    return response.data;
+  },
+
+  getQuestionBank: async (id: number): Promise<{
+    question_bank: any;
+  }> => {
+    const response = await apiClient.get(`/question-bank/${id}`);
+    return response.data;
+  },
+
+  updateQuestionBank: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      description: string;
+    }>;
+  }): Promise<{
+    message: string;
+    question_bank: any;
+  }> => {
+    const response = await apiClient.put(`/question-bank/${id}`, data);
+    return response.data;
+  },
+
+  deleteQuestionBank: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/question-bank/${id}`);
+    return response.data;
+  },
+
+  getQuestionsForExam: async (params: {
+    subject_id: number;
+    class_id: number;
+  }): Promise<{
+    questions: Array<any>;
+  }> => {
+    const response = await apiClient.get('/question-bank/for-exam', { params });
+    return response.data;
+  },
+
+  getQuestionBankStatistics: async (): Promise<{
+    statistics: any;
+  }> => {
+    const response = await apiClient.get('/question-bank/statistics');
+    return response.data;
+  },
+
+  duplicateQuestionBank: async (id: number): Promise<{
+    message: string;
+    question_bank: any;
+  }> => {
+    const response = await apiClient.post(`/question-bank/${id}/duplicate`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

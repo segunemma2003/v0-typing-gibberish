@@ -114,6 +114,18 @@ export const schoolService = {
     return response.data;
   },
 
+  // Get My School (School Admin API)
+  getMySchool: async (): Promise<{ school: School }> => {
+    const response = await apiClient.get('/schools/me');
+    return response.data;
+  },
+
+  // Update My School (School Admin API)
+  updateMySchool: async (data: UpdateSchoolRequest & { academic_year?: string; term?: string }): Promise<{ message: string; school: School }> => {
+    const response = await apiClient.put('/schools/me', data);
+    return response.data;
+  },
+
   getSchoolById: async (id: number): Promise<School> => {
     const response = await apiClient.get(`/schools/${id}`);
     // API returns { school: {...}, stats: {...} } but we want just the school object
@@ -195,3 +207,21 @@ export const useSchoolOrganogram = (id: number) => {
   });
 };
 
+// School Admin specific hooks
+export const useMySchool = () => {
+  return useQuery({
+    queryKey: ['school', 'me'],
+    queryFn: () => schoolService.getMySchool(),
+  });
+};
+
+export const useUpdateMySchool = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: schoolService.updateMySchool,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['school', 'me'] });
+      queryClient.invalidateQueries({ queryKey: ['schools'] });
+    },
+  });
+};

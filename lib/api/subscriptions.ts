@@ -77,6 +77,124 @@ export const subscriptionService = {
     const response = await apiClient.post(`/subscriptions/${id}/renew`);
     return response.data;
   },
+
+  // School Admin - Subscriptions & Modules APIs
+  listSubscriptions: async (): Promise<{
+    data: Array<{
+      id: number;
+      plan_id: number;
+      status: string;
+      start_date: string;
+      end_date: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/subscriptions');
+    return response.data;
+  },
+
+  getSubscriptionPlans: async (): Promise<{
+    plans: Array<any>;
+  }> => {
+    const response = await apiClient.get('/subscriptions/plans');
+    return response.data;
+  },
+
+  getAvailableModules: async (): Promise<{
+    modules: Array<any>;
+  }> => {
+    const response = await apiClient.get('/subscriptions/modules');
+    return response.data;
+  },
+
+  getSubscriptionStatus: async (): Promise<{
+    subscription: {
+      status: string;
+      plan: any;
+      modules: Array<any>;
+      message?: string;
+    };
+  }> => {
+    const response = await apiClient.get('/subscriptions/status');
+    return response.data;
+  },
+
+  getSubscriptionDetails: async (id: number): Promise<{
+    subscription: any;
+  }> => {
+    const response = await apiClient.get(`/subscriptions/${id}`);
+    return response.data;
+  },
+
+  createSubscription: async (data: {
+    plan_id: number;
+    auto_renew?: boolean;
+  }): Promise<{
+    message: string;
+    subscription: any;
+  }> => {
+    const response = await apiClient.post('/subscriptions/create', data);
+    return response.data;
+  },
+
+  upgradeSubscription: async ({ id, data }: {
+    id: number;
+    data: {
+      plan_id: number;
+    };
+  }): Promise<{
+    message: string;
+    subscription: any;
+  }> => {
+    const response = await apiClient.put(`/subscriptions/${id}/upgrade`, data);
+    return response.data;
+  },
+
+  renewSubscription: async (id: number): Promise<{
+    message: string;
+    subscription: any;
+  }> => {
+    const response = await apiClient.post(`/subscriptions/${id}/renew`);
+    return response.data;
+  },
+
+  cancelSubscription: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/subscriptions/${id}/cancel`);
+    return response.data;
+  },
+
+  checkModuleAccess: async (module: string): Promise<{
+    has_access: boolean;
+    message?: string;
+  }> => {
+    const response = await apiClient.get(`/subscriptions/modules/${module}/access`);
+    return response.data;
+  },
+
+  checkFeatureAccess: async (feature: string): Promise<{
+    has_access: boolean;
+    message?: string;
+  }> => {
+    const response = await apiClient.get(`/subscriptions/features/${feature}/access`);
+    return response.data;
+  },
+
+  getSchoolModules: async (): Promise<{
+    modules: string[];
+  }> => {
+    const response = await apiClient.get('/subscriptions/school/modules');
+    return response.data;
+  },
+
+  getSchoolLimits: async (): Promise<{
+    limits: {
+      students: number;
+      teachers: number;
+      storage: number;
+    };
+  }> => {
+    const response = await apiClient.get('/subscriptions/school/limits');
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -150,3 +268,113 @@ export const useRenewSubscription = () => {
   });
 };
 
+// School Admin - Subscriptions & Modules Hooks
+export const useListSubscriptions = () => {
+  return useQuery({
+    queryKey: ['subscriptions'],
+    queryFn: () => subscriptionService.listSubscriptions(),
+  });
+};
+
+export const useSubscriptionPlans = () => {
+  return useQuery({
+    queryKey: ['subscriptionPlans'],
+    queryFn: () => subscriptionService.getSubscriptionPlans(),
+  });
+};
+
+export const useAvailableModules = () => {
+  return useQuery({
+    queryKey: ['availableModules'],
+    queryFn: () => subscriptionService.getAvailableModules(),
+  });
+};
+
+export const useSubscriptionStatus = () => {
+  return useQuery({
+    queryKey: ['subscriptionStatus'],
+    queryFn: () => subscriptionService.getSubscriptionStatus(),
+  });
+};
+
+export const useSubscriptionDetails = (id: number) => {
+  return useQuery({
+    queryKey: ['subscriptionDetails', id],
+    queryFn: () => subscriptionService.getSubscriptionDetails(id),
+    enabled: !!id,
+  });
+};
+
+export const useCreateSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: subscriptionService.createSubscription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptionStatus'] });
+    },
+  });
+};
+
+export const useUpgradeSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: subscriptionService.upgradeSubscription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptionStatus'] });
+    },
+  });
+};
+
+export const useRenewSubscriptionAdmin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: subscriptionService.renewSubscription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptionStatus'] });
+    },
+  });
+};
+
+export const useCancelSubscriptionAdmin = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: subscriptionService.cancelSubscription,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['subscriptionStatus'] });
+    },
+  });
+};
+
+export const useCheckModuleAccess = (module: string) => {
+  return useQuery({
+    queryKey: ['moduleAccess', module],
+    queryFn: () => subscriptionService.checkModuleAccess(module),
+    enabled: !!module,
+  });
+};
+
+export const useCheckFeatureAccess = (feature: string) => {
+  return useQuery({
+    queryKey: ['featureAccess', feature],
+    queryFn: () => subscriptionService.checkFeatureAccess(feature),
+    enabled: !!feature,
+  });
+};
+
+export const useSchoolModules = () => {
+  return useQuery({
+    queryKey: ['schoolModules'],
+    queryFn: () => subscriptionService.getSchoolModules(),
+  });
+};
+
+export const useSchoolLimits = () => {
+  return useQuery({
+    queryKey: ['schoolLimits'],
+    queryFn: () => subscriptionService.getSchoolLimits(),
+  });
+};

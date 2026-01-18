@@ -123,6 +123,154 @@ export const sportsService = {
     const response = await apiClient.post('/sports/events', data);
     return response.data;
   },
+
+  // School Admin - Sports Management APIs
+  listSportsActivities: async (): Promise<{
+    activities: Array<{
+      id: number;
+      name: string;
+      type: string;
+      coach_id?: number;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/sports/activities');
+    return response.data;
+  },
+
+  createSportsActivity: async (data: {
+    name: string;
+    description?: string;
+    type: string;
+    coach_id?: number;
+  }): Promise<{
+    message: string;
+    activity: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.post('/sports/activities', data);
+    return response.data;
+  },
+
+  updateSportsActivity: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      name: string;
+      description: string;
+      type: string;
+      coach_id: number;
+      status: string;
+    }>;
+  }): Promise<{
+    message: string;
+    activity: any;
+  }> => {
+    const response = await apiClient.put(`/sports/activities/${id}`, data);
+    return response.data;
+  },
+
+  deleteSportsActivity: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/sports/activities/${id}`);
+    return response.data;
+  },
+
+  listSportsTeams: async (): Promise<{
+    teams: Array<{
+      id: number;
+      name: string;
+      activity_id: number;
+      captain_id?: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/sports/teams');
+    return response.data;
+  },
+
+  createSportsTeam: async (data: {
+    name: string;
+    sport: string;
+    gender?: string;
+    age_group?: string;
+  }): Promise<{
+    message: string;
+    team: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.post('/sports/teams', data);
+    return response.data;
+  },
+
+  updateSportsTeam: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      name: string;
+      captain_id: number;
+    }>;
+  }): Promise<{
+    message: string;
+    team: any;
+  }> => {
+    const response = await apiClient.put(`/sports/teams/${id}`, data);
+    return response.data;
+  },
+
+  deleteSportsTeam: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/sports/teams/${id}`);
+    return response.data;
+  },
+
+  listSportsEvents: async (): Promise<{
+    events: Array<{
+      id: number;
+      name: string;
+      event_date: string;
+      venue?: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/sports/events');
+    return response.data;
+  },
+
+  createSportsEvent: async (data: {
+    title: string;
+    date: string;
+    venue?: string;
+    description?: string;
+  }): Promise<{
+    message: string;
+    event: {
+      id: number;
+      name: string;
+    };
+  }> => {
+    const response = await apiClient.post('/sports/events', data);
+    return response.data;
+  },
+
+  updateSportsEvent: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      date: string;
+      venue: string;
+      description: string;
+    }>;
+  }): Promise<{
+    message: string;
+    event: any;
+  }> => {
+    const response = await apiClient.put(`/sports/events/${id}`, data);
+    return response.data;
+  },
+
+  deleteSportsEvent: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/sports/events/${id}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

@@ -108,6 +108,61 @@ export const announcementService = {
     const response = await apiClient.get('/announcements/for-parents');
     return response.data;
   },
+
+  // School Admin - Announcements APIs (already have most, adding missing ones)
+  listAnnouncements: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      content: string;
+      priority: string;
+      published_at: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/announcements');
+    return response.data;
+  },
+
+  createAnnouncement: async (data: {
+    title: string;
+    content: string;
+    priority?: string;
+    target_audience?: string;
+  }): Promise<{
+    message: string;
+    announcement: any;
+  }> => {
+    const response = await apiClient.post('/announcements', data);
+    return response.data;
+  },
+
+  getAnnouncement: async (id: number): Promise<{
+    announcement: any;
+  }> => {
+    const response = await apiClient.get(`/announcements/${id}`);
+    return response.data;
+  },
+
+  updateAnnouncement: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      content: string;
+      priority: string;
+      target_audience: string;
+    }>;
+  }): Promise<{
+    message: string;
+    announcement: any;
+  }> => {
+    const response = await apiClient.put(`/announcements/${id}`, data);
+    return response.data;
+  },
+
+  deleteAnnouncement: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/announcements/${id}`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

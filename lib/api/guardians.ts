@@ -221,6 +221,123 @@ export const guardianService = {
     const response = await apiClient.delete('/users/me/profile-picture');
     return response.data;
   },
+
+  // School Admin - Guardians APIs (already have most, adding missing ones)
+  listGuardians: async (): Promise<{
+    guardians: {
+      data: Array<{
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        phone: string;
+        relationship_to_student: string;
+      }>;
+    };
+  }> => {
+    const response = await apiClient.get('/guardians');
+    return response.data;
+  },
+
+  createGuardian: async (data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    relationship: string;
+    address?: string;
+  }): Promise<{
+    message: string;
+    guardian: any;
+  }> => {
+    const response = await apiClient.post('/guardians', data);
+    return response.data;
+  },
+
+  getGuardianDetails: async (id: number): Promise<{
+    guardian: any;
+  }> => {
+    const response = await apiClient.get(`/guardians/${id}`);
+    return response.data;
+  },
+
+  updateGuardian: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone: string;
+      address: string;
+    }>;
+  }): Promise<{
+    message: string;
+    guardian: any;
+  }> => {
+    const response = await apiClient.put(`/guardians/${id}`, data);
+    return response.data;
+  },
+
+  deleteGuardian: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/guardians/${id}`);
+    return response.data;
+  },
+
+  assignStudentToGuardian: async ({ id, data }: {
+    id: number;
+    data: {
+      student_id: number;
+    };
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post(`/guardians/${id}/assign-student`, data);
+    return response.data;
+  },
+
+  removeStudentFromGuardian: async ({ id, data }: {
+    id: number;
+    data: {
+      student_id: number;
+    };
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.delete(`/guardians/${id}/remove-student`, { data });
+    return response.data;
+  },
+
+  getGuardianStudents: async (id: number): Promise<{
+    guardian: any;
+    students: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/guardians/${id}/students`);
+    return response.data;
+  },
+
+  getGuardianNotifications: async (id: number): Promise<{
+    guardian: any;
+    notifications: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/guardians/${id}/notifications`);
+    return response.data;
+  },
+
+  getGuardianMessages: async (id: number): Promise<{
+    guardian: any;
+    messages: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/guardians/${id}/messages`);
+    return response.data;
+  },
+
+  getGuardianPayments: async (id: number): Promise<{
+    guardian: any;
+    payments: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/guardians/${id}/payments`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

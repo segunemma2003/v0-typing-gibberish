@@ -118,6 +118,99 @@ export const livestreamService = {
     const response = await apiClient.post(`/livestreams/${id}/end`);
     return response.data;
   },
+
+  // School Admin - Livestreams APIs
+  listLivestreams: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      teacher_id: number;
+      start_time: string;
+      status: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/livestreams');
+    return response.data;
+  },
+
+  createLivestream: async (data: {
+    title: string;
+    description?: string;
+    teacher_id: number;
+    scheduled_start: string;
+    scheduled_end?: string;
+  }): Promise<{
+    message: string;
+    livestream: any;
+  }> => {
+    const response = await apiClient.post('/livestreams', data);
+    return response.data;
+  },
+
+  getLivestream: async (id: number): Promise<{
+    livestream: any;
+  }> => {
+    const response = await apiClient.get(`/livestreams/${id}`);
+    return response.data;
+  },
+
+  updateLivestream: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      description: string;
+      scheduled_start: string;
+      scheduled_end: string;
+    }>;
+  }): Promise<{
+    message: string;
+    livestream: any;
+  }> => {
+    const response = await apiClient.put(`/livestreams/${id}`, data);
+    return response.data;
+  },
+
+  deleteLivestream: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/livestreams/${id}`);
+    return response.data;
+  },
+
+  joinLivestream: async (id: number): Promise<{
+    message: string;
+    livestream: any;
+  }> => {
+    const response = await apiClient.post(`/livestreams/${id}/join`);
+    return response.data;
+  },
+
+  leaveLivestream: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/livestreams/${id}/leave`);
+    return response.data;
+  },
+
+  getLivestreamAttendance: async (id: number): Promise<{
+    livestream: any;
+    attendance: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/livestreams/${id}/attendance`);
+    return response.data;
+  },
+
+  startLivestream: async (id: number): Promise<{
+    message: string;
+    livestream: any;
+  }> => {
+    const response = await apiClient.post(`/livestreams/${id}/start`);
+    return response.data;
+  },
+
+  endLivestream: async (id: number): Promise<{
+    message: string;
+    livestream: any;
+  }> => {
+    const response = await apiClient.post(`/livestreams/${id}/end`);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

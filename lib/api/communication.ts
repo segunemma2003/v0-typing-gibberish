@@ -139,6 +139,155 @@ export const communicationService = {
     const response = await apiClient.post('/communication/email/send', data);
     return response.data;
   },
+
+  // School Admin - Communication APIs
+  listMessages: async (params?: {
+    type?: string;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      from_user_id: number;
+      to_user_id: number;
+      subject: string;
+      message: string;
+      is_read: boolean;
+      sent_at: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/communication/messages', { params });
+    return response.data;
+  },
+
+  createMessage: async (data: {
+    to_user_id: number;
+    subject: string;
+    message: string;
+    priority?: string;
+  }): Promise<{
+    message: string;
+    data: any;
+  }> => {
+    const response = await apiClient.post('/communication/messages', data);
+    return response.data;
+  },
+
+  getMessage: async (id: number): Promise<{
+    data: any;
+  }> => {
+    const response = await apiClient.get(`/communication/messages/${id}`);
+    return response.data;
+  },
+
+  updateMessage: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      subject: string;
+      message: string;
+    }>;
+  }): Promise<{
+    message: string;
+    data: any;
+  }> => {
+    const response = await apiClient.put(`/communication/messages/${id}`, data);
+    return response.data;
+  },
+
+  deleteMessage: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/communication/messages/${id}`);
+    return response.data;
+  },
+
+  markMessageAsRead: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.put(`/communication/messages/${id}/read`);
+    return response.data;
+  },
+
+  listNotifications: async (params?: {
+    is_read?: boolean;
+  }): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      message: string;
+      type: string;
+      is_read: boolean;
+      created_at: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/communication/notifications', { params });
+    return response.data;
+  },
+
+  createNotification: async (data: {
+    title: string;
+    message: string;
+    type: string;
+    recipient_ids?: number[];
+  }): Promise<{
+    message: string;
+    data: any;
+  }> => {
+    const response = await apiClient.post('/communication/notifications', data);
+    return response.data;
+  },
+
+  getNotification: async (id: number): Promise<{
+    data: any;
+  }> => {
+    const response = await apiClient.get(`/communication/notifications/${id}`);
+    return response.data;
+  },
+
+  updateNotification: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      message: string;
+      type: string;
+    }>;
+  }): Promise<{
+    message: string;
+    data: any;
+  }> => {
+    const response = await apiClient.put(`/communication/notifications/${id}`, data);
+    return response.data;
+  },
+
+  deleteNotification: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/communication/notifications/${id}`);
+    return response.data;
+  },
+
+  markNotificationAsReadAdmin: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.put(`/communication/notifications/${id}/read`);
+    return response.data;
+  },
+
+  markAllNotificationsAsRead: async (): Promise<{ message: string }> => {
+    const response = await apiClient.put('/communication/notifications/read-all');
+    return response.data;
+  },
+
+  sendSMS: async (data: {
+    recipients: string[];
+    message: string;
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post('/communication/sms/send', data);
+    return response.data;
+  },
+
+  sendEmailAdmin: async (data: {
+    recipients: string[];
+    subject: string;
+    body: string;
+  }): Promise<{
+    message: string;
+  }> => {
+    const response = await apiClient.post('/communication/email/send', data);
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks

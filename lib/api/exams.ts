@@ -440,6 +440,306 @@ export const examsService = {
     const response = await apiClient.post('/bulk/exams/create', { exams });
     return response.data;
   },
+
+  // School Admin - Examinations & CBT APIs
+  listExams: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      subject_id: number;
+      class_id: number;
+      exam_date: string;
+      duration: number;
+      total_marks: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/exams');
+    return response.data;
+  },
+
+  createExam: async (data: {
+    title: string;
+    subject_id: number;
+    class_id: number;
+    term_id: number;
+    academic_year_id: number;
+    exam_date: string;
+    duration: number;
+    total_marks: number;
+    passing_marks?: number;
+    instructions?: string;
+  }): Promise<{
+    message: string;
+    exam: any;
+  }> => {
+    const response = await apiClient.post('/assessments/exams', data);
+    return response.data;
+  },
+
+  getExamDetails: async (id: number): Promise<{
+    exam: any;
+  }> => {
+    const response = await apiClient.get(`/assessments/exams/${id}`);
+    return response.data;
+  },
+
+  updateExam: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      exam_date: string;
+      duration: number;
+      total_marks: number;
+      passing_marks: number;
+      instructions: string;
+    }>;
+  }): Promise<{
+    message: string;
+    exam: any;
+  }> => {
+    const response = await apiClient.put(`/assessments/exams/${id}`, data);
+    return response.data;
+  },
+
+  deleteExam: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/assessments/exams/${id}`);
+    return response.data;
+  },
+
+  // School Admin - Assignments
+  listAssignments: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      subject_id: number;
+      class_id: number;
+      due_date: string;
+      total_marks: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/assessments/assignments');
+    return response.data;
+  },
+
+  createAssignment: async (data: {
+    title: string;
+    description?: string;
+    subject_id: number;
+    class_id: number;
+    due_date: string;
+    total_marks: number;
+  }): Promise<{
+    message: string;
+    assignment: any;
+  }> => {
+    const response = await apiClient.post('/assessments/assignments', data);
+    return response.data;
+  },
+
+  getAssignmentDetails: async (id: number): Promise<{
+    assignment: any;
+  }> => {
+    const response = await apiClient.get(`/assessments/assignments/${id}`);
+    return response.data;
+  },
+
+  updateAssignment: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      description: string;
+      due_date: string;
+      total_marks: number;
+    }>;
+  }): Promise<{
+    message: string;
+    assignment: any;
+  }> => {
+    const response = await apiClient.put(`/assessments/assignments/${id}`, data);
+    return response.data;
+  },
+
+  deleteAssignment: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/assessments/assignments/${id}`);
+    return response.data;
+  },
+
+  getAssignmentSubmissions: async (id: number): Promise<{
+    assignment: any;
+    submissions: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/assessments/assignments/${id}/submissions`);
+    return response.data;
+  },
+
+  submitAssignment: async ({ id, data }: {
+    id: number;
+    data: {
+      student_id: number;
+      content: string;
+      attachments?: Array<{ name: string; url: string }>;
+    };
+  }): Promise<{
+    message: string;
+    submission: any;
+  }> => {
+    const response = await apiClient.post(`/assessments/assignments/${id}/submit`, data);
+    return response.data;
+  },
+
+  gradeAssignment: async ({ id, data }: {
+    id: number;
+    data: {
+      submission_id: number;
+      marks: number;
+      feedback?: string;
+    };
+  }): Promise<{
+    message: string;
+    submission: any;
+  }> => {
+    const response = await apiClient.put(`/assessments/assignments/${id}/grade`, data);
+    return response.data;
+  },
+
+  // School Admin - Quizzes
+  listQuizzes: async (): Promise<{
+    data: Array<{
+      id: number;
+      title: string;
+      subject_id: number;
+      duration: number;
+      total_marks: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/quizzes');
+    return response.data;
+  },
+
+  createQuiz: async (data: {
+    title: string;
+    description?: string;
+    subject_id: number;
+    class_id?: number;
+    duration: number;
+    total_marks: number;
+  }): Promise<{
+    message: string;
+    quiz: any;
+  }> => {
+    const response = await apiClient.post('/quizzes', data);
+    return response.data;
+  },
+
+  getQuizDetails: async (id: number): Promise<{
+    quiz: any;
+  }> => {
+    const response = await apiClient.get(`/quizzes/${id}`);
+    return response.data;
+  },
+
+  updateQuiz: async ({ id, data }: {
+    id: number;
+    data: Partial<{
+      title: string;
+      description: string;
+      duration: number;
+      total_marks: number;
+    }>;
+  }): Promise<{
+    message: string;
+    quiz: any;
+  }> => {
+    const response = await apiClient.put(`/quizzes/${id}`, data);
+    return response.data;
+  },
+
+  deleteQuiz: async (id: number): Promise<{ message: string }> => {
+    const response = await apiClient.delete(`/quizzes/${id}`);
+    return response.data;
+  },
+
+  getQuizQuestions: async (id: number): Promise<{
+    quiz: any;
+    questions: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/quizzes/${id}/questions`);
+    return response.data;
+  },
+
+  addQuestionToQuiz: async ({ id, data }: {
+    id: number;
+    data: {
+      question: string;
+      type: string;
+      options?: Array<{ text: string; is_correct: boolean }>;
+      marks: number;
+    };
+  }): Promise<{
+    message: string;
+    question: any;
+  }> => {
+    const response = await apiClient.post(`/quizzes/${id}/questions`, data);
+    return response.data;
+  },
+
+  // School Admin - CBT Operations
+  getCBTQuestions: async (examId: number): Promise<{
+    exam: any;
+    questions: Array<any>;
+  }> => {
+    const response = await apiClient.get(`/assessments/cbt/${examId}/questions`);
+    return response.data;
+  },
+
+  createCBTQuestions: async ({ examId, data }: {
+    examId: number;
+    data: {
+      questions: Array<{
+        question: string;
+        type: string;
+        options?: Array<{ text: string; is_correct: boolean }>;
+        marks: number;
+      }>;
+    };
+  }): Promise<{
+    message: string;
+    questions: Array<any>;
+  }> => {
+    const response = await apiClient.post(`/assessments/cbt/${examId}/questions/create`, data);
+    return response.data;
+  },
+
+  submitCBTAnswers: async (data: {
+    session_id: string;
+    exam_id: number;
+    answers: Array<{
+      question_id: number;
+      answer: string[];
+    }>;
+  }): Promise<{
+    message: string;
+    result: any;
+  }> => {
+    const response = await apiClient.post('/assessments/cbt/submit', data);
+    return response.data;
+  },
+
+  getCBTSessionStatus: async (sessionId: string): Promise<{
+    session: any;
+    status: string;
+  }> => {
+    const response = await apiClient.get(`/assessments/cbt/session/${sessionId}/status`);
+    return response.data;
+  },
+
+  getCBTResults: async (sessionId: string): Promise<{
+    session: any;
+    results: any;
+  }> => {
+    const response = await apiClient.get(`/assessments/cbt/session/${sessionId}/results`);
+    return response.data;
+  },
 };
 
 // TanStack Query Hooks

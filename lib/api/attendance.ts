@@ -219,6 +219,119 @@ export const attendanceService = {
     const response = await apiClient.get('/attendance/student/me', { params });
     return response.data;
   },
+
+  // School Admin - Mark Attendance
+  markAttendance: async (data: {
+    class_id: number;
+    date: string;
+    records: Array<{
+      student_id: number;
+      status: 'present' | 'absent' | 'late';
+      remarks?: string;
+    }>;
+  }): Promise<{
+    message: string;
+    created: number;
+  }> => {
+    const response = await apiClient.post('/attendance', data);
+    return response.data;
+  },
+
+  // School Admin - Get Student Attendance
+  getStudentAttendance: async (studentId: number, params?: {
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
+    student: {
+      id: number;
+      name: string;
+      admission_number: string;
+    };
+    attendance: Array<{
+      date: string;
+      status: 'present' | 'absent' | 'late';
+      remarks?: string;
+    }>;
+    summary: {
+      total_days: number;
+      present_days: number;
+      absent_days: number;
+      attendance_percentage: number;
+    };
+  }> => {
+    const response = await apiClient.get(`/attendance/student/${studentId}`, { params });
+    return response.data;
+  },
+
+  // School Admin - Get Class Attendance
+  getClassAttendance: async (classId: number, params?: {
+    date?: string;
+  }): Promise<{
+    class: {
+      id: number;
+      name: string;
+    };
+    date: string;
+    attendance: Array<{
+      student_id: number;
+      student_name: string;
+      status: 'present' | 'absent' | 'late';
+      remarks?: string;
+    }>;
+  }> => {
+    const response = await apiClient.get(`/attendance/class/${classId}`, { params });
+    return response.data;
+  },
+
+  // School Admin - Get Attendance Reports
+  getAttendanceReports: async (params?: {
+    start_date?: string;
+    end_date?: string;
+    class_id?: number;
+  }): Promise<{
+    summary: {
+      total_students: number;
+      average_attendance: number;
+      total_days: number;
+    };
+    details: Array<any>;
+  }> => {
+    const response = await apiClient.get('/attendance/reports', { params });
+    return response.data;
+  },
+
+  // School Admin - Get Student Attendance List
+  getStudentAttendanceList: async (params?: {
+    date?: string;
+  }): Promise<{
+    date: string;
+    students: Array<{
+      id: number;
+      name: string;
+      admission_number: string;
+      class: string;
+      status: 'present' | 'absent' | 'late';
+    }>;
+  }> => {
+    const response = await apiClient.get('/attendance/students', { params });
+    return response.data;
+  },
+
+  // School Admin - Get Teacher Attendance List
+  getTeacherAttendanceList: async (params?: {
+    date?: string;
+  }): Promise<{
+    date: string;
+    teachers: Array<{
+      id: number;
+      name: string;
+      employee_id: string;
+      status: 'present' | 'absent' | 'late';
+    }>;
+  }> => {
+    const response = await apiClient.get('/attendance/teachers', { params });
+    return response.data;
+  },
 };
 
 // 2. TanStack Query Hooks
@@ -312,3 +425,50 @@ export const useChildAttendance = (childId: number, params?: { from?: string; to
   });
 };
 
+// School Admin - Attendance Management Hooks
+export const useMarkAttendance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attendanceService.markAttendance,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendance'] });
+    },
+  });
+};
+
+export const useStudentAttendanceAdmin = (studentId: number, params?: { start_date?: string; end_date?: string }) => {
+  return useQuery({
+    queryKey: ['studentAttendanceAdmin', studentId, params],
+    queryFn: () => attendanceService.getStudentAttendance(studentId, params),
+    enabled: !!studentId,
+  });
+};
+
+export const useClassAttendanceAdmin = (classId: number, params?: { date?: string }) => {
+  return useQuery({
+    queryKey: ['classAttendanceAdmin', classId, params],
+    queryFn: () => attendanceService.getClassAttendance(classId, params),
+    enabled: !!classId,
+  });
+};
+
+export const useAttendanceReportsAdmin = (params?: { start_date?: string; end_date?: string; class_id?: number }) => {
+  return useQuery({
+    queryKey: ['attendanceReportsAdmin', params],
+    queryFn: () => attendanceService.getAttendanceReports(params),
+  });
+};
+
+export const useStudentAttendanceList = (params?: { date?: string }) => {
+  return useQuery({
+    queryKey: ['studentAttendanceList', params],
+    queryFn: () => attendanceService.getStudentAttendanceList(params),
+  });
+};
+
+export const useTeacherAttendanceList = (params?: { date?: string }) => {
+  return useQuery({
+    queryKey: ['teacherAttendanceList', params],
+    queryFn: () => attendanceService.getTeacherAttendanceList(params),
+  });
+};
