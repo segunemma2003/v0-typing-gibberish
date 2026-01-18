@@ -30,10 +30,44 @@ jobs:
             timeout 5 pm2 flush 2>/dev/null || true
             sleep 1
             
-            # Method 2: Force kill PM2 processes
-            echo "Step 2: Force killing PM2 processes..."
-            pkill -9 -f pm2 2>/dev/null || true
-            pkill -9 -f "node.*pm2" 2>/dev/null || true
+            # Method 2: Kill PM2 processes more safely (avoid killing SSH session)
+            echo "Step 2: Killing PM2 daemon processes (safely)..."
+            # Get current process ID to avoid killing ourselves
+            CURRENT_PID=$$
+            PARENT_PID=$PPID
+            
+            # Only kill actual PM2 daemon processes, be very specific
+            # Look for processes with "pm2" in the command but exclude our session
+            pm2_daemon_pids=$(ps aux | grep -E "[p]m2.*daemon|[p]m2.*God" | awk '{print $2}' 2>/dev/null || true)
+            if [ ! -z "$pm2_daemon_pids" ]; then
+              for pid in $pm2_daemon_pids; do
+                # Skip if it's our current process or parent
+                if [ "$pid" != "$CURRENT_PID" ] && [ "$pid" != "$PARENT_PID" ] && [ "$pid" != "1" ]; then
+                  # Verify it's actually a PM2 process
+                  cmd=$(ps -p $pid -o cmd= 2>/dev/null || echo "")
+                  if echo "$cmd" | grep -qE "pm2.*(daemon|God)"; then
+                    echo "Killing PM2 daemon process $pid"
+                    kill -9 $pid 2>/dev/null || true
+                  fi
+                fi
+              done
+            fi
+            
+            # Kill node processes that are PM2 managed apps (very specific)
+            node_pm2_pids=$(ps aux | grep -E "[n]ode.*next|[n]ode.*pm2" | grep -v "grep" | awk '{print $2}' 2>/dev/null || true)
+            if [ ! -z "$node_pm2_pids" ]; then
+              for pid in $node_pm2_pids; do
+                # Skip if it's our current process or parent
+                if [ "$pid" != "$CURRENT_PID" ] && [ "$pid" != "$PARENT_PID" ] && [ "$pid" != "1" ]; then
+                  # Check if it's actually a PM2 managed process
+                  cmd=$(ps -p $pid -o cmd= 2>/dev/null || echo "")
+                  if echo "$cmd" | grep -qE "(next|pm2)" && ! echo "$cmd" | grep -qE "(ssh|deploy)"; then
+                    echo "Killing node PM2 process $pid"
+                    kill -9 $pid 2>/dev/null || true
+                  fi
+                fi
+              done
+            fi
             sleep 2
             
             # Method 3: Clean PM2 lock files to prevent hanging
@@ -46,24 +80,24 @@ jobs:
               rm -f "$PM2_HOME/pids" 2>/dev/null || true
             fi
             
-            # Method 4: Kill processes on ports
+            # Method 4: Kill processes on ports (more specific)
             echo "Step 4: Killing all processes on ports 9000, 3000, and 5000..."
             for port in 9000 3000 5000; do
               pid=$(lsof -ti:$port 2>/dev/null || true)
-              if [ ! -z "$pid" ]; then
+              if [ ! -z "$pid" ] && [ "$pid" != "$$" ]; then
                 echo "Killing process $pid on port $port"
                 kill -9 $pid 2>/dev/null || true
               fi
             done
             sleep 2
             
-            # Verify PM2 is stopped
-            if pgrep -f pm2 > /dev/null 2>&1; then
-              echo "⚠️ Warning: Some PM2 processes may still be running, force killing again..."
-              pkill -9 -f pm2 2>/dev/null || true
-              sleep 1
+            # Verify PM2 is stopped (but don't kill if it's our session)
+            remaining_pm2=$(ps aux | grep -E "[p]m2.*daemon|[p]m2.*God" | grep -v "$$" | grep -v "$PPID" | awk '{print $2}' 2>/dev/null || true)
+            if [ ! -z "$remaining_pm2" ]; then
+              echo "⚠️ Warning: Some PM2 daemon processes may still be running"
+              echo "   (Not killing to avoid affecting SSH session)"
             else
-              echo "✅ PM2 fully stopped"
+              echo "✅ PM2 daemon stopped"
             fi
             
             echo "📥 Pulling latest changes from git..."
@@ -127,10 +161,22 @@ jobs:
             export NEXT_PUBLIC_BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-compasse.net}
             export NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-https://api.compasse.net}
             
-            # Ensure PM2 daemon is not running before starting
-            if pgrep -f pm2 > /dev/null 2>&1; then
-              echo "⚠️ PM2 still running, force killing..."
-              pkill -9 -f pm2 2>/dev/null || true
+            # Ensure PM2 daemon is not running before starting (safely)
+            CURRENT_PID=$$
+            PARENT_PID=$PPID
+            pm2_daemon_pids=$(ps aux | grep -E "[p]m2.*daemon|[p]m2.*God" | awk '{print $2}' 2>/dev/null || true)
+            if [ ! -z "$pm2_daemon_pids" ]; then
+              echo "⚠️ PM2 daemon still running, killing specific processes..."
+              for pid in $pm2_daemon_pids; do
+                # Skip if it's our current process, parent, or init
+                if [ "$pid" != "$CURRENT_PID" ] && [ "$pid" != "$PARENT_PID" ] && [ "$pid" != "1" ]; then
+                  cmd=$(ps -p $pid -o cmd= 2>/dev/null || echo "")
+                  if echo "$cmd" | grep -qE "pm2.*(daemon|God)"; then
+                    echo "Killing PM2 daemon process $pid"
+                    kill -9 $pid 2>/dev/null || true
+                  fi
+                fi
+              done
               sleep 2
             fi
             
