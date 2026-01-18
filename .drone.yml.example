@@ -1,0 +1,43 @@
+# Drone CI Configuration Example
+# Copy this to .drone.yml and adjust for your setup
+
+kind: pipeline
+type: ssh
+name: deploy
+
+server:
+  host: your-server-ip-or-domain
+  user: your-username
+  ssh_key:
+    from_secret: ssh_key
+
+steps:
+  - name: deploy
+    commands:
+      - cd /var/www/react-app
+      - git pull origin main
+      - bash deploy.sh
+    timeout: 30m  # Increase timeout to 30 minutes
+
+# Alternative: If using drone-ssh plugin directly
+---
+kind: pipeline
+type: exec
+name: deploy
+
+steps:
+  - name: deploy
+    image: appleboy/drone-ssh:latest
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_user
+      key:
+        from_secret: deploy_key
+      port: 22
+      script:
+        - cd /var/www/react-app
+        - git pull origin main
+        - bash deploy.sh
+      timeout: 30m  # Increase timeout to 30 minutes

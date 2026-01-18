@@ -21,13 +21,33 @@ jobs:
             
             cd /var/www/react-app
             
-            echo "🛑 Stopping and cleaning up PM2..."
-            pm2 delete my-compasse-app 2>/dev/null || true
-            pm2 kill 2>/dev/null || true
-            pm2 flush 2>/dev/null || true
-            pm2 save 2>/dev/null || true
+            echo "🛑 Stopping and cleaning up PM2 (with timeout protection)..."
             
-            echo "🔍 Killing all processes on ports 9000, 3000, and 5000..."
+            # Method 1: Try graceful shutdown with timeout
+            echo "Step 1: Graceful PM2 shutdown..."
+            timeout 5 pm2 delete my-compasse-app 2>/dev/null || true
+            timeout 5 pm2 kill 2>/dev/null || true
+            timeout 5 pm2 flush 2>/dev/null || true
+            sleep 1
+            
+            # Method 2: Force kill PM2 processes
+            echo "Step 2: Force killing PM2 processes..."
+            pkill -9 -f pm2 2>/dev/null || true
+            pkill -9 -f "node.*pm2" 2>/dev/null || true
+            sleep 2
+            
+            # Method 3: Clean PM2 lock files to prevent hanging
+            echo "Step 3: Cleaning PM2 lock files..."
+            PM2_HOME="${PM2_HOME:-$HOME/.pm2}"
+            if [ -d "$PM2_HOME" ]; then
+              rm -f "$PM2_HOME/.sock" 2>/dev/null || true
+              rm -f "$PM2_HOME/lock" 2>/dev/null || true
+              rm -f "$PM2_HOME/reload.lock" 2>/dev/null || true
+              rm -f "$PM2_HOME/pids" 2>/dev/null || true
+            fi
+            
+            # Method 4: Kill processes on ports
+            echo "Step 4: Killing all processes on ports 9000, 3000, and 5000..."
             for port in 9000 3000 5000; do
               pid=$(lsof -ti:$port 2>/dev/null || true)
               if [ ! -z "$pid" ]; then
@@ -35,7 +55,16 @@ jobs:
                 kill -9 $pid 2>/dev/null || true
               fi
             done
-            sleep 3
+            sleep 2
+            
+            # Verify PM2 is stopped
+            if pgrep -f pm2 > /dev/null 2>&1; then
+              echo "⚠️ Warning: Some PM2 processes may still be running, force killing again..."
+              pkill -9 -f pm2 2>/dev/null || true
+              sleep 1
+            else
+              echo "✅ PM2 fully stopped"
+            fi
             
             echo "📥 Pulling latest changes from git..."
             git fetch origin
@@ -92,16 +121,51 @@ jobs:
             echo "   Build ID: $(cat .next/BUILD_ID)"
             
             echo "🔄 Starting PM2 application..."
-            # Export environment variables for PM2
+            
+            # Set PM2_HOME explicitly to avoid path issues
+            export PM2_HOME="$HOME/.pm2"
             export NEXT_PUBLIC_BASE_DOMAIN=${NEXT_PUBLIC_BASE_DOMAIN:-compasse.net}
             export NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-https://api.compasse.net}
             
-            # Make sure ecosystem.config.js exists
+            # Ensure PM2 daemon is not running before starting
+            if pgrep -f pm2 > /dev/null 2>&1; then
+              echo "⚠️ PM2 still running, force killing..."
+              pkill -9 -f pm2 2>/dev/null || true
+              sleep 2
+            fi
+            
+            # Start PM2 with timeout to prevent hanging
+            echo "🚀 Starting PM2 (with 30s timeout)..."
             if [ ! -f "ecosystem.config.js" ]; then
               echo "⚠️ ecosystem.config.js not found, starting with npm"
-              PORT=9000 NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start npm --name "my-compasse-app" -- start || exit 1
+              if timeout 30 PORT=9000 NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start npm --name "my-compasse-app" -- start; then
+                echo "✅ PM2 started successfully with npm"
+              else
+                echo "❌ PM2 start failed or timed out"
+                echo "🔍 Debugging info:"
+                echo "PM2_HOME: $PM2_HOME"
+                ls -la "$PM2_HOME" 2>/dev/null || echo "PM2_HOME directory not found"
+                pm2 list 2>/dev/null || echo "PM2 list command failed"
+                ps aux | grep pm2 | head -5 || true
+                exit 1
+              fi
             else
-              NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start ecosystem.config.js || PORT=9000 NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start npm --name "my-compasse-app" -- start || exit 1
+              if timeout 30 NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start ecosystem.config.js; then
+                echo "✅ PM2 started successfully with ecosystem.config.js"
+              else
+                echo "⚠️ PM2 start with ecosystem.config.js failed, trying with npm..."
+                if timeout 30 PORT=9000 NEXT_PUBLIC_BASE_DOMAIN=$NEXT_PUBLIC_BASE_DOMAIN NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL pm2 start npm --name "my-compasse-app" -- start; then
+                  echo "✅ PM2 started successfully with npm fallback"
+                else
+                  echo "❌ PM2 start failed or timed out with both methods"
+                  echo "🔍 Debugging info:"
+                  echo "PM2_HOME: $PM2_HOME"
+                  ls -la "$PM2_HOME" 2>/dev/null || echo "PM2_HOME directory not found"
+                  pm2 list 2>/dev/null || echo "PM2 list command failed"
+                  ps aux | grep pm2 | head -5 || true
+                  exit 1
+                fi
+              fi
             fi
             
             # Wait a bit and check if it started successfully
@@ -113,7 +177,7 @@ jobs:
             fi
             
             echo "💾 Saving PM2 configuration..."
-            pm2 save || true
+            timeout 5 pm2 save || echo "⚠️ PM2 save failed, but continuing..."
             
             echo "⏳ Waiting for application to initialize..."
             sleep 8
